@@ -15,10 +15,13 @@ SRC_DIRS += $(IOC)/support
 INC += support.h
 LIBSRCS += support.cpp
 
-
 SRC_DIRS += $(IOC)/util
 INC += util.h
 LIBSRCS += util.cpp
+
+SRC_DIRS += $(IOC)/v3Channel
+INC += v3Channel.h
+LIBSRCS += v3Channel.cpp
 
 LIBRARY=pvIoc
 
