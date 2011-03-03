@@ -7,9 +7,11 @@
 #ifndef V3CHANNEL_H
 #define V3CHANNEL_H
 #include <string>
+#include <cstring>
 #include <stdexcept>
 #include <memory>
 
+#include <dbAccess.h>
 #include <pvIntrospect.h>
 #include <pvData.h>
 #include <noDefaultMethods.h>
@@ -32,69 +34,84 @@ class V3ChannelMonitor;
 class V3ChannelArray;
 class V3ChannelRPC;
 
+class DbAddr {
+public:
+    DbAddr(struct dbAddr addr)
+    : dbaddr(new (struct dbAddr))
+    {
+        memcpy(dbaddr,&addr,sizeof addr);
+    }
+    ~DbAddr() {delete dbaddr;}
+    struct dbAddr *get() {return dbaddr;}
+private:
+    struct dbAddr *dbaddr;
+};
+
+
 class V3ChannelProvider : public epics::pvAccess::ChannelProvider {
 public:
-    V3ChannelProvider();
-    ~V3ChannelProvider();
+    static V3ChannelProvider &getChannelProvider();
     virtual epics::pvData::String getProviderName();
     virtual void destroy();
-    virtual epics::pvAccess::ChannelFind* channelFind(
+    virtual epics::pvAccess::ChannelFind *channelFind(
         epics::pvData::String channelName,
         epics::pvAccess::ChannelFindRequester *channelFindRequester);
-    virtual epics::pvAccess::Channel* createChannel(
+    virtual epics::pvAccess::Channel *createChannel(
         epics::pvData::String channelName,
         epics::pvAccess::ChannelRequester *channelRequester,
         short priority);
-    virtual epics::pvAccess::Channel* createChannel(
+    virtual epics::pvAccess::Channel *createChannel(
         epics::pvData::String channelName,
         epics::pvAccess::ChannelRequester *channelRequester,
         short priority,
         epics::pvData::String address);
 private:
-    // TBD
+    V3ChannelProvider();
+    ~V3ChannelProvider();
 };
 
 
 class V3Channel : public epics::pvAccess::Channel {
 public:
-    V3Channel(epics::pvAccess::ChannelProvider &provider,
+    V3Channel(
         epics::pvAccess::ChannelRequester &requester,
         epics::pvData::String name,
-        epics::pvData::String remoteAddress);
+        std::auto_ptr<DbAddr> addr
+        );
     virtual void destroy();
     virtual epics::pvData::String getRequesterName();
     virtual void message(
         epics::pvData::String message,
         epics::pvData::MessageType messageType);
-    virtual epics::pvAccess::ChannelProvider* getProvider();
+    virtual epics::pvAccess::ChannelProvider *getProvider();
     virtual epics::pvData::String getRemoteAddress();
     virtual epics::pvAccess::Channel::ConnectionState getConnectionState();
     virtual epics::pvData::String getChannelName();
-    virtual epics::pvAccess::ChannelRequester* getChannelRequester();
+    virtual epics::pvAccess::ChannelRequester *getChannelRequester();
     virtual bool isConnected();
     virtual void getField(epics::pvAccess::GetFieldRequester *requester,
         epics::pvData::String subField);
     virtual epics::pvAccess::AccessRights getAccessRights(
         epics::pvData::PVField *pvField);
-    virtual epics::pvAccess::ChannelProcess* createChannelProcess(
+    virtual epics::pvAccess::ChannelProcess *createChannelProcess(
         epics::pvAccess::ChannelProcessRequester *channelProcessRequester,
         epics::pvData::PVStructure *pvRequest);
-    virtual epics::pvAccess::ChannelGet* createChannelGet(
+    virtual epics::pvAccess::ChannelGet *createChannelGet(
         epics::pvAccess::ChannelGetRequester *channelGetRequester,
         epics::pvData::PVStructure *pvRequest);
-    virtual epics::pvAccess::ChannelPut* createChannelPut(
+    virtual epics::pvAccess::ChannelPut *createChannelPut(
         epics::pvAccess::ChannelPutRequester *channelPutRequester,
         epics::pvData::PVStructure *pvRequest);
-    virtual epics::pvAccess::ChannelPutGet* createChannelPutGet(
+    virtual epics::pvAccess::ChannelPutGet *createChannelPutGet(
         epics::pvAccess::ChannelPutGetRequester *channelPutGetRequester,
         epics::pvData::PVStructure *pvRequest);
-    virtual epics::pvAccess::ChannelRPC* createChannelRPC(
+    virtual epics::pvAccess::ChannelRPC *createChannelRPC(
         epics::pvAccess::ChannelRPCRequester *channelRPCRequester,
         epics::pvData::PVStructure *pvRequest);
-    virtual epics::pvData::Monitor* createMonitor(
+    virtual epics::pvData::Monitor *createMonitor(
         epics::pvData::MonitorRequester *monitorRequester,
         epics::pvData::PVStructure *pvRequest);
-    virtual epics::pvAccess::ChannelArray* createChannelArray(
+    virtual epics::pvAccess::ChannelArray *createChannelArray(
         epics::pvAccess::ChannelArrayRequester *channelArrayRequester,
         epics::pvData::PVStructure *pvRequest);
     virtual void printInfo();

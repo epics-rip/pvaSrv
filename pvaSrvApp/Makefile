@@ -6,6 +6,8 @@ IOC = $(TOP)/pvIocApp/
 SRC_DIRS += $(IOC)/database
 INC += pvDatabase.h
 LIBSRCS += pvDatabase.cpp
+LIBSRCS += pvRecord.cpp
+LIBSRCS += pvReplace.cpp
 
 SRC_DIRS += $(IOC)/install
 INC += install.h
@@ -22,6 +24,7 @@ LIBSRCS += util.cpp
 SRC_DIRS += $(IOC)/v3Channel
 INC += v3Channel.h
 LIBSRCS += v3Channel.cpp
+LIBSRCS += v3ChannelProvider.cpp
 
 LIBRARY=pvIoc
 
