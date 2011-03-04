@@ -1,6 +1,0 @@
-epicsEnvSet("ARCH","linux-x86")
-epicsEnvSet("IOC","ioctypes")
-epicsEnvSet("TOP","/home/mrk/hg/pvIOCCPP")
-epicsEnvSet("EPICS_BASE","/home/install/epics/base")
-epicsEnvSet("PVDATA","/home/mrk/hg/pvDataCPP")
-epicsEnvSet("PVACCESS","/home/mrk/hg/pvAccessCPP")
