@@ -12,6 +12,7 @@
 #include <memory>
 
 #include <dbAccess.h>
+#include <linkedList.h>
 #include <pvIntrospect.h>
 #include <pvData.h>
 #include <noDefaultMethods.h>
@@ -34,19 +35,7 @@ class V3ChannelMonitor;
 class V3ChannelArray;
 class V3ChannelRPC;
 
-class DbAddr {
-public:
-    DbAddr(struct dbAddr addr)
-    : dbaddr(new (struct dbAddr))
-    {
-        memcpy(dbaddr,&addr,sizeof addr);
-    }
-    ~DbAddr() {delete dbaddr;}
-    struct dbAddr *get() {return dbaddr;}
-private:
-    struct dbAddr *dbaddr;
-};
-
+typedef struct dbAddr DbAddr;
 
 class V3ChannelProvider : public epics::pvAccess::ChannelProvider {
 public:
@@ -70,6 +59,18 @@ private:
     ~V3ChannelProvider();
 };
 
+typedef epics::pvData::LinkedListNode<V3ChannelProcess> ChannelProcessListNode;
+typedef epics::pvData::LinkedList<V3ChannelProcess> ChannelProcessList;
+typedef epics::pvData::LinkedListNode<V3ChannelGet> ChannelGetListNode;
+typedef epics::pvData::LinkedList<V3ChannelGet> ChannelGetList;
+typedef epics::pvData::LinkedListNode<V3ChannelPut> ChannelPutListNode;
+typedef epics::pvData::LinkedList<V3ChannelPut> ChannelPutList;
+typedef epics::pvData::LinkedListNode<V3ChannelPutGet> ChannelPutGetListNode;
+typedef epics::pvData::LinkedList<V3ChannelPutGet> ChannelPutGetList;
+typedef epics::pvData::LinkedListNode<V3ChannelMonitor> ChannelMonitorListNode;
+typedef epics::pvData::LinkedList<V3ChannelMonitor> ChannelMonitorList;
+typedef epics::pvData::LinkedListNode<V3ChannelArray> ChannelArrayListNode;
+typedef epics::pvData::LinkedList<V3ChannelArray> ChannelArrayList;
 
 class V3Channel : public epics::pvAccess::Channel {
 public:
@@ -116,9 +117,24 @@ public:
         epics::pvData::PVStructure *pvRequest);
     virtual void printInfo();
     virtual void printInfo(epics::pvData::StringBuilder out);
+    // following only called by other V3ChannelXXX coxde
+    void removeChannelProcess(ChannelProcessListNode &);
+    void removeChannelGet(ChannelGetListNode &);
+    void removeChannelPut(ChannelPutListNode &);
+    void removeChannelPutGet(ChannelPutGetListNode &);
+    void removeChannelMonitor(ChannelMonitorListNode &);
+    void removeChannelArray(ChannelArrayListNode &);
 private:
     ~V3Channel();
-    // TBD
+    epics::pvAccess::ChannelRequester &requester;
+    epics::pvData::String name;
+    std::auto_ptr<DbAddr> addr;
+    ChannelProcessList channelProcessList;
+    ChannelGetList channelGetList;
+    ChannelPutList channelPutList;
+    ChannelPutGetList channelPutGetList;
+    ChannelMonitorList channelMonitorList;
+    ChannelArrayList channelArrayList;
 };
 
 class V3ChannelProcess : public epics::pvAccess::ChannelProcess {
@@ -127,8 +143,8 @@ public:
 private:
     V3ChannelProcess(
         V3Channel &v3Channel,
-        epics::pvAccess::ChannelProcessRequester *channelProcessRequester,
-        epics::pvData::PVStructure *pvRequest);
+        epics::pvAccess::ChannelProcessRequester &channelProcessRequester,
+        epics::pvData::PVStructure &pvRequest);
     ~V3ChannelProcess();
      friend class V3Channel;
    //TBD
@@ -136,16 +152,27 @@ private:
 
 class V3ChannelGet : public epics::pvAccess::ChannelGet {
 public:
+    V3ChannelGet(
+        V3Channel &v3Channel,
+        epics::pvAccess::ChannelGetRequester &channelGetRequester,
+        DbAddr &dbaddr);
+    virtual ~V3ChannelGet();
+    ChannelGetListNode * init(epics::pvData::PVStructure & pvRequest);
+    virtual epics::pvData::String getRequesterName();
+    virtual void message(
+        epics::pvData::String message,
+        epics::pvData::MessageType messageType);
     virtual void destroy();
     virtual void get(bool lastRequest);
 private:
-    V3ChannelGet(
-        V3Channel &v3Channel,
-        epics::pvAccess::ChannelGetRequester *channelGetRequester,
-        epics::pvData::PVStructure *pvRequest);
-    ~V3ChannelGet();
-     friend class V3Channel;
-   //TBD
+    V3Channel &v3Channel;
+    epics::pvAccess::ChannelGetRequester &channelGetRequester;
+    DbAddr &dbaddr;
+    ChannelGetListNode getListNode;
+    bool process;
+    int whatMask;
+    std::auto_ptr<epics::pvData::PVStructure> pvStructure;
+    std::auto_ptr<epics::pvData::BitSet> bitSet;
 };
 
 class V3ChannelPut : public epics::pvAccess::ChannelPut {

@@ -79,6 +79,7 @@ ChannelFind *V3ChannelProvider::channelFind(
         channelFindRequester->channelFindResult(notFoundStatus,0,false);
         return 0;
     }
+printf("after dbNameToAddr pfield %p\n",dbaddr.pfield);
     channelFindRequester->channelFindResult(okStatus,0,true);
     return 0;
 }
@@ -103,7 +104,11 @@ Channel *V3ChannelProvider::createChannel(
         channelRequester->channelCreated(notFoundStatus,0);
         return 0;
     }
-    std::auto_ptr<DbAddr> addr(new DbAddr(dbaddr));
+printf("after dbNameToAddr pfield %p\n",dbaddr.pfield);
+    std::auto_ptr<DbAddr> addr(new DbAddr());
+printf("after dbNameToAddr pfield %p\n",addr.get()->pfield);
+    memcpy(addr.get(),&dbaddr,sizeof(dbaddr));
+printf("after dbNameToAddr pfield %p\n",addr.get()->pfield);
     V3Channel *v3Channel = new V3Channel(*channelRequester,channelName,addr);
     channelRequester->channelCreated(okStatus,v3Channel);
     return v3Channel;

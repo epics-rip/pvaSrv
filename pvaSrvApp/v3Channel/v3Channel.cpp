@@ -25,6 +25,14 @@ V3Channel::V3Channel(
     ChannelRequester &requester,
     String name,
     std::auto_ptr<DbAddr> addr)
+: requester(requester),name(name),
+    addr(addr),
+    channelProcessList(),
+    channelGetList(),
+    channelPutList(),
+    channelPutGetList(),
+    channelMonitorList(),
+    channelArrayList()
 {
 }
 
@@ -35,6 +43,36 @@ V3Channel::~V3Channel()
 void V3Channel::destroy()
 {
     delete this;
+}
+
+void V3Channel::removeChannelProcess(ChannelProcessListNode &node)
+{
+    if(node.isOnList()) channelProcessList.remove(node);
+}
+
+void V3Channel::removeChannelGet(ChannelGetListNode &node)
+{
+    if(node.isOnList()) channelGetList.remove(node);
+}
+
+void V3Channel::removeChannelPut(ChannelPutListNode &node)
+{
+    if(node.isOnList()) channelPutList.remove(node);
+}
+
+void V3Channel::removeChannelPutGet(ChannelPutGetListNode &node)
+{
+    if(node.isOnList()) channelPutGetList.remove(node);
+}
+
+void V3Channel::removeChannelMonitor(ChannelMonitorListNode &node)
+{
+    if(node.isOnList()) channelMonitorList.remove(node);
+}
+
+void V3Channel::removeChannelArray(ChannelArrayListNode &node)
+{
+    if(node.isOnList()) channelArrayList.remove(node);
 }
 
 String V3Channel::getRequesterName()
@@ -79,7 +117,7 @@ bool V3Channel::isConnected()
     throw std::logic_error(String("Not Implemented"));
 }
 
-void V3Channel::getField(epics::pvAccess::GetFieldRequester *requester,
+void V3Channel::getField(GetFieldRequester *requester,
         String subField)
 {
     throw std::logic_error(String("Not Implemented"));
@@ -92,35 +130,39 @@ AccessRights V3Channel::getAccessRights(
 }
 
 ChannelProcess *V3Channel::createChannelProcess(
-        epics::pvAccess::ChannelProcessRequester *channelProcessRequester,
+        ChannelProcessRequester *channelProcessRequester,
         PVStructure *pvRequest)
 {
     throw std::logic_error(String("Not Implemented"));
 }
 
 ChannelGet *V3Channel::createChannelGet(
-        epics::pvAccess::ChannelGetRequester *channelGetRequester,
+        ChannelGetRequester *channelGetRequester,
         PVStructure *pvRequest)
 {
-    throw std::logic_error(String("Not Implemented"));
+    V3ChannelGet *v3ChannelGet = new V3ChannelGet(
+        *this,*channelGetRequester,*(addr.get()));
+    ChannelGetListNode * node = v3ChannelGet->init(*pvRequest);
+    if(node!=0) channelGetList.addTail(*node);
+    return v3ChannelGet;
 }
 
 ChannelPut *V3Channel::createChannelPut(
-        epics::pvAccess::ChannelPutRequester *channelPutRequester,
+        ChannelPutRequester *channelPutRequester,
         PVStructure *pvRequest)
 {
     throw std::logic_error(String("Not Implemented"));
 }
 
 ChannelPutGet *V3Channel::createChannelPutGet(
-        epics::pvAccess::ChannelPutGetRequester *channelPutGetRequester,
+        ChannelPutGetRequester *channelPutGetRequester,
         PVStructure *pvRequest)
 {
     throw std::logic_error(String("Not Implemented"));
 }
 
 ChannelRPC *V3Channel::createChannelRPC(
-        epics::pvAccess::ChannelRPCRequester *channelRPCRequester,
+        ChannelRPCRequester *channelRPCRequester,
         PVStructure *pvRequest)
 {
     throw std::logic_error(String("Not Implemented"));
@@ -134,7 +176,7 @@ Monitor *V3Channel::createMonitor(
 }
 
 ChannelArray *V3Channel::createChannelArray(
-        epics::pvAccess::ChannelArrayRequester *channelArrayRequester,
+        ChannelArrayRequester *channelArrayRequester,
         PVStructure *pvRequest)
 {
     throw std::logic_error(String("Not Implemented"));
