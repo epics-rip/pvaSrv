@@ -107,7 +107,11 @@ ChannelGetListNode * V3ChannelGet::init(PVStructure &pvRequest)
     } else {
         list = pvRequest.getStringField(fieldListString);
     }
-    if(list==0) return 0;
+    if(list==0) {
+        Status invalidPVRequest(Status::STATUSTYPE_ERROR, "pvRequest contains no " + fieldListString + " field");
+        channelGetRequester.channelGetConnect(invalidPVRequest,0,0,0);
+        return 0;
+    }
     StandardPVField *standardPVField = getStandardPVField();
     String properties;
     String fieldList = list->get();
@@ -187,6 +191,7 @@ void V3ChannelGet::destroy() {
 
 void V3ChannelGet::get(bool lastRequest)
 {
+    bitSet->clear();
     PVField *pvField = pvStructure.get()->getSubField(valueString);
     if((whatMask&scalarValueBit)!=0) {
         switch(dbaddr.field_type) {
@@ -230,6 +235,7 @@ void V3ChannelGet::get(bool lastRequest)
             pvString->put(sval);
         }
         }
+        bitSet->set(pvField->getFieldOffset());
     } else if((whatMask&scalarValueBit)!=0) {
     }
     

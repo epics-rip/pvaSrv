@@ -24,7 +24,6 @@ namespace epics { namespace pvIOC {
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
-static Status okStatus;
 static Status notFoundStatus(Status::STATUSTYPE_ERROR,String("pv not found"));
 
 static V3ChannelProvider *channelProvider = 0;
@@ -83,7 +82,7 @@ printf("V3ChannelProvider::channelFind %s\n",channelName.c_str());
         channelFindRequester->channelFindResult(notFoundStatus,0,false);
         return 0;
     }
-    channelFindRequester->channelFindResult(okStatus,0,true);
+    channelFindRequester->channelFindResult(Status::OK,0,true);
     return 0;
 }
 
@@ -92,7 +91,7 @@ Channel *V3ChannelProvider::createChannel(
     ChannelRequester *channelRequester,
     short priority)
 {
-    return createChannel(channelName,channelRequester,priority,0);
+    return createChannel(channelName,channelRequester,priority,"");
 }
 
 Channel *V3ChannelProvider::createChannel(
@@ -111,7 +110,7 @@ printf("V3ChannelProvider::createChannel %s\n",channelName.c_str());
     std::auto_ptr<DbAddr> addr(new DbAddr());
     memcpy(addr.get(),&dbaddr,sizeof(dbaddr));
     V3Channel *v3Channel = new V3Channel(*channelRequester,channelName,addr);
-    channelRequester->channelCreated(okStatus,v3Channel);
+    channelRequester->channelCreated(Status::OK,v3Channel);
     return v3Channel;
 }
 
