@@ -55,3 +55,4 @@ epicsThreadSleep(2.0)
 casr
 startPVAccessServer
 startV3Channel
+dbpf string01 10.1
