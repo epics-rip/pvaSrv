@@ -51,11 +51,14 @@ V3ChannelProvider &V3ChannelProvider::getChannelProvider()
 }
 
 V3ChannelProvider::V3ChannelProvider()
+: providerName("v3Local"),channelList()
 {
+    registerChannelProvider(this);
 }
 
 V3ChannelProvider::~V3ChannelProvider()
 {
+    unregisterChannelProvider(this);
 }
 
 void V3ChannelProvider::destroy()
@@ -65,7 +68,7 @@ void V3ChannelProvider::destroy()
 
 String V3ChannelProvider::getProviderName()
 {
-    return String("v3Channel");
+    return providerName;
 }
 
 
@@ -73,13 +76,13 @@ ChannelFind *V3ChannelProvider::channelFind(
     String channelName,
     ChannelFindRequester *channelFindRequester)
 {
+printf("V3ChannelProvider::channelFind %s\n",channelName.c_str());
     struct dbAddr dbaddr;
     long result = dbNameToAddr(channelName.c_str(),&dbaddr);
     if(result!=0) {
         channelFindRequester->channelFindResult(notFoundStatus,0,false);
         return 0;
     }
-printf("after dbNameToAddr pfield %p\n",dbaddr.pfield);
     channelFindRequester->channelFindResult(okStatus,0,true);
     return 0;
 }
@@ -98,17 +101,15 @@ Channel *V3ChannelProvider::createChannel(
     short priority,
     String address)
 {
+printf("V3ChannelProvider::createChannel %s\n",channelName.c_str());
     struct dbAddr dbaddr;
     long result = dbNameToAddr(channelName.c_str(),&dbaddr);
     if(result!=0) {
         channelRequester->channelCreated(notFoundStatus,0);
         return 0;
     }
-printf("after dbNameToAddr pfield %p\n",dbaddr.pfield);
     std::auto_ptr<DbAddr> addr(new DbAddr());
-printf("after dbNameToAddr pfield %p\n",addr.get()->pfield);
     memcpy(addr.get(),&dbaddr,sizeof(dbaddr));
-printf("after dbNameToAddr pfield %p\n",addr.get()->pfield);
     V3Channel *v3Channel = new V3Channel(*channelRequester,channelName,addr);
     channelRequester->channelCreated(okStatus,v3Channel);
     return v3Channel;

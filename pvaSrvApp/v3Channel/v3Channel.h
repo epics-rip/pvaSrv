@@ -36,6 +36,8 @@ class V3ChannelArray;
 class V3ChannelRPC;
 
 typedef struct dbAddr DbAddr;
+typedef epics::pvData::LinkedListNode<V3Channel> ChannelListNode;
+typedef epics::pvData::LinkedList<V3Channel> ChannelList;
 
 class V3ChannelProvider : public epics::pvAccess::ChannelProvider {
 public:
@@ -57,6 +59,8 @@ public:
 private:
     V3ChannelProvider();
     ~V3ChannelProvider();
+    epics::pvData::String providerName;
+    ChannelList channelList;
 };
 
 typedef epics::pvData::LinkedListNode<V3ChannelProcess> ChannelProcessListNode;

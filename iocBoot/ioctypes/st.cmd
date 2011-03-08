@@ -53,3 +53,5 @@ cd ${TOP}/iocBoot/${IOC}
 iocInit()
 epicsThreadSleep(2.0)
 casr
+startPVAccessServer
+startV3Channel

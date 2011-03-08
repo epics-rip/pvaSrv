@@ -3,6 +3,10 @@ include $(TOP)/configure/CONFIG
 
 IOC = $(TOP)/pvIocApp/
 
+LIBRARY_IOC += pvIOC
+pvIOC_LIBS += $(EPICS_BASE_IOC_LIBS)
+pvIoc_LIBS += Com pvData pvAccess
+
 SRC_DIRS += $(IOC)/database
 INC += pvDatabase.h
 LIBSRCS += pvDatabase.cpp
@@ -27,9 +31,10 @@ LIBSRCS += v3Channel.cpp
 LIBSRCS += v3ChannelProvider.cpp
 LIBSRCS += v3ChannelGet.cpp`
 
-LIBRARY=pvIoc
-
-pvIoc_LIBS += Com pvData pvAccess
+SRC_DIRS += $(IOC)/register
+DBD += pvIOC.dbd
+LIBSRCS += startPVAccessServer.cpp
+LIBSRCS += startV3Channel.cpp
 
 include $(TOP)/configure/RULES
 
