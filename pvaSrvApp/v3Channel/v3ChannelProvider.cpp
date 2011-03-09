@@ -57,6 +57,13 @@ V3ChannelProvider::V3ChannelProvider()
 
 V3ChannelProvider::~V3ChannelProvider()
 {
+    while(true) {
+        ChannelListNode *node = channelList.removeHead();
+        if(node==0) break;
+        V3Channel &v3Channel = node->getObject();
+        v3Channel.destroy();
+        delete node;
+    }
     unregisterChannelProvider(this);
 }
 
@@ -75,7 +82,6 @@ ChannelFind *V3ChannelProvider::channelFind(
     String channelName,
     ChannelFindRequester *channelFindRequester)
 {
-printf("V3ChannelProvider::channelFind %s\n",channelName.c_str());
     struct dbAddr dbaddr;
     long result = dbNameToAddr(channelName.c_str(),&dbaddr);
     if(result!=0) {
@@ -91,7 +97,7 @@ Channel *V3ChannelProvider::createChannel(
     ChannelRequester *channelRequester,
     short priority)
 {
-    return createChannel(channelName,channelRequester,priority,"");
+    return createChannel(channelName,channelRequester,priority,0);
 }
 
 Channel *V3ChannelProvider::createChannel(
@@ -100,7 +106,6 @@ Channel *V3ChannelProvider::createChannel(
     short priority,
     String address)
 {
-printf("V3ChannelProvider::createChannel %s\n",channelName.c_str());
     struct dbAddr dbaddr;
     long result = dbNameToAddr(channelName.c_str(),&dbaddr);
     if(result!=0) {
@@ -110,6 +115,8 @@ printf("V3ChannelProvider::createChannel %s\n",channelName.c_str());
     std::auto_ptr<DbAddr> addr(new DbAddr());
     memcpy(addr.get(),&dbaddr,sizeof(dbaddr));
     V3Channel *v3Channel = new V3Channel(*channelRequester,channelName,addr);
+    ChannelListNode *node = new ChannelListNode(*v3Channel);
+    channelList.addTail(*node);
     channelRequester->channelCreated(Status::OK,v3Channel);
     return v3Channel;
 }

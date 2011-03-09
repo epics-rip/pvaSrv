@@ -143,15 +143,23 @@ private:
 
 class V3ChannelProcess : public epics::pvAccess::ChannelProcess {
 public:
-    virtual void destroy();
-private:
     V3ChannelProcess(
         V3Channel &v3Channel,
         epics::pvAccess::ChannelProcessRequester &channelProcessRequester,
-        epics::pvData::PVStructure &pvRequest);
+        DbAddr &dbaddr);
     ~V3ChannelProcess();
-     friend class V3Channel;
-   //TBD
+    ChannelProcessListNode * init(epics::pvData::PVStructure & pvRequest);
+    virtual epics::pvData::String getRequesterName();
+    virtual void message(
+        epics::pvData::String message,
+        epics::pvData::MessageType messageType);
+    virtual void destroy();
+    virtual void process(bool lastRequest);
+private:
+    V3Channel &v3Channel;
+    epics::pvAccess::ChannelProcessRequester &channelProcessRequester;
+    DbAddr &dbaddr;
+    ChannelProcessListNode processListNode;
 };
 
 class V3ChannelGet : public epics::pvAccess::ChannelGet {
