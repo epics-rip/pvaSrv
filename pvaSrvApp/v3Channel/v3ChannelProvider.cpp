@@ -72,6 +72,7 @@ V3ChannelProvider::~V3ChannelProvider()
 void V3ChannelProvider::destroy()
 {
     Lock xx(mutex);
+    if(!isRegistered) return;
     isRegistered = false;
     unregisterChannelProvider(this);
     // do not destroy since is singleton
