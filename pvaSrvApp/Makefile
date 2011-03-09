@@ -30,6 +30,7 @@ INC += v3Channel.h
 LIBSRCS += v3Channel.cpp
 LIBSRCS += v3ChannelProvider.cpp
 LIBSRCS += v3ChannelGet.cpp
+LIBSRCS += v3ChannelPut.cpp
 
 SRC_DIRS += $(IOC)/register
 DBD += pvIOC.dbd

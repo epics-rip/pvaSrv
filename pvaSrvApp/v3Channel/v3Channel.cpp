@@ -151,7 +151,11 @@ ChannelPut *V3Channel::createChannelPut(
         ChannelPutRequester *channelPutRequester,
         PVStructure *pvRequest)
 {
-    throw std::logic_error(String("Not Implemented"));
+    V3ChannelPut *v3ChannelPut = new V3ChannelPut(
+        *this,*channelPutRequester,*(addr.get()));
+    ChannelPutListNode * node = v3ChannelPut->init(*pvRequest);
+    if(node!=0) channelPutList.addTail(*node);
+    return v3ChannelPut;
 }
 
 ChannelPutGet *V3Channel::createChannelPutGet(

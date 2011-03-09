@@ -1,4 +1,4 @@
-/* vsChannelGet.cpp */
+/* vsChannelPut.cpp */
 /**
  * Copyright - See the COPYRIGHT that is included with this distribution.
  * EPICS pvDataCPP is distributed subject to a Software License Agreement found
@@ -58,38 +58,30 @@ using namespace epics::pvAccess;
 static int scalarValueBit   = 0x01;
 static int arrayValueBit    = 0x02;
 static int enumValueBit     = 0x04;
-static int timeStampBit     = 0x08;
-static int alarmBit         = 0x10;
-static int displayBit       = 0x20;
-static int controlBit       = 0x40;
 
 static String recordString("record");
 static String processString("process");
 static String fieldString("field");
 static String fieldListString("fieldList");
 static String valueString("value");
-static String timeStampString("timeStamp");
-static String alarmString("alarm");
-static String displayString("display");
-static String controlString("control");
 
-V3ChannelGet::V3ChannelGet(
+V3ChannelPut::V3ChannelPut(
     V3Channel &v3Channel,
-    ChannelGetRequester &channelGetRequester,
+    ChannelPutRequester &channelPutRequester,
     DbAddr &dbaddr)
-: v3Channel(v3Channel),channelGetRequester(channelGetRequester),
+: v3Channel(v3Channel),channelPutRequester(channelPutRequester),
   dbaddr(dbaddr),
-  getListNode(*this),
+  putListNode(*this),
   process(false),
   whatMask(0),
   pvStructure(0),bitSet(0)
 {
 }
 
-V3ChannelGet::~V3ChannelGet() {}
+V3ChannelPut::~V3ChannelPut() {}
 
 
-ChannelGetListNode * V3ChannelGet::init(PVStructure &pvRequest)
+ChannelPutListNode * V3ChannelPut::init(PVStructure &pvRequest)
 {
     PVField *pvField = pvRequest.getSubField(recordString);
     if(pvField!=0) {
@@ -110,31 +102,12 @@ ChannelGetListNode * V3ChannelGet::init(PVStructure &pvRequest)
     }
     if(list==0) {
         Status invalidPVRequest(Status::STATUSTYPE_ERROR, "pvRequest contains no " + fieldListString + " field");
-        channelGetRequester.channelGetConnect(invalidPVRequest,0,0,0);
+        channelPutRequester.channelPutConnect(invalidPVRequest,0,0,0);
         return 0;
     }
     StandardPVField *standardPVField = getStandardPVField();
     String properties;
     String fieldList = list->get();
-    if(fieldList.find(timeStampString)!=String::npos) {
-        properties+= timeStampString;
-        whatMask |= timeStampBit;
-    }
-    if(fieldList.find(alarmString)!=String::npos) {
-        if(!properties.empty()) properties += ",";
-        properties += alarmString;
-        whatMask |= alarmBit;
-    }
-    if(fieldList.find(displayString)!=String::npos) {
-        if(!properties.empty()) properties += ",";
-        properties += displayString;
-        whatMask |= displayBit;
-    }
-    if(fieldList.find(controlString)!=String::npos) {
-        if(!properties.empty()) properties += ",";
-        properties += controlString;
-        whatMask |= controlBit;
-    }
     if(fieldList.find(valueString)!=String::npos) {
         Type type = scalar;
         if(dbaddr.no_elements>1) type = scalarArray;
@@ -157,7 +130,7 @@ ChannelGetListNode * V3ChannelGet::init(PVStructure &pvRequest)
             scalarType = pvString; break;
         default:
           //MARTY MUST HANDLE ENUM,and MENU
-          channelGetRequester.message(String("no support for field type"),errorMessage);
+          channelPutRequester.message(String("no support for field type"),errorMessage);
         }
         if(type==scalar) {
            whatMask |= scalarValueBit;
@@ -170,27 +143,78 @@ ChannelGetListNode * V3ChannelGet::init(PVStructure &pvRequest)
         }
         int numFields = pvStructure->getNumberFields();
         bitSet = std::auto_ptr<BitSet>(new BitSet(numFields));
-        channelGetRequester.channelGetConnect(
+        channelPutRequester.channelPutConnect(
            Status::OK,this,pvStructure.get(),bitSet.get());
     }
-    return &getListNode;
+    return &putListNode;
 }
 
-String V3ChannelGet::getRequesterName() {
-    return channelGetRequester.getRequesterName();
+String V3ChannelPut::getRequesterName() {
+    return channelPutRequester.getRequesterName();
 }
 
-void V3ChannelGet::message(String message,MessageType messageType)
+void V3ChannelPut::message(String message,MessageType messageType)
 {
-    channelGetRequester.message(message,messageType);
+    channelPutRequester.message(message,messageType);
 }
 
-void V3ChannelGet::destroy() {
-    v3Channel.removeChannelGet(getListNode);
+void V3ChannelPut::destroy() {
+    v3Channel.removeChannelPut(putListNode);
     delete this;
 }
 
-void V3ChannelGet::get(bool lastRequest)
+void V3ChannelPut::put(bool lastRequest)
+{
+    PVField *pvField = pvStructure.get()->getSubField(valueString);
+    if((whatMask&scalarValueBit)!=0) {
+        switch(dbaddr.field_type) {
+        case DBF_CHAR:
+        case DBF_UCHAR: {
+            int8 * val = static_cast<int8 *>(dbaddr.pfield);
+            PVByte *pv = static_cast<PVByte *>(pvField);
+            *val = pv->get();
+            break;
+        }
+        case DBF_SHORT:
+        case DBF_USHORT: {
+            int16 * val = static_cast<int16 *>(dbaddr.pfield);
+            PVShort *pv = static_cast<PVShort *>(pvField);
+            *val = pv->get();
+            break;
+        }
+        case DBF_LONG:
+        case DBF_ULONG: {
+            int32 * val = static_cast<int32 *>(dbaddr.pfield);
+            PVInt *pv = static_cast<PVInt *>(pvField);
+            *val = pv->get();
+            break;
+        }
+        case DBF_FLOAT: {
+            float * val = static_cast<float *>(dbaddr.pfield);
+            PVFloat *pv = static_cast<PVFloat *>(pvField);
+            pv->put(*val);
+            break;
+        }
+        case DBF_DOUBLE: {
+            double * val = static_cast<double *>(dbaddr.pfield);
+            PVDouble *pv = static_cast<PVDouble *>(pvField);
+            *val = pv->get();
+            break;
+        }
+        case DBF_STRING: {
+            char * val = static_cast<char *>(dbaddr.pfield);
+            String sval(val);
+            PVString *pvString = static_cast<PVString *>(pvField);
+            memcpy(val,pvString->get().c_str(),sizeof(double));
+        }
+        }
+    } else if((whatMask&scalarValueBit)!=0) {
+    }
+    channelPutRequester.putDone(Status::OK);
+    
+}
+
+void V3ChannelPut::get()
 {
     bitSet->clear();
     PVField *pvField = pvStructure.get()->getSubField(valueString);
@@ -240,8 +264,7 @@ void V3ChannelGet::get(bool lastRequest)
     } else if((whatMask&scalarValueBit)!=0) {
     }
     
-    channelGetRequester.getDone(Status::OK);
-    
+    channelPutRequester.getDone(Status::OK);
 }
 
 }}
