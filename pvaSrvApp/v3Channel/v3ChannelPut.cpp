@@ -26,6 +26,7 @@
 #include <epicsThread.h>
 #include <epicsExit.h>
 #include <dbAccess.h>
+#include <dbNotify.h>
 
 #include <epicsExport.h>
 
@@ -74,7 +75,10 @@ V3ChannelPut::V3ChannelPut(
   putListNode(*this),
   process(false),
   whatMask(0),
-  pvStructure(0),bitSet(0)
+  pvStructure(0),bitSet(0),
+  pNotify(0),
+  notifyAddr(0),
+  event()
 {
 }
 
@@ -130,7 +134,9 @@ ChannelPutListNode * V3ChannelPut::init(PVStructure &pvRequest)
             scalarType = pvString; break;
         default:
           //MARTY MUST HANDLE ENUM,and MENU
-          channelPutRequester.message(String("no support for field type"),errorMessage);
+          channelPutRequester.message(
+              String("no support for field type"),errorMessage);
+          return 0;
         }
         if(type==scalar) {
            whatMask |= scalarValueBit;
@@ -143,6 +149,25 @@ ChannelPutListNode * V3ChannelPut::init(PVStructure &pvRequest)
         }
         int numFields = pvStructure->getNumberFields();
         bitSet = std::auto_ptr<BitSet>(new BitSet(numFields));
+        if(process) {
+           pNotify = std::auto_ptr<struct putNotify>(new (struct putNotify)());
+           notifyAddr = std::auto_ptr<DbAddr>(new DbAddr());
+           memcpy(notifyAddr.get(),&dbaddr,sizeof(DbAddr));
+           DbAddr *paddr = notifyAddr.get();
+           struct dbCommon *precord = paddr->precord;
+           char buffer[sizeof(precord->name) + 10];
+           strcpy(buffer,precord->name);
+           strcat(buffer,".PROC");
+           if(dbNameToAddr(buffer,paddr)!=0) {
+                throw std::logic_error(String("dbNameToAddr failed"));
+           }
+           struct putNotify *pn = pNotify.get();
+           pn->userCallback = this->notifyCallback;
+           pn->paddr = paddr;
+           pn->nRequest = 1;
+           pn->dbrType = DBR_CHAR;
+           pn->usrPvt = this;
+        }
         channelPutRequester.channelPutConnect(
            Status::OK,this,pvStructure.get(),bitSet.get());
     }
@@ -210,8 +235,20 @@ void V3ChannelPut::put(bool lastRequest)
         }
     } else if((whatMask&scalarValueBit)!=0) {
     }
+    if(process) {
+        epicsUInt8 value = 1;
+        pNotify.get()->pbuffer = &value;
+        dbPutNotify(pNotify.get());
+        event.wait();
+    }
     channelPutRequester.putDone(Status::OK);
     
+}
+
+void V3ChannelPut::notifyCallback(struct putNotify *pn)
+{
+    V3ChannelPut * cput = static_cast<V3ChannelPut *>(pn->usrPvt);
+    cput->event.signal();
 }
 
 void V3ChannelPut::get()

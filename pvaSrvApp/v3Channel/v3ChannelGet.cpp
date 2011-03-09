@@ -26,6 +26,7 @@
 #include <epicsThread.h>
 #include <epicsExit.h>
 #include <dbAccess.h>
+#include <dbCommon.h>
 
 #include <epicsExport.h>
 
@@ -193,6 +194,23 @@ void V3ChannelGet::destroy() {
 void V3ChannelGet::get(bool lastRequest)
 {
     bitSet->clear();
+    if((whatMask&timeStampBit)!=0) {
+        TimeStamp timeStamp;
+        PVTimeStamp pvTimeStamp;
+        PVField *pvField = pvStructure.get()->getSubField(timeStampString);
+        if(!pvTimeStamp.attach(pvField)) {
+            throw std::logic_error(String("V3ChannelGet::get logic error"));
+        }
+        struct dbCommon *precord = dbaddr.precord;
+        epicsUInt32 secPastEpoch = precord->time.secPastEpoch;
+        epicsUInt32 nsec = precord->time.nsec;
+        int64 seconds = secPastEpoch;
+        seconds += POSIX_TIME_AT_EPICS_EPOCH;
+        int32 nanoseconds = nsec;
+        timeStamp.put(seconds,nanoseconds);
+        pvTimeStamp.set(timeStamp);
+        bitSet->set(pvField->getFieldOffset());
+    }
     PVField *pvField = pvStructure.get()->getSubField(valueString);
     if((whatMask&scalarValueBit)!=0) {
         switch(dbaddr.field_type) {

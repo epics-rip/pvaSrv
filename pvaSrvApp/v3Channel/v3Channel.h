@@ -12,12 +12,15 @@
 #include <memory>
 
 #include <dbAccess.h>
+#include <dbNotify.h>
+
 #include <linkedList.h>
 #include <pvIntrospect.h>
 #include <pvData.h>
 #include <noDefaultMethods.h>
 #include <pvEnumerated.h>
 #include <thread.h>
+#include <event.h>
 #include <pvAccess.h>
 
 #include "pvDatabase.h"
@@ -203,6 +206,7 @@ public:
     virtual void put(bool lastRequest);
     virtual void get();
 private:
+    static void notifyCallback(struct putNotify *);
     V3Channel &v3Channel;
     epics::pvAccess::ChannelPutRequester &channelPutRequester;
     DbAddr &dbaddr;
@@ -211,6 +215,9 @@ private:
     int whatMask;
     std::auto_ptr<epics::pvData::PVStructure> pvStructure;
     std::auto_ptr<epics::pvData::BitSet> bitSet;
+    std::auto_ptr<struct putNotify> pNotify;
+    std::auto_ptr<DbAddr> notifyAddr;
+    epics::pvData::Event event;
 };
 
 class V3ChannelPutGet : public epics::pvAccess::ChannelPutGet {
