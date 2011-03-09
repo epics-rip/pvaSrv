@@ -28,6 +28,7 @@ static Status notFoundStatus(Status::STATUSTYPE_ERROR,String("pv not found"));
 
 static V3ChannelProvider *channelProvider = 0;
 static Mutex mutex;
+static bool isRegistered = false;
 
 static void myDestroy(void*)
 {
@@ -44,6 +45,10 @@ V3ChannelProvider &V3ChannelProvider::getChannelProvider()
         channelProvider = new V3ChannelProvider();
         epicsAtExit(&myDestroy,0);
     }
+    if(!isRegistered) {
+        isRegistered = true;
+        registerChannelProvider(channelProvider);
+    }
     return *channelProvider;
 
 }
@@ -51,7 +56,6 @@ V3ChannelProvider &V3ChannelProvider::getChannelProvider()
 V3ChannelProvider::V3ChannelProvider()
 : providerName("v3Local"),channelList()
 {
-    registerChannelProvider(this);
 }
 
 V3ChannelProvider::~V3ChannelProvider()
@@ -67,6 +71,8 @@ V3ChannelProvider::~V3ChannelProvider()
 
 void V3ChannelProvider::destroy()
 {
+    Lock xx(mutex);
+    isRegistered = false;
     unregisterChannelProvider(this);
     // do not destroy since is singleton
 }
