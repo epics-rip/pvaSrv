@@ -97,7 +97,7 @@ Channel *V3ChannelProvider::createChannel(
     ChannelRequester *channelRequester,
     short priority)
 {
-    return createChannel(channelName,channelRequester,priority,0);
+    return createChannel(channelName,channelRequester,priority,"");
 }
 
 Channel *V3ChannelProvider::createChannel(
