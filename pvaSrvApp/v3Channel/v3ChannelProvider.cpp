@@ -27,10 +27,10 @@ using namespace epics::pvAccess;
 static Status notFoundStatus(Status::STATUSTYPE_ERROR,String("pv not found"));
 
 static V3ChannelProvider *channelProvider = 0;
+static Mutex mutex;
 
 static void myDestroy(void*)
 {
-    static Mutex mutex;
     Lock xx(mutex);
     if(channelProvider==0) return;
     channelProvider->destroy();
@@ -39,7 +39,6 @@ static void myDestroy(void*)
 
 V3ChannelProvider &V3ChannelProvider::getChannelProvider()
 {
-    static Mutex mutex;
     Lock xx(mutex);
     if(channelProvider==0){
         channelProvider = new V3ChannelProvider();
@@ -64,12 +63,12 @@ V3ChannelProvider::~V3ChannelProvider()
         v3Channel.destroy();
         delete node;
     }
-    unregisterChannelProvider(this);
 }
 
 void V3ChannelProvider::destroy()
 {
-    delete channelProvider;
+    unregisterChannelProvider(this);
+    // do not destroy since is singleton
 }
 
 String V3ChannelProvider::getProviderName()
