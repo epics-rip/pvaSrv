@@ -151,7 +151,7 @@ public:
         epics::pvAccess::ChannelProcessRequester &channelProcessRequester,
         DbAddr &dbaddr);
     ~V3ChannelProcess();
-    ChannelProcessListNode * init(epics::pvData::PVStructure & pvRequest);
+    ChannelProcessListNode * init();
     virtual epics::pvData::String getRequesterName();
     virtual void message(
         epics::pvData::String message,
@@ -159,10 +159,14 @@ public:
     virtual void destroy();
     virtual void process(bool lastRequest);
 private:
+    static void notifyCallback(struct putNotify *);
     V3Channel &v3Channel;
     epics::pvAccess::ChannelProcessRequester &channelProcessRequester;
     DbAddr &dbaddr;
     ChannelProcessListNode processListNode;
+    std::auto_ptr<struct putNotify> pNotify;
+    std::auto_ptr<DbAddr> notifyAddr;
+    epics::pvData::Event event;
 };
 
 class V3ChannelGet : public epics::pvAccess::ChannelGet {
@@ -180,6 +184,7 @@ public:
     virtual void destroy();
     virtual void get(bool lastRequest);
 private:
+    static void notifyCallback(struct putNotify *);
     V3Channel &v3Channel;
     epics::pvAccess::ChannelGetRequester &channelGetRequester;
     DbAddr &dbaddr;
@@ -188,6 +193,9 @@ private:
     int whatMask;
     std::auto_ptr<epics::pvData::PVStructure> pvStructure;
     std::auto_ptr<epics::pvData::BitSet> bitSet;
+    std::auto_ptr<struct putNotify> pNotify;
+    std::auto_ptr<DbAddr> notifyAddr;
+    epics::pvData::Event event;
 };
 
 class V3ChannelPut : public epics::pvAccess::ChannelPut {
@@ -237,6 +245,7 @@ public:
     virtual void getPut();
     virtual void getGet();
 private:
+    static void notifyCallback(struct putNotify *);
     V3Channel &v3Channel;
     epics::pvAccess::ChannelPutGetRequester &channelPutGetRequester;
     DbAddr &dbaddr;
@@ -244,6 +253,9 @@ private:
     bool process;
     std::auto_ptr<epics::pvData::PVStructure> pvStructure;
     std::auto_ptr<epics::pvData::BitSet> bitSet;
+    std::auto_ptr<struct putNotify> pNotify;
+    std::auto_ptr<DbAddr> notifyAddr;
+    epics::pvData::Event event;
 };
 
 class V3ChannelMonitor : public epics::pvData::Monitor {

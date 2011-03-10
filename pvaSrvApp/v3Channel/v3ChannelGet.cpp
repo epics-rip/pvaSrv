@@ -9,8 +9,6 @@
  * It provides access to  value, alarm, display, and control.
  */
 
-#ifndef RECORDV3_H
-#define RECORDV3_H
 #include <cstddef>
 #include <cstdlib>
 #include <cstddef>
@@ -27,6 +25,7 @@
 #include <epicsExit.h>
 #include <dbAccess.h>
 #include <dbCommon.h>
+#include <recSup.h>
 
 #include <epicsExport.h>
 
@@ -56,6 +55,10 @@ namespace epics { namespace pvIOC {
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
+extern "C" {
+typedef long (*get_array_info) (void *,long *,long *);
+}
+
 static int scalarValueBit   = 0x01;
 static int arrayValueBit    = 0x02;
 static int enumValueBit     = 0x04;
@@ -83,7 +86,10 @@ V3ChannelGet::V3ChannelGet(
   getListNode(*this),
   process(false),
   whatMask(0),
-  pvStructure(0),bitSet(0)
+  pvStructure(0),bitSet(0),
+  pNotify(0),
+  notifyAddr(0),
+  event()
 {
 }
 
@@ -110,7 +116,8 @@ ChannelGetListNode * V3ChannelGet::init(PVStructure &pvRequest)
         list = pvRequest.getStringField(fieldListString);
     }
     if(list==0) {
-        Status invalidPVRequest(Status::STATUSTYPE_ERROR, "pvRequest contains no " + fieldListString + " field");
+        Status invalidPVRequest(Status::STATUSTYPE_ERROR,
+            "pvRequest contains no " + fieldListString + " field");
         channelGetRequester.channelGetConnect(invalidPVRequest,0,0,0);
         return 0;
     }
@@ -171,6 +178,25 @@ ChannelGetListNode * V3ChannelGet::init(PVStructure &pvRequest)
         }
         int numFields = pvStructure->getNumberFields();
         bitSet = std::auto_ptr<BitSet>(new BitSet(numFields));
+        if(process) {
+           pNotify = std::auto_ptr<struct putNotify>(new (struct putNotify)());
+           notifyAddr = std::auto_ptr<DbAddr>(new DbAddr());
+           memcpy(notifyAddr.get(),&dbaddr,sizeof(DbAddr));
+           DbAddr *paddr = notifyAddr.get();
+           struct dbCommon *precord = paddr->precord;
+           char buffer[sizeof(precord->name) + 10];
+           strcpy(buffer,precord->name);
+           strcat(buffer,".PROC");
+           if(dbNameToAddr(buffer,paddr)!=0) {
+                throw std::logic_error(String("dbNameToAddr failed"));
+           }
+           struct putNotify *pn = pNotify.get();
+           pn->userCallback = this->notifyCallback;
+           pn->paddr = paddr;
+           pn->nRequest = 1;
+           pn->dbrType = DBR_CHAR;
+           pn->usrPvt = this;
+        }
         channelGetRequester.channelGetConnect(
            Status::OK,this,pvStructure.get(),bitSet.get());
     }
@@ -193,7 +219,14 @@ void V3ChannelGet::destroy() {
 
 void V3ChannelGet::get(bool lastRequest)
 {
+    if(process) {
+        epicsUInt8 value = 1;
+        pNotify.get()->pbuffer = &value;
+        dbPutNotify(pNotify.get());
+        event.wait();
+    }
     bitSet->clear();
+    dbScanLock(dbaddr.precord);
     if((whatMask&timeStampBit)!=0) {
         TimeStamp timeStamp;
         PVTimeStamp pvTimeStamp;
@@ -210,6 +243,28 @@ void V3ChannelGet::get(bool lastRequest)
         timeStamp.put(seconds,nanoseconds);
         pvTimeStamp.set(timeStamp);
         bitSet->set(pvField->getFieldOffset());
+    }
+    if((whatMask&alarmBit)!=0) {
+        Alarm alarm;
+        PVAlarm pvAlarm;
+        PVField *pvField = pvStructure.get()->getSubField(alarmString);
+        if(!pvAlarm.attach(pvField)) {
+            throw std::logic_error(String("V3ChannelGet::get logic error"));
+        }
+        struct dbCommon *precord = dbaddr.precord;
+        epicsEnum16 stat = precord->stat;
+        epicsEnum16 sevr = precord->sevr;
+        pvAlarm.get(alarm);
+        AlarmSeverity prev = alarm.getSeverity();
+        epicsEnum16 prevSevr = static_cast<epicsEnum16>(prev);
+        if(prevSevr!=sevr) {
+            String message("not implemented");
+            AlarmSeverity severity = static_cast<AlarmSeverity>(sevr);
+            alarm.setSeverity(severity);
+            alarm.setMessage(message);
+            pvAlarm.set(alarm);
+            bitSet->set(pvField->getFieldOffset());
+        }
     }
     PVField *pvField = pvStructure.get()->getSubField(valueString);
     if((whatMask&scalarValueBit)!=0) {
@@ -255,13 +310,101 @@ void V3ChannelGet::get(bool lastRequest)
         }
         }
         bitSet->set(pvField->getFieldOffset());
-    } else if((whatMask&scalarValueBit)!=0) {
+    } else if((whatMask&arrayValueBit)!=0) {
+        long length = dbaddr.no_elements;
+        long offset = 0;
+        struct rset *prset = dbGetRset(&dbaddr);
+        if(prset && prset->get_array_info) {
+            get_array_info get_info;
+            get_info = (get_array_info)(prset->get_array_info);
+            get_info(&dbaddr, &length, &offset);
+            if(offset!=0) {
+                dbScanUnlock(dbaddr.precord);
+                channelGetRequester.getDone(
+                    Status(Status::STATUSTYPE_ERROR,
+                       String("offset not supported"),
+                       String("")));
+                return;
+            }
+        }
+        int field_size = dbaddr.field_size;
+        PVArray *pvArray = static_cast<PVArray *>(pvField);
+        int capacity = pvArray->getCapacity();
+        if(capacity!=length) {
+            pvArray->setCapacity(length);
+            pvArray->setLength(length);
+        }
+        switch(dbaddr.field_type) {
+        case DBF_CHAR:
+        case DBF_UCHAR: {
+            PVByteArray *pv = static_cast<PVByteArray *>(pvField);
+            ByteArrayData data;
+            pv->get(0,length,&data);
+            memcpy(data.data,dbaddr.pfield,length*field_size);
+            pv->postPut();
+            break;
+        }
+        case DBF_SHORT:
+        case DBF_USHORT: {
+            PVShortArray *pv = static_cast<PVShortArray *>(pvField);
+            ShortArrayData data;
+            pv->get(0,length,&data);
+            memcpy(data.data,dbaddr.pfield,length*field_size);
+            pv->postPut();
+            break;
+        }
+        case DBF_LONG:
+        case DBF_ULONG: {
+            PVIntArray *pv = static_cast<PVIntArray *>(pvField);
+            IntArrayData data;
+            pv->get(0,length,&data);
+            memcpy(data.data,dbaddr.pfield,length*field_size);
+            pv->postPut();
+            break;
+        }
+        case DBF_FLOAT: {
+            PVFloatArray *pv = static_cast<PVFloatArray *>(pvField);
+            FloatArrayData data;
+            pv->get(0,length,&data);
+            memcpy(data.data,dbaddr.pfield,length*field_size);
+            pv->postPut();
+            break;
+        }
+        case DBF_DOUBLE: {
+            PVDoubleArray *pv = static_cast<PVDoubleArray *>(pvField);
+            DoubleArrayData data;
+            pv->get(0,length,&data);
+            memcpy(data.data,dbaddr.pfield,length*field_size);
+            pv->postPut();
+            break;
+        }
+        case DBF_STRING: {
+            PVStringArray *pv = static_cast<PVStringArray *>(pvField);
+            StringArrayData data;
+            pv->get(0,length,&data);
+            int index = 0;
+            char *pchar = static_cast<char *>(dbaddr.pfield);
+            while(index<length) {
+                data.data[index] = String(pchar);
+                index++;
+                pchar += MAX_STRING_SIZE;
+            }
+            pv->postPut();
+            break;
+        }
+        }
+        bitSet->set(pvField->getFieldOffset());
     }
-    
+    dbScanUnlock(dbaddr.precord);
     channelGetRequester.getDone(Status::OK);
     
 }
 
+void V3ChannelGet::notifyCallback(struct putNotify *pn)
+{
+    V3ChannelGet * cget = static_cast<V3ChannelGet *>(pn->usrPvt);
+    cget->event.signal();
+}
+
 }}
 
-#endif  /* RECORDV3_H */

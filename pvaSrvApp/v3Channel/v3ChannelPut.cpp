@@ -9,8 +9,6 @@
  * It provides access to  value, alarm, display, and control.
  */
 
-#ifndef RECORDV3_H
-#define RECORDV3_H
 #include <cstddef>
 #include <cstdlib>
 #include <cstddef>
@@ -45,6 +43,7 @@
 #include "pvDisplay.h"
 #include "pvEnumerated.h"
 #include "pvTimeStamp.h"
+#include <recSup.h>
 
 #include "pvDatabase.h"
 #include "v3Channel.h"
@@ -55,6 +54,11 @@ namespace epics { namespace pvIOC {
 
 using namespace epics::pvData;
 using namespace epics::pvAccess;
+
+extern "C" {
+typedef long (*get_array_info) (void *,long *,long *);
+typedef long (*put_array_info) (void *,long);
+}
 
 static int scalarValueBit   = 0x01;
 static int arrayValueBit    = 0x02;
@@ -191,6 +195,7 @@ void V3ChannelPut::destroy() {
 void V3ChannelPut::put(bool lastRequest)
 {
     PVField *pvField = pvStructure.get()->getSubField(valueString);
+    dbScanLock(dbaddr.precord);
     if((whatMask&scalarValueBit)!=0) {
         switch(dbaddr.field_type) {
         case DBF_CHAR:
@@ -233,8 +238,73 @@ void V3ChannelPut::put(bool lastRequest)
             memcpy(val,pvString->get().c_str(),sizeof(double));
         }
         }
-    } else if((whatMask&scalarValueBit)!=0) {
+    } else if((whatMask&arrayValueBit)!=0) {
+        long length = dbaddr.no_elements;
+        PVArray *pvArray = static_cast<PVArray *>(pvField);
+        int len = pvArray->getLength();
+        if(len<length) length = len;
+        struct rset *prset = dbGetRset(&dbaddr);
+        if(prset && prset->put_array_info) {
+            put_array_info put_info;
+            put_info = (put_array_info)(prset->put_array_info);
+            put_info(&dbaddr, length);
+         }
+        int field_size = dbaddr.field_size;
+        switch(dbaddr.field_type) {
+        case DBF_CHAR:
+        case DBF_UCHAR: {
+            PVByteArray *pv = static_cast<PVByteArray *>(pvField);
+            ByteArrayData data;
+            pv->get(0,length,&data);
+            memcpy(dbaddr.pfield,data.data,length*field_size);
+            break;
+        }
+        case DBF_SHORT:
+        case DBF_USHORT: {
+            PVShortArray *pv = static_cast<PVShortArray *>(pvField);
+            ShortArrayData data;
+            pv->get(0,length,&data);
+            memcpy(dbaddr.pfield,data.data,length*field_size);
+            break;
+        }
+        case DBF_LONG:
+        case DBF_ULONG: {
+            PVIntArray *pv = static_cast<PVIntArray *>(pvField);
+            IntArrayData data;
+            pv->get(0,length,&data);
+            memcpy(dbaddr.pfield,data.data,length*field_size);
+            break;
+        }
+        case DBF_FLOAT: {
+            PVFloatArray *pv = static_cast<PVFloatArray *>(pvField);
+            FloatArrayData data;
+            pv->get(0,length,&data);
+            memcpy(dbaddr.pfield,data.data,length*field_size);
+            break;
+        }
+        case DBF_DOUBLE: {
+            PVDoubleArray *pv = static_cast<PVDoubleArray *>(pvField);
+            DoubleArrayData data;
+            pv->get(0,length,&data);
+            memcpy(dbaddr.pfield,data.data,length*field_size);
+            break;
+        }
+        case DBF_STRING: {
+            PVStringArray *pv = static_cast<PVStringArray *>(pvField);
+            StringArrayData data;
+            pv->get(0,length,&data);
+            int index = 0;
+            char *pchar = static_cast<char *>(dbaddr.pfield);
+            while(index<length) {
+                strcpy(pchar,data.data[index].c_str());
+                index++;
+                pchar += MAX_STRING_SIZE;
+            }
+            break;
+         }
+         }
     }
+    dbScanUnlock(dbaddr.precord);
     if(process) {
         epicsUInt8 value = 1;
         pNotify.get()->pbuffer = &value;
@@ -254,6 +324,7 @@ void V3ChannelPut::notifyCallback(struct putNotify *pn)
 void V3ChannelPut::get()
 {
     bitSet->clear();
+    dbScanLock(dbaddr.precord);
     PVField *pvField = pvStructure.get()->getSubField(valueString);
     if((whatMask&scalarValueBit)!=0) {
         switch(dbaddr.field_type) {
@@ -299,11 +370,93 @@ void V3ChannelPut::get()
         }
         bitSet->set(pvField->getFieldOffset());
     } else if((whatMask&scalarValueBit)!=0) {
+        long length = dbaddr.no_elements;
+        long offset = 0;
+        struct rset *prset = dbGetRset(&dbaddr);
+        if(prset && prset->get_array_info) {
+            get_array_info get_info;
+            get_info = (get_array_info)(prset->get_array_info);
+            get_info(&dbaddr, &length, &offset);
+            if(offset!=0) {
+                dbScanUnlock(dbaddr.precord);
+                channelPutRequester.getDone(
+                    Status(Status::STATUSTYPE_ERROR,
+                       String("offset not supported"),
+                       String("")));
+                return;
+            }
+        }
+        int field_size = dbaddr.field_size;
+        PVArray *pvArray = static_cast<PVArray *>(pvField);
+        int capacity = pvArray->getCapacity();
+        if(capacity!=length) {
+            pvArray->setCapacity(length);
+            pvArray->setLength(length);
+        }
+        switch(dbaddr.field_type) {
+        case DBF_CHAR:
+        case DBF_UCHAR: {
+            PVByteArray *pv = static_cast<PVByteArray *>(pvField);
+            ByteArrayData data;
+            pv->get(0,length,&data);
+            memcpy(data.data,dbaddr.pfield,length*field_size);
+            pv->postPut();
+            break;
+        }
+        case DBF_SHORT:
+        case DBF_USHORT: {
+            PVShortArray *pv = static_cast<PVShortArray *>(pvField);
+            ShortArrayData data;
+            pv->get(0,length,&data);
+            memcpy(data.data,dbaddr.pfield,length*field_size);
+            pv->postPut();
+            break;
+        }
+        case DBF_LONG:
+        case DBF_ULONG: {
+            PVIntArray *pv = static_cast<PVIntArray *>(pvField);
+            IntArrayData data;
+            pv->get(0,length,&data);
+            memcpy(data.data,dbaddr.pfield,length*field_size);
+            pv->postPut();
+            break;
+        }
+        case DBF_FLOAT: {
+            PVFloatArray *pv = static_cast<PVFloatArray *>(pvField);
+            FloatArrayData data;
+            pv->get(0,length,&data);
+            memcpy(data.data,dbaddr.pfield,length*field_size);
+            pv->postPut();
+            break;
+        }
+        case DBF_DOUBLE: {
+            PVDoubleArray *pv = static_cast<PVDoubleArray *>(pvField);
+            DoubleArrayData data;
+            pv->get(0,length,&data);
+            memcpy(data.data,dbaddr.pfield,length*field_size);
+            pv->postPut();
+            break;
+        }
+        case DBF_STRING: {
+            PVStringArray *pv = static_cast<PVStringArray *>(pvField);
+            StringArrayData data;
+            pv->get(0,length,&data);
+            int index = 0;
+            char *pchar = static_cast<char *>(dbaddr.pfield);
+            while(index<length) {
+                data.data[index] = String(pchar);
+                index++;
+                pchar += MAX_STRING_SIZE;
+            }
+            pv->postPut();
+            break;
+        }
+        }
+        bitSet->set(pvField->getFieldOffset());
     }
-    
+    dbScanUnlock(dbaddr.precord);
     channelPutRequester.getDone(Status::OK);
 }
 
 }}
 
-#endif  /* RECORDV3_H */

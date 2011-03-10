@@ -133,7 +133,11 @@ ChannelProcess *V3Channel::createChannelProcess(
         ChannelProcessRequester *channelProcessRequester,
         PVStructure *pvRequest)
 {
-    throw std::logic_error(String("Not Implemented"));
+    V3ChannelProcess *v3ChannelProcess = new V3ChannelProcess(
+        *this,*channelProcessRequester,*(addr.get()));
+    ChannelProcessListNode * node = v3ChannelProcess->init();
+    if(node!=0) channelProcessList.addTail(*node);
+    return v3ChannelProcess;
 }
 
 ChannelGet *V3Channel::createChannelGet(
