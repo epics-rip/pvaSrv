@@ -25,6 +25,9 @@
 #include <epicsExit.h>
 #include <dbAccess.h>
 #include <dbNotify.h>
+#include <dbCommon.h>
+#include <recSup.h>
+#include <dbBase.h>
 
 #include <epicsExport.h>
 
@@ -58,6 +61,7 @@ using namespace epics::pvAccess;
 extern "C" {
 typedef long (*get_array_info) (void *,long *,long *);
 typedef long (*put_array_info) (void *,long);
+typedef long (*get_enum_strs) (DBADDR *, struct dbr_enumStrs  *);
 }
 
 static int scalarValueBit   = 0x01;
@@ -69,6 +73,7 @@ static String processString("process");
 static String fieldString("field");
 static String fieldListString("fieldList");
 static String valueString("value");
+static String indexString("index");
 
 V3ChannelPut::V3ChannelPut(
     V3Channel &v3Channel,
@@ -78,6 +83,7 @@ V3ChannelPut::V3ChannelPut(
   dbaddr(dbaddr),
   putListNode(*this),
   process(false),
+  firstTime(true),
   whatMask(0),
   pvStructure(0),bitSet(0),
   pNotify(0),
@@ -94,10 +100,12 @@ ChannelPutListNode * V3ChannelPut::init(PVStructure &pvRequest)
     PVField *pvField = pvRequest.getSubField(recordString);
     if(pvField!=0) {
         PVStructure *pvStructure = static_cast<PVStructure *>(pvField);
-        PVString *pvString = pvStructure->getStringField(processString);
-        if(pvString!=0) {
-            String value = pvString->get();
-            if(value.compare("true")==0) process = true;
+        if(pvStructure->getSubField(processString)!=0) {
+            PVString *pvString = pvStructure->getStringField(processString);
+            if(pvString!=0) {
+                String value = pvString->get();
+                if(value.compare("true")==0) process = true;
+            }
         }
     }
     pvField = pvRequest.getSubField(fieldString);
@@ -137,19 +145,70 @@ ChannelPutListNode * V3ChannelPut::init(PVStructure &pvRequest)
         case DBF_STRING:
             scalarType = pvString; break;
         default:
-          //MARTY MUST HANDLE ENUM,and MENU
-          channelPutRequester.message(
-              String("no support for field type"),errorMessage);
-          return 0;
+            break;
         }
-        if(type==scalar) {
+        if(type==scalar&&scalarType!=pvBoolean) {
            whatMask |= scalarValueBit;
            pvStructure = std::auto_ptr<PVStructure>(
                standardPVField->scalarValue(0,scalarType,properties));
-        } else {
+        } else if(type==scalarArray) {
            whatMask |= arrayValueBit;
            pvStructure = std::auto_ptr<PVStructure>(
                standardPVField->scalarArrayValue(0,scalarType,properties));
+        } else if(dbaddr.field_type==DBF_MENU) {
+            whatMask |= enumValueBit;
+            dbMenu *pdbMenu = (dbMenu *)(dbaddr.pfldDes->ftPvt);
+            unsigned long no_str = pdbMenu->nChoice;
+            char **papChoiceValue = pdbMenu->papChoiceValue;
+            int32 length = no_str;
+            String choices[length];
+            for(int i=0; i<length; i++) {
+                choices[i] = String(papChoiceValue[i]);
+            }
+            pvStructure = std::auto_ptr<PVStructure>(
+            standardPVField->enumeratedValue(0,choices,length,properties));
+        } else if(dbaddr.field_type==DBF_ENUM) {
+            whatMask |= enumValueBit;
+            struct dbr_enumStrs enumStrs;
+            struct rset *prset = dbGetRset(&dbaddr);
+            if(prset && prset->get_enum_strs) {
+                get_enum_strs get_strs;
+                get_strs = (get_enum_strs)(prset->get_enum_strs);
+                get_strs(&dbaddr,&enumStrs);
+                int32 length = enumStrs.no_str;
+                String choices[length];
+                for(int i=0; i<length; i++) {
+                     choices[i] = String(enumStrs.strs[i]);
+                }
+                pvStructure = std::auto_ptr<PVStructure>(
+                standardPVField->enumeratedValue(0,choices,length,properties));
+                    standardPVField->enumeratedValue(0,choices,length);
+            } else {
+                channelPutRequester.message(
+                   String("bad enum field in V3 record"),errorMessage);
+                return false;
+            }
+        } else if(dbaddr.field_type==DBF_DEVICE) {
+            whatMask |= enumValueBit;
+            dbDeviceMenu *pdbDeviceMenu = (dbDeviceMenu *)
+                 (dbaddr.pfldDes->ftPvt);
+            if(!pdbDeviceMenu) {
+                channelPutRequester.message(
+                   String("bad device in V3 record"),errorMessage);
+                return false;
+            }
+            char **papChoiceValue = pdbDeviceMenu->papChoice;
+            int32 length = static_cast<int32>(pdbDeviceMenu->nChoice);
+            String choices[length];
+            for(int i=0; i<length; i++) {
+                choices[i] = String(papChoiceValue[i]);
+            }
+            pvStructure = std::auto_ptr<PVStructure>(
+            standardPVField->enumeratedValue(0,choices,length,properties));
+        } else {
+            channelPutRequester.message(
+               String("unsupported field in V3 record"),errorMessage);
+            return false;
         }
         int numFields = pvStructure->getNumberFields();
         bitSet = std::auto_ptr<BitSet>(new BitSet(numFields));
@@ -303,6 +362,19 @@ void V3ChannelPut::put(bool lastRequest)
             break;
          }
          }
+    } else if((whatMask&enumValueBit)!=0) {
+        PVStructure *pvEnum = static_cast<PVStructure *>(pvField);
+        PVInt *pvIndex = pvEnum->getIntField(indexString);
+        if(dbaddr.field_type==DBF_MENU) {
+            channelPutRequester.message(
+                String("Not allowed to change a menu field"),errorMessage);
+        } else if(dbaddr.field_type==DBF_ENUM) {
+            epicsEnum16 *value = static_cast<epicsEnum16*>(dbaddr.pfield);
+            *value = pvIndex->get();
+        } else if(dbaddr.field_type==DBF_DEVICE) {
+            channelPutRequester.message(
+                String("Changing the DTYP field not supported"),errorMessage);
+        }
     }
     dbScanUnlock(dbaddr.precord);
     if(process) {
@@ -453,6 +525,25 @@ void V3ChannelPut::get()
         }
         }
         bitSet->set(pvField->getFieldOffset());
+    } else if((whatMask&enumValueBit)!=0) {
+        PVStructure *pvEnum = static_cast<PVStructure *>(pvField);
+        PVInt *pvIndex = pvEnum->getIntField(indexString);
+        if(dbaddr.field_type==DBF_MENU) {
+            epicsEnum16 *value = static_cast<epicsEnum16*>(dbaddr.pfield);
+            pvIndex->put(*value);
+        } else if(dbaddr.field_type==DBF_ENUM) {
+            epicsEnum16 *value = static_cast<epicsEnum16*>(dbaddr.pfield);
+            pvIndex->put(*value);
+        } else if(dbaddr.field_type==DBF_DEVICE) {
+            epicsEnum16 value = static_cast<epicsEnum16>(dbaddr.precord->dtyp);
+            pvIndex->put(value);
+        }
+        if(firstTime) {
+            firstTime = false;
+            bitSet->set(pvField->getFieldOffset());
+        } else {
+            bitSet->set(pvIndex->getFieldOffset());
+        }
     }
     dbScanUnlock(dbaddr.precord);
     channelPutRequester.getDone(Status::OK);

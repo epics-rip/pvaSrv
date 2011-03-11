@@ -190,6 +190,7 @@ private:
     DbAddr &dbaddr;
     ChannelGetListNode getListNode;
     bool process;
+    bool firstTime;
     int whatMask;
     std::auto_ptr<epics::pvData::PVStructure> pvStructure;
     std::auto_ptr<epics::pvData::BitSet> bitSet;
@@ -220,6 +221,7 @@ private:
     DbAddr &dbaddr;
     ChannelPutListNode putListNode;
     bool process;
+    bool firstTime;
     int whatMask;
     std::auto_ptr<epics::pvData::PVStructure> pvStructure;
     std::auto_ptr<epics::pvData::BitSet> bitSet;
