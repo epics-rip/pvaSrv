@@ -41,9 +41,6 @@
 #include "control.h"
 #include "display.h"
 #include "timeStamp.h"
-#include "pvAlarm.h"
-#include "pvControl.h"
-#include "pvDisplay.h"
 #include "pvEnumerated.h"
 #include "pvTimeStamp.h"
 #include <recSup.h>
@@ -69,10 +66,8 @@ static int arrayValueBit    = 0x02;
 static int enumValueBit     = 0x04;
 
 static String recordString("record");
-static String processString("process");
-static String fieldString("field");
-static String fieldListString("fieldList");
 static String valueString("value");
+static String processString("process");
 static String indexString("index");
 
 V3ChannelPut::V3ChannelPut(
@@ -108,132 +103,116 @@ ChannelPutListNode * V3ChannelPut::init(PVStructure &pvRequest)
             }
         }
     }
-    pvField = pvRequest.getSubField(fieldString);
-    PVString *list = 0;
-    if(pvField!=0) {
-        PVStructure * pvStructure = static_cast<PVStructure * >(pvField);
-        list = pvStructure->getStringField(fieldListString);
-    } else {
-        list = pvRequest.getStringField(fieldListString);
-    }
-    if(list==0) {
-        Status invalidPVRequest(Status::STATUSTYPE_ERROR, "pvRequest contains no " + fieldListString + " field");
-        channelPutRequester.channelPutConnect(invalidPVRequest,0,0,0);
-        return 0;
-    }
     StandardPVField *standardPVField = getStandardPVField();
     String properties;
-    String fieldList = list->get();
-    if(fieldList.find(valueString)!=String::npos) {
-        Type type = scalar;
-        if(dbaddr.no_elements>1) type = scalarArray;
-        ScalarType scalarType(pvBoolean);
-        switch(dbaddr.field_type) {
-        case DBF_CHAR:
-        case DBF_UCHAR:
-            scalarType = pvByte; break;
-        case DBF_SHORT:
-        case DBF_USHORT:
-            scalarType = pvShort; break;
-        case DBF_LONG:
-        case DBF_ULONG:
-            scalarType = pvInt; break;
-        case DBF_FLOAT:
-            scalarType = pvFloat; break;
-        case DBF_DOUBLE:
-            scalarType = pvDouble; break;
-        case DBF_STRING:
-            scalarType = pvString; break;
-        default:
-            break;
+    Type type = scalar;
+    if(dbaddr.no_elements>1) type = scalarArray;
+    ScalarType scalarType(pvBoolean);
+    switch(dbaddr.field_type) {
+    case DBF_CHAR:
+    case DBF_UCHAR:
+        scalarType = pvByte; break;
+    case DBF_SHORT:
+    case DBF_USHORT:
+        scalarType = pvShort; break;
+    case DBF_LONG:
+    case DBF_ULONG:
+        scalarType = pvInt; break;
+    case DBF_FLOAT:
+        scalarType = pvFloat; break;
+    case DBF_DOUBLE:
+        scalarType = pvDouble; break;
+    case DBF_STRING:
+        scalarType = pvString; break;
+    default:
+        break;
+    }
+    if(type==scalar&&scalarType!=pvBoolean) {
+       whatMask |= scalarValueBit;
+       pvStructure = std::auto_ptr<PVStructure>(
+           standardPVField->scalarValue(0,scalarType,properties));
+    } else if(type==scalarArray) {
+       whatMask |= arrayValueBit;
+       pvStructure = std::auto_ptr<PVStructure>(
+           standardPVField->scalarArrayValue(0,scalarType,properties));
+    } else if(dbaddr.field_type==DBF_MENU) {
+        whatMask |= enumValueBit;
+        dbMenu *pdbMenu = (dbMenu *)(dbaddr.pfldDes->ftPvt);
+        unsigned long no_str = pdbMenu->nChoice;
+        char **papChoiceValue = pdbMenu->papChoiceValue;
+        int32 length = no_str;
+        String choices[length];
+        for(int i=0; i<length; i++) {
+            choices[i] = String(papChoiceValue[i]);
         }
-        if(type==scalar&&scalarType!=pvBoolean) {
-           whatMask |= scalarValueBit;
-           pvStructure = std::auto_ptr<PVStructure>(
-               standardPVField->scalarValue(0,scalarType,properties));
-        } else if(type==scalarArray) {
-           whatMask |= arrayValueBit;
-           pvStructure = std::auto_ptr<PVStructure>(
-               standardPVField->scalarArrayValue(0,scalarType,properties));
-        } else if(dbaddr.field_type==DBF_MENU) {
-            whatMask |= enumValueBit;
-            dbMenu *pdbMenu = (dbMenu *)(dbaddr.pfldDes->ftPvt);
-            unsigned long no_str = pdbMenu->nChoice;
-            char **papChoiceValue = pdbMenu->papChoiceValue;
-            int32 length = no_str;
+        pvStructure = std::auto_ptr<PVStructure>(
+        standardPVField->enumeratedValue(0,choices,length,properties));
+    } else if(dbaddr.field_type==DBF_ENUM) {
+        whatMask |= enumValueBit;
+        struct dbr_enumStrs enumStrs;
+        struct rset *prset = dbGetRset(&dbaddr);
+        if(prset && prset->get_enum_strs) {
+            get_enum_strs get_strs;
+            get_strs = (get_enum_strs)(prset->get_enum_strs);
+            get_strs(&dbaddr,&enumStrs);
+            int32 length = enumStrs.no_str;
             String choices[length];
             for(int i=0; i<length; i++) {
-                choices[i] = String(papChoiceValue[i]);
+                 choices[i] = String(enumStrs.strs[i]);
             }
             pvStructure = std::auto_ptr<PVStructure>(
             standardPVField->enumeratedValue(0,choices,length,properties));
-        } else if(dbaddr.field_type==DBF_ENUM) {
-            whatMask |= enumValueBit;
-            struct dbr_enumStrs enumStrs;
-            struct rset *prset = dbGetRset(&dbaddr);
-            if(prset && prset->get_enum_strs) {
-                get_enum_strs get_strs;
-                get_strs = (get_enum_strs)(prset->get_enum_strs);
-                get_strs(&dbaddr,&enumStrs);
-                int32 length = enumStrs.no_str;
-                String choices[length];
-                for(int i=0; i<length; i++) {
-                     choices[i] = String(enumStrs.strs[i]);
-                }
-                pvStructure = std::auto_ptr<PVStructure>(
-                standardPVField->enumeratedValue(0,choices,length,properties));
-                    standardPVField->enumeratedValue(0,choices,length);
-            } else {
-                channelPutRequester.message(
-                   String("bad enum field in V3 record"),errorMessage);
-                return false;
-            }
-        } else if(dbaddr.field_type==DBF_DEVICE) {
-            whatMask |= enumValueBit;
-            dbDeviceMenu *pdbDeviceMenu = (dbDeviceMenu *)
-                 (dbaddr.pfldDes->ftPvt);
-            if(!pdbDeviceMenu) {
-                channelPutRequester.message(
-                   String("bad device in V3 record"),errorMessage);
-                return false;
-            }
-            char **papChoiceValue = pdbDeviceMenu->papChoice;
-            int32 length = static_cast<int32>(pdbDeviceMenu->nChoice);
-            String choices[length];
-            for(int i=0; i<length; i++) {
-                choices[i] = String(papChoiceValue[i]);
-            }
-            pvStructure = std::auto_ptr<PVStructure>(
-            standardPVField->enumeratedValue(0,choices,length,properties));
+                standardPVField->enumeratedValue(0,choices,length);
         } else {
             channelPutRequester.message(
-               String("unsupported field in V3 record"),errorMessage);
+               String("bad enum field in V3 record"),errorMessage);
             return false;
         }
-        int numFields = pvStructure->getNumberFields();
-        bitSet = std::auto_ptr<BitSet>(new BitSet(numFields));
-        if(process) {
-           pNotify = std::auto_ptr<struct putNotify>(new (struct putNotify)());
-           notifyAddr = std::auto_ptr<DbAddr>(new DbAddr());
-           memcpy(notifyAddr.get(),&dbaddr,sizeof(DbAddr));
-           DbAddr *paddr = notifyAddr.get();
-           struct dbCommon *precord = paddr->precord;
-           char buffer[sizeof(precord->name) + 10];
-           strcpy(buffer,precord->name);
-           strcat(buffer,".PROC");
-           if(dbNameToAddr(buffer,paddr)!=0) {
-                throw std::logic_error(String("dbNameToAddr failed"));
-           }
-           struct putNotify *pn = pNotify.get();
-           pn->userCallback = this->notifyCallback;
-           pn->paddr = paddr;
-           pn->nRequest = 1;
-           pn->dbrType = DBR_CHAR;
-           pn->usrPvt = this;
+    } else if(dbaddr.field_type==DBF_DEVICE) {
+        whatMask |= enumValueBit;
+        dbDeviceMenu *pdbDeviceMenu = (dbDeviceMenu *)
+             (dbaddr.pfldDes->ftPvt);
+        if(!pdbDeviceMenu) {
+            channelPutRequester.message(
+               String("bad device in V3 record"),errorMessage);
+            return false;
         }
-        channelPutRequester.channelPutConnect(
-           Status::OK,this,pvStructure.get(),bitSet.get());
+        char **papChoiceValue = pdbDeviceMenu->papChoice;
+        int32 length = static_cast<int32>(pdbDeviceMenu->nChoice);
+        String choices[length];
+        for(int i=0; i<length; i++) {
+            choices[i] = String(papChoiceValue[i]);
+        }
+        pvStructure = std::auto_ptr<PVStructure>(
+        standardPVField->enumeratedValue(0,choices,length,properties));
+    } else {
+        channelPutRequester.message(
+           String("unsupported field in V3 record"),errorMessage);
+        return false;
     }
+    int numFields = pvStructure->getNumberFields();
+    bitSet = std::auto_ptr<BitSet>(new BitSet(numFields));
+    if(process) {
+       pNotify = std::auto_ptr<struct putNotify>(new (struct putNotify)());
+       notifyAddr = std::auto_ptr<DbAddr>(new DbAddr());
+       memcpy(notifyAddr.get(),&dbaddr,sizeof(DbAddr));
+       DbAddr *paddr = notifyAddr.get();
+       struct dbCommon *precord = paddr->precord;
+       char buffer[sizeof(precord->name) + 10];
+       strcpy(buffer,precord->name);
+       strcat(buffer,".PROC");
+       if(dbNameToAddr(buffer,paddr)!=0) {
+            throw std::logic_error(String("dbNameToAddr failed"));
+       }
+       struct putNotify *pn = pNotify.get();
+       pn->userCallback = this->notifyCallback;
+       pn->paddr = paddr;
+       pn->nRequest = 1;
+       pn->dbrType = DBR_CHAR;
+       pn->usrPvt = this;
+    }
+    channelPutRequester.channelPutConnect(
+       Status::OK,this,pvStructure.get(),bitSet.get());
     return &putListNode;
 }
 
@@ -538,12 +517,11 @@ void V3ChannelPut::get()
             epicsEnum16 value = static_cast<epicsEnum16>(dbaddr.precord->dtyp);
             pvIndex->put(value);
         }
-        if(firstTime) {
-            firstTime = false;
-            bitSet->set(pvField->getFieldOffset());
-        } else {
-            bitSet->set(pvIndex->getFieldOffset());
-        }
+        bitSet->set(pvIndex->getFieldOffset());
+    }
+    if(firstTime) {
+        firstTime = false;
+        bitSet->set(pvStructure->getFieldOffset());
     }
     dbScanUnlock(dbaddr.precord);
     channelPutRequester.getDone(Status::OK);

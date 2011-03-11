@@ -1,4 +1,4 @@
-/* vsChannelGet.cpp */
+/* v3ChannelGet.cpp */
 /**
  * Copyright - See the COPYRIGHT that is included with this distribution.
  * EPICS pvDataCPP is distributed subject to a Software License Agreement found
@@ -59,6 +59,10 @@ using namespace epics::pvAccess;
 extern "C" {
 typedef long (*get_array_info) (DBADDR *,long *,long *);
 typedef long (*get_enum_strs) (DBADDR *, struct dbr_enumStrs  *);
+typedef long (*get_units) (DBADDR *, char *);
+typedef long (*get_precision) (DBADDR *, long  *);
+typedef long (*get_graphic_double) (DBADDR *, struct dbr_grDouble  *);
+typedef long (*get_control_double) (DBADDR *, struct dbr_ctrlDouble  *);
 }
 
 static int scalarValueBit   = 0x01;
@@ -78,6 +82,7 @@ static String timeStampString("timeStamp");
 static String alarmString("alarm");
 static String displayString("display");
 static String controlString("control");
+static String allString("value,timeStamp,alarm,display,control");
 static String indexString("index");
 
 V3ChannelGet::V3ChannelGet(
@@ -117,19 +122,17 @@ ChannelGetListNode * V3ChannelGet::init(PVStructure &pvRequest)
     PVString *list = 0;
     if(pvField!=0) {
         PVStructure * pvStructure = static_cast<PVStructure * >(pvField);
-        list = pvStructure->getStringField(fieldListString);
+        if(pvStructure->getSubField(fieldListString)) {
+            list = pvStructure->getStringField(fieldListString);
+        }
     } else {
-        list = pvRequest.getStringField(fieldListString);
-    }
-    if(list==0) {
-        Status invalidPVRequest(Status::STATUSTYPE_ERROR,
-            "pvRequest contains no " + fieldListString + " field");
-        channelGetRequester.channelGetConnect(invalidPVRequest,0,0,0);
-        return 0;
+        if( pvRequest.getSubField(fieldListString)) {
+            list = pvRequest.getStringField(fieldListString);
+        }
     }
     StandardPVField *standardPVField = getStandardPVField();
     String properties;
-    String fieldList = list->get();
+    String fieldList = ((list!=0) ? list->get() : allString);
     if(fieldList.find(timeStampString)!=String::npos) {
         properties+= timeStampString;
         whatMask |= timeStampBit;
@@ -140,14 +143,18 @@ ChannelGetListNode * V3ChannelGet::init(PVStructure &pvRequest)
         whatMask |= alarmBit;
     }
     if(fieldList.find(displayString)!=String::npos) {
-        if(!properties.empty()) properties += ",";
-        properties += displayString;
-        whatMask |= displayBit;
+        if(dbaddr.field_type==DBF_LONG||dbaddr.field_type==DBF_DOUBLE) {
+            if(!properties.empty()) properties += ",";
+            properties += displayString;
+            whatMask |= displayBit;
+        }
     }
     if(fieldList.find(controlString)!=String::npos) {
-        if(!properties.empty()) properties += ",";
-        properties += controlString;
-        whatMask |= controlBit;
+        if(dbaddr.field_type==DBF_LONG||dbaddr.field_type==DBF_DOUBLE) {
+            if(!properties.empty()) properties += ",";
+            properties += controlString;
+            whatMask |= controlBit;
+        }
     }
     if(fieldList.find(valueString)!=String::npos) {
         Type type = scalar;
@@ -235,6 +242,56 @@ ChannelGetListNode * V3ChannelGet::init(PVStructure &pvRequest)
             channelGetRequester.message(
                String("unsupported field in V3 record"),errorMessage);
             return false;
+        }
+        if(whatMask&displayBit) {
+            Display display;
+            char units[DB_UNITS_SIZE];
+            units[0] = 0;
+            long precision = 0; 
+            struct rset *prset = dbGetRset(&dbaddr);
+            if(prset && prset->get_units) {
+                get_units gunits;
+                gunits = (get_units)(prset->get_units);
+                gunits(&dbaddr,units);
+                display.setUnits(String(units));
+            }
+            if(prset && prset->get_precision) {
+                get_precision gprec = (get_precision)(prset->get_precision);
+                gprec(&dbaddr,&precision);
+                String format("%f");
+                if(precision>0) {
+                    format += "." + precision;
+                    display.setFormat(format);
+                }
+            }
+            struct dbr_grDouble graphics;
+            if(prset && prset->get_graphic_double) {
+               get_graphic_double gg =
+                    (get_graphic_double)(prset->get_graphic_double);
+               gg(&dbaddr,&graphics);
+               display.setHigh(graphics.upper_disp_limit);
+               display.setLow(graphics.lower_disp_limit);
+            }
+            PVDisplay pvDisplay;
+            PVField *pvField = pvStructure->getSubField(displayString);
+            pvDisplay.attach(pvField);
+            pvDisplay.set(display);
+        }
+        if(whatMask&controlBit) {
+            Control control;
+            struct rset *prset = dbGetRset(&dbaddr);
+            struct dbr_ctrlDouble graphics;
+            if(prset && prset->get_control_double) {
+               get_control_double cc =
+                    (get_control_double)(prset->get_control_double);
+               cc(&dbaddr,&graphics);
+               control.setHigh(graphics.upper_ctrl_limit);
+               control.setLow(graphics.lower_ctrl_limit);
+            }
+            PVControl pvControl;
+            PVField *pvField = pvStructure->getSubField(controlString);
+            pvControl.attach(pvField);
+            pvControl.set(control);
         }
         int numFields = pvStructure->getNumberFields();
         bitSet = std::auto_ptr<BitSet>(new BitSet(numFields));
@@ -491,12 +548,12 @@ void V3ChannelGet::get(bool lastRequest)
             epicsEnum16 value = static_cast<epicsEnum16>(dbaddr.precord->dtyp);
             pvIndex->put(value);
         }
-        if(firstTime) {
-            firstTime = false;
-            bitSet->set(pvField->getFieldOffset());
-        } else {
-            bitSet->set(pvIndex->getFieldOffset());
-        }
+        bitSet->set(pvIndex->getFieldOffset());
+    }
+    if(firstTime) {
+        firstTime = false;
+        bitSet->clear();
+        bitSet->set(0);
     }
     dbScanUnlock(dbaddr.precord);
     channelGetRequester.getDone(Status::OK);
