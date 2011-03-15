@@ -233,7 +233,7 @@ public:
 private:
     V3ChannelMonitor(
         V3Channel &v3Channel,
-        epics::pvData::MonitorRequester *monitorRequester,
+        epics::pvData::MonitorRequester &monitorRequester,
         epics::pvData::PVStructure *pvRequest);
     ~V3ChannelMonitor();
      friend class V3Channel;
@@ -242,18 +242,22 @@ private:
 
 class V3ChannelArray : public epics::pvAccess::ChannelArray {
 public:
+    V3ChannelArray(
+        V3Channel &v3Channel,
+        epics::pvAccess::ChannelArrayRequester &channelArrayRequester,
+        DbAddr &dbaddr);
+    ~V3ChannelArray();
+    ChannelArrayListNode * init(epics::pvData::PVStructure & pvRequest);
     virtual void destroy();
     virtual void putArray(bool lastRequest, int offset, int count);
     virtual void getArray(bool lastRequest, int offset, int count);
     virtual void setLength(bool lastRequest, int length, int capacity);
 private:
-    V3ChannelArray(
-        V3Channel &v3Channel,
-        epics::pvAccess::ChannelArrayRequester *channelArrayRequester,
-        epics::pvData::PVStructure *pvRequest);
-    ~V3ChannelArray();
-     friend class V3Channel;
-   //TBD
+    V3Channel &v3Channel;
+    epics::pvAccess::ChannelArrayRequester &channelArrayRequester;
+    DbAddr &dbaddr;
+    ChannelArrayListNode arrayListNode;
+    std::auto_ptr<epics::pvData::PVScalarArray> pvScalarArray;
 };
 
 }}

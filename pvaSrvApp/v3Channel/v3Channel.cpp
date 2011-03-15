@@ -192,10 +192,11 @@ ChannelArray *V3Channel::createChannelArray(
         ChannelArrayRequester *channelArrayRequester,
         PVStructure *pvRequest)
 {
-    Status status(Status::STATUSTYPE_ERROR,
-        String("ChannelArray not implemented for V3 Records"));
-    channelArrayRequester->channelArrayConnect(status,0,0);
-    return 0;
+    V3ChannelArray *v3ChannelArray = new V3ChannelArray(
+        *this,*channelArrayRequester,*(addr.get()));
+    ChannelArrayListNode * node = v3ChannelArray->init(*pvRequest);
+    if(node!=0) channelArrayList.addTail(*node);
+    return v3ChannelArray;
 }
 
 void V3Channel::printInfo()

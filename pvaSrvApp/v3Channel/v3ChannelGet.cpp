@@ -295,23 +295,6 @@ ChannelGetListNode * V3ChannelGet::init(PVStructure &pvRequest)
         }
         int numFields = pvStructure->getNumberFields();
         bitSet = std::auto_ptr<BitSet>(new BitSet(numFields));
-        if(process) {
-           pNotify = std::auto_ptr<struct putNotify>(new (struct putNotify)());
-           notifyAddr = std::auto_ptr<DbAddr>(new DbAddr());
-           memcpy(notifyAddr.get(),&dbaddr,sizeof(DbAddr));
-           DbAddr *paddr = notifyAddr.get();
-           struct dbCommon *precord = paddr->precord;
-           char buffer[sizeof(precord->name) + 10];
-           strcpy(buffer,precord->name);
-           strcat(buffer,".PROC");
-           if(dbNameToAddr(buffer,paddr)!=0) {
-                throw std::logic_error(String("dbNameToAddr failed"));
-           }
-           struct putNotify *pn = pNotify.get();
-           pn->userCallback = this->notifyCallback;
-           pn->paddr = paddr;
-           pn->nRequest = 1;
-        }
         numFields = pvStructure->getNumberFields();
         bitSet = std::auto_ptr<BitSet>(new BitSet(numFields));
         if(process) {
