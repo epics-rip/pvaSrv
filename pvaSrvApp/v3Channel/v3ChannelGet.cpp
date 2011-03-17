@@ -511,7 +511,7 @@ void V3ChannelGet::get(bool lastRequest)
             while(index<length) {
                 data.data[index] = String(pchar);
                 index++;
-                pchar += MAX_STRING_SIZE;
+                pchar += dbaddr.field_size;
             }
             pv->postPut();
             break;

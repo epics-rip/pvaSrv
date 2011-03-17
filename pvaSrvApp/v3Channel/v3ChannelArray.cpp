@@ -143,15 +143,8 @@ void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
     if((offset+count)>length) count = length -offset;
     if(count<0) {
         dbScanUnlock(dbaddr.precord);
-        channelArrayRequester.getArrayDone(
-            Status(Status::STATUSTYPE_ERROR,
-               String("out of bounds"),
-               String("")));
+        channelArrayRequester.getArrayDone(Status::OK);
         return;
-    }
-    int capacity = pvScalarArray->getCapacity();
-    if(capacity<=count) {
-        pvScalarArray->setCapacity(count);
     }
     pvScalarArray->setLength(count);
     switch(dbaddr.field_type) {
@@ -194,11 +187,11 @@ void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
         pv->get(0,length,&data);
         int index = 0;
         char *pchar = static_cast<char *>(dbaddr.pfield);
-        pchar += MAX_STRING_SIZE*offset;
+        pchar += dbaddr.field_size*offset;
         while(index<count) {
             data.data[index] = String(pchar);
             index++;
-            pchar += MAX_STRING_SIZE;
+            pchar += dbaddr.field_size;
         }
         break;
     }
@@ -214,18 +207,24 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
     if((offset+count)>no_elements) count = no_elements - count;
     if(count<=0) {
         dbScanUnlock(dbaddr.precord);
-        channelArrayRequester.putArrayDone(
-            Status(Status::STATUSTYPE_ERROR,
-               String("array overrun"),
-               String("")));
+        channelArrayRequester.getArrayDone(Status::OK);
         return;
     }
     long length = offset + count;
     struct rset *prset = dbGetRset(&dbaddr);
-    if(prset && prset->put_array_info) {
-        put_array_info put_info;
-        put_info = (put_array_info)(prset->put_array_info);
-        put_info(&dbaddr, length);
+    if(prset && prset->get_array_info) {
+        long oldLength = 0;
+        long v3offset = 0;
+        get_array_info get_info;
+        get_info = (get_array_info)(prset->get_array_info);
+        get_info(&dbaddr, &oldLength, &v3offset);
+        if(length>oldLength) {
+           if(prset && prset->put_array_info) {
+               put_array_info put_info;
+               put_info = (put_array_info)(prset->put_array_info);
+               put_info(&dbaddr, length);
+           }
+        }
     }
     switch(dbaddr.field_type) {
     case DBF_CHAR:
@@ -282,12 +281,16 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
         StringArrayData data;
         pv->get(0,length,&data);
         int index = 0;
-        char *pchar = static_cast<char *>(dbaddr.pfield);
-        pchar += MAX_STRING_SIZE*offset;
-        while(index<count) {
-            strcpy(pchar,data.data[index].c_str());
+        char *to = static_cast<char *>(dbaddr.pfield);
+        int len = dbaddr.field_size;
+        while(index<length) {
+            const char * from = data.data[index].c_str();
+            if(from!=0) {
+                strncpy(to,from,len-1);
+            }
+            *(to + len -1) = 0;
+            to += len;
             index++;
-            pchar += MAX_STRING_SIZE;
         }
         break;
     }

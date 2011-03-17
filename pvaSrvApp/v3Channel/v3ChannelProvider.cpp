@@ -54,7 +54,7 @@ V3ChannelProvider &V3ChannelProvider::getChannelProvider()
 }
 
 V3ChannelProvider::V3ChannelProvider()
-: providerName("v3Local"),channelList()
+: providerName("v3Channel"),channelList()
 {
 }
 

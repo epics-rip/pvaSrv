@@ -260,7 +260,7 @@ void V3ChannelPut::put(bool lastRequest)
         case DBF_FLOAT: {
             float * val = static_cast<float *>(dbaddr.pfield);
             PVFloat *pv = static_cast<PVFloat *>(pvField);
-            pv->put(*val);
+            *val = pv->get();
             break;
         }
         case DBF_DOUBLE: {
@@ -270,10 +270,12 @@ void V3ChannelPut::put(bool lastRequest)
             break;
         }
         case DBF_STRING: {
-            char * val = static_cast<char *>(dbaddr.pfield);
-            String sval(val);
+            char * to = static_cast<char *>(dbaddr.pfield);
             PVString *pvString = static_cast<PVString *>(pvField);
-            memcpy(val,pvString->get().c_str(),sizeof(double));
+            const char *from = pvString->get().c_str();
+            int len = dbaddr.field_size;
+            strncpy(to,pvString->get().c_str(),len -1);
+            *(to + len -1) = 0;
         }
         }
     } else if((whatMask&arrayValueBit)!=0) {
@@ -332,11 +334,16 @@ void V3ChannelPut::put(bool lastRequest)
             StringArrayData data;
             pv->get(0,length,&data);
             int index = 0;
-            char *pchar = static_cast<char *>(dbaddr.pfield);
+            char *to = static_cast<char *>(dbaddr.pfield);
+            int len = dbaddr.field_size;
             while(index<length) {
-                strcpy(pchar,data.data[index].c_str());
+                const char * from = data.data[index].c_str();
+                if(from!=0) {
+                    strncpy(to,from,len);
+                }
+                *(to + len -1) = 0;
+                to += len;
                 index++;
-                pchar += MAX_STRING_SIZE;
             }
             break;
          }
@@ -354,6 +361,10 @@ void V3ChannelPut::put(bool lastRequest)
             channelPutRequester.message(
                 String("Changing the DTYP field not supported"),errorMessage);
         }
+    }
+    dbFldDes *pfldDes = dbaddr.pfldDes;
+    if(dbIsValueField(pfldDes)) {
+        dbaddr.precord->udf = 0;
     }
     dbScanUnlock(dbaddr.precord);
     if(process) {
@@ -420,7 +431,7 @@ void V3ChannelPut::get()
         }
         }
         bitSet->set(pvField->getFieldOffset());
-    } else if((whatMask&scalarValueBit)!=0) {
+    } else if((whatMask&arrayValueBit)!=0) {
         long length = dbaddr.no_elements;
         long offset = 0;
         struct rset *prset = dbGetRset(&dbaddr);
@@ -497,7 +508,7 @@ void V3ChannelPut::get()
             while(index<length) {
                 data.data[index] = String(pchar);
                 index++;
-                pchar += MAX_STRING_SIZE;
+                pchar += dbaddr.field_size;
             }
             pv->postPut();
             break;

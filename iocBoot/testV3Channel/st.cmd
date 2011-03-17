@@ -3,8 +3,8 @@
 cd ${TOP}
 
 ## Register all support components
-dbLoadDatabase("dbd/v3LocalTest.dbd")
-v3LocalTest_registerRecordDeviceDriver(pdbbase)
+dbLoadDatabase("dbd/testV3Channel.dbd")
+testV3Channel_registerRecordDeviceDriver(pdbbase)
 
 ## Load record instances
 dbLoadRecords("db/dbScalar.db","name=byte01,type=byte")
