@@ -8,12 +8,16 @@
 #include <stdexcept>
 #include <memory>
 
+#include "dbFldTypes.h"
+#include "dbDefs.h"
+
 #include <pvIntrospect.h>
 #include <pvData.h>
 #include <noDefaultMethods.h>
 
 #include "support.h"
 #include "pvDatabase.h"
+#include "standardField.h"
 #include "v3Channel.h"
 
 namespace epics { namespace pvIOC { 
@@ -29,12 +33,49 @@ V3Channel::V3Channel(
 :   provider(provider),
     requester(requester),name(name),
     addr(addr),
+    recordField(0),
     channelProcessList(),
     channelGetList(),
     channelPutList(),
     channelMonitorList(),
     channelArrayList()
 {
+}
+
+void V3Channel::init()
+{
+    ScalarType scalarType = pvBoolean;
+    DbAddr *dbaddr = addr.get();
+    switch(dbaddr->field_type) {
+    case DBF_CHAR:
+        case DBF_UCHAR:
+            scalarType = pvByte; break;
+        case DBF_SHORT:
+        case DBF_USHORT:
+            scalarType = pvShort; break;
+        case DBF_LONG:
+        case DBF_ULONG:
+            scalarType = pvInt; break;
+        case DBF_FLOAT:
+            scalarType = pvFloat; break;
+        case DBF_DOUBLE:
+            scalarType = pvDouble; break;
+        case DBF_STRING:
+            scalarType = pvString; break;
+        default:
+          break;
+    }
+    if(scalarType!=pvBoolean) {
+        StandardField *standardField = getStandardField();
+        bool isArray = (dbaddr->no_elements>1) ? true : false;
+        if(isArray) {
+            recordField = standardField->scalarArrayValue(scalarType,
+                String("value,timeStamp,alarm,display"));
+        } else {
+            recordField = standardField->scalarValue(scalarType,
+                String("value,timeStamp,alarm,display,control"));
+        }
+    }
 }
 
 V3Channel::~V3Channel()
@@ -90,7 +131,7 @@ ChannelProvider *V3Channel::getProvider()
 
 String V3Channel::getRemoteAddress()
 {
-    throw std::logic_error(String("Not Implemented"));
+    return provider.getProviderName();
 }
 
 Channel::ConnectionState V3Channel::getConnectionState()
@@ -116,7 +157,13 @@ bool V3Channel::isConnected()
 void V3Channel::getField(GetFieldRequester *requester,
         String subField)
 {
-    throw std::logic_error(String("Not Implemented"));
+    if(recordField!=0) {
+        requester->getDone(Status::OK,recordField);
+        return;
+    }
+    Status status(Status::STATUSTYPE_ERROR,
+        String("client asked for illegal V3 field"));
+    requester->getDone(status,0);
 }
 
 AccessRights V3Channel::getAccessRights(

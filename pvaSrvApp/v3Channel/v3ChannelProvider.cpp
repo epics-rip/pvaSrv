@@ -121,6 +121,7 @@ Channel *V3ChannelProvider::createChannel(
     std::auto_ptr<DbAddr> addr(new DbAddr());
     memcpy(addr.get(),&dbaddr,sizeof(dbaddr));
     V3Channel *v3Channel = new V3Channel(*this,*channelRequester,channelName,addr);
+    v3Channel->init();
     ChannelListNode *node = new ChannelListNode(*v3Channel);
     channelList.addTail(*node);
     channelRequester->channelCreated(Status::OK,v3Channel);

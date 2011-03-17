@@ -83,6 +83,7 @@ public:
         epics::pvData::String name,
         std::auto_ptr<DbAddr> addr
         );
+    void init();
     virtual void destroy();
     virtual epics::pvData::String getRequesterName();
     virtual void message(
@@ -133,6 +134,7 @@ private:
     epics::pvAccess::ChannelRequester &requester;
     epics::pvData::String name;
     std::auto_ptr<DbAddr> addr;
+    epics::pvData::FieldConstPtr recordField; 
     ChannelProcessList channelProcessList;
     ChannelGetList channelGetList;
     ChannelPutList channelPutList;
