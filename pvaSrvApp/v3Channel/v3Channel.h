@@ -14,6 +14,9 @@
 #include <dbAccess.h>
 #include <dbNotify.h>
 
+#include <status.h>
+#include <monitor.h>
+#include <monitorQueue.h>
 #include <linkedList.h>
 #include <pvIntrospect.h>
 #include <pvData.h>
@@ -25,6 +28,7 @@
 
 #include "pvDatabase.h"
 #include "support.h"
+#include "v3CAMonitor.h"
 
 namespace epics { namespace pvIOC { 
 
@@ -75,7 +79,7 @@ typedef epics::pvData::LinkedList<V3ChannelMonitor> ChannelMonitorList;
 typedef epics::pvData::LinkedListNode<V3ChannelArray> ChannelArrayListNode;
 typedef epics::pvData::LinkedList<V3ChannelArray> ChannelArrayList;
 
-class V3Channel : public epics::pvAccess::Channel {
+class V3Channel : public virtual epics::pvAccess::Channel {
 public:
     V3Channel(
         V3ChannelProvider &provider,
@@ -142,13 +146,13 @@ private:
     ChannelArrayList channelArrayList;
 };
 
-class V3ChannelProcess : public epics::pvAccess::ChannelProcess {
+class V3ChannelProcess : public virtual epics::pvAccess::ChannelProcess {
 public:
     V3ChannelProcess(
         V3Channel &v3Channel,
         epics::pvAccess::ChannelProcessRequester &channelProcessRequester,
         DbAddr &dbaddr);
-    ~V3ChannelProcess();
+    virtual ~V3ChannelProcess();
     ChannelProcessListNode * init();
     virtual epics::pvData::String getRequesterName();
     virtual void message(
@@ -167,7 +171,7 @@ private:
     epics::pvData::Event event;
 };
 
-class V3ChannelGet : public epics::pvAccess::ChannelGet {
+class V3ChannelGet : public virtual epics::pvAccess::ChannelGet {
 public:
     V3ChannelGet(
         V3Channel &v3Channel,
@@ -197,13 +201,13 @@ private:
     epics::pvData::Event event;
 };
 
-class V3ChannelPut : public epics::pvAccess::ChannelPut {
+class V3ChannelPut : public virtual epics::pvAccess::ChannelPut {
 public:
     V3ChannelPut(
         V3Channel &v3Channel,
         epics::pvAccess::ChannelPutRequester &channelPutRequester,
         DbAddr &dbaddr);
-    ~V3ChannelPut();
+    virtual ~V3ChannelPut();
     ChannelPutListNode * init(epics::pvData::PVStructure & pvRequest);
     virtual epics::pvData::String getRequesterName();
     virtual void message(
@@ -228,18 +232,45 @@ private:
     epics::pvData::Event event;
 };
 
-class V3ChannelMonitor : public epics::pvData::Monitor {
+class V3ChannelMonitor
+: public virtual epics::pvData::Monitor,
+  public virtual CAV3MonitorRequester
+{
 public:
-    virtual void destroy();
-    // TBD
-private:
     V3ChannelMonitor(
         V3Channel &v3Channel,
         epics::pvData::MonitorRequester &monitorRequester,
-        epics::pvData::PVStructure *pvRequest);
-    ~V3ChannelMonitor();
-     friend class V3Channel;
-   //TBD
+        DbAddr &dbaddr
+    );
+    virtual ~V3ChannelMonitor();
+    ChannelMonitorListNode * init(epics::pvData::PVStructure & pvRequest);
+    virtual epics::pvData::String getRequesterName();
+    virtual void message(
+        epics::pvData::String message,
+        epics::pvData::MessageType messageType);
+    virtual void destroy();
+    virtual epics::pvData::Status start();
+    virtual epics::pvData::Status stop();
+    virtual epics::pvData::MonitorElement* poll();
+    virtual void release(epics::pvData::MonitorElement* monitorElement);
+    virtual void exceptionCallback(long status,long op);
+    virtual void connectionCallback();
+    virtual void accessRightsCallback();
+    virtual void eventCallback(long status);
+private:
+    V3Channel &v3Channel;
+    epics::pvData::MonitorRequester &monitorRequester;
+    DbAddr &dbaddr;
+    ChannelMonitorListNode monitorListNode;
+    epics::pvData::Event event;
+    int whatMask;
+    bool firstTime;
+    bool gotEvent;
+    V3Type v3Type;
+    int queueSize;
+    epics::pvData::PVStructurePtrArray pvStructurePtrArray;
+    std::auto_ptr<epics::pvData::MonitorQueue> monitorQueue;
+    std::auto_ptr<CAV3Monitor> caV3Monitor;
 };
 
 class V3ChannelArray : public epics::pvAccess::ChannelArray {
@@ -248,7 +279,7 @@ public:
         V3Channel &v3Channel,
         epics::pvAccess::ChannelArrayRequester &channelArrayRequester,
         DbAddr &dbaddr);
-    ~V3ChannelArray();
+    virtual ~V3ChannelArray();
     ChannelArrayListNode * init(epics::pvData::PVStructure & pvRequest);
     virtual void destroy();
     virtual void putArray(bool lastRequest, int offset, int count);

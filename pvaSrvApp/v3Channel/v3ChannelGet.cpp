@@ -540,7 +540,7 @@ void V3ChannelGet::get(bool lastRequest)
     }
     dbScanUnlock(dbaddr.precord);
     channelGetRequester.getDone(Status::OK);
-    
+    if(lastRequest) destroy();
 }
 
 void V3ChannelGet::notifyCallback(struct putNotify *pn)

@@ -229,10 +229,11 @@ Monitor *V3Channel::createMonitor(
         MonitorRequester *monitorRequester,
         PVStructure *pvRequest)
 {
-    Status status(Status::STATUSTYPE_ERROR,
-        String("ChannelMonitor not implemented for V3 Records"));
-    monitorRequester->monitorConnect(status,0,0);
-    return 0;
+    V3ChannelMonitor *v3ChannelMonitor = new V3ChannelMonitor(
+        *this,*monitorRequester,*(addr.get()));
+    ChannelMonitorListNode * node = v3ChannelMonitor->init(*pvRequest);
+    if(node!=0) channelMonitorList.addTail(*node);
+    return v3ChannelMonitor;
 }
 
 ChannelArray *V3Channel::createChannelArray(

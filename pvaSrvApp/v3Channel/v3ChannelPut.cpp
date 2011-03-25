@@ -374,7 +374,7 @@ void V3ChannelPut::put(bool lastRequest)
         event.wait();
     }
     channelPutRequester.putDone(Status::OK);
-    
+    if(lastRequest) destroy();
 }
 
 void V3ChannelPut::notifyCallback(struct putNotify *pn)

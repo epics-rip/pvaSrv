@@ -136,6 +136,7 @@ void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
                 Status(Status::STATUSTYPE_ERROR,
                    String("v3offset not supported"),
                    String("")));
+            if(lastRequest) destroy();
             return;
         }
     }
@@ -144,6 +145,7 @@ void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
     if(count<0) {
         dbScanUnlock(dbaddr.precord);
         channelArrayRequester.getArrayDone(Status::OK);
+        if(lastRequest) destroy();
         return;
     }
     pvScalarArray->setLength(count);
@@ -198,6 +200,7 @@ void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
     }
     dbScanUnlock(dbaddr.precord);
     channelArrayRequester.getArrayDone(Status::OK);
+    if(lastRequest) destroy();
 }
 
 void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
@@ -208,6 +211,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
     if(count<=0) {
         dbScanUnlock(dbaddr.precord);
         channelArrayRequester.getArrayDone(Status::OK);
+        if(lastRequest) destroy();
         return;
     }
     long length = offset + count;
@@ -297,6 +301,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
     }
     dbScanUnlock(dbaddr.precord);
     channelArrayRequester.getArrayDone(Status::OK);
+    if(lastRequest) destroy();
 }
 
 void V3ChannelArray::setLength(bool lastRequest,int length,int capacity)
@@ -312,6 +317,7 @@ void V3ChannelArray::setLength(bool lastRequest,int length,int capacity)
     }
     dbScanUnlock(dbaddr.precord);
     channelArrayRequester.setLengthDone(Status::OK);
+    if(lastRequest) destroy();
 }
 
 }}
