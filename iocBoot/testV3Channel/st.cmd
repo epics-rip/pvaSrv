@@ -20,6 +20,7 @@ dbLoadRecords("db/dbArray.db","name=doubleArray01,type=DOUBLE")
 dbLoadRecords("db/dbString.db","name=string01")
 dbLoadRecords("db/dbStringArray.db","name=stringArray01")
 dbLoadRecords("db/dbEnum.db","name=enum01")
+dbLoadRecords("db/dbCounter.db","name=counter01");
 
 dbLoadRecords("db/dbScalar.db","name=byte02,type=byte")
 dbLoadRecords("db/dbScalar.db","name=short02,type=short")
@@ -34,6 +35,7 @@ dbLoadRecords("db/dbArray.db","name=doubleArray02,type=DOUBLE")
 dbLoadRecords("db/dbString.db","name=string02")
 dbLoadRecords("db/dbStringArray.db","name=stringArray02")
 dbLoadRecords("db/dbEnum.db","name=enum02")
+dbLoadRecords("db/dbCounter.db","name=counter02");
 
 dbLoadRecords("db/dbScalar.db","name=byte03,type=byte")
 dbLoadRecords("db/dbScalar.db","name=short03,type=short")
@@ -48,6 +50,7 @@ dbLoadRecords("db/dbArray.db","name=doubleArray03,type=DOUBLE")
 dbLoadRecords("db/dbString.db","name=string03")
 dbLoadRecords("db/dbStringArray.db","name=stringArray03")
 dbLoadRecords("db/dbEnum.db","name=enum03")
+dbLoadRecords("db/dbCounter.db","name=counter03");
 
 cd ${TOP}/iocBoot/${IOC}
 iocInit()

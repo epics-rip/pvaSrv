@@ -144,6 +144,7 @@ private:
     ChannelPutList channelPutList;
     ChannelMonitorList channelMonitorList;
     ChannelArrayList channelArrayList;
+    CAV3Context *context;
 };
 
 class V3ChannelProcess : public virtual epics::pvAccess::ChannelProcess {
@@ -151,7 +152,7 @@ public:
     V3ChannelProcess(
         V3Channel &v3Channel,
         epics::pvAccess::ChannelProcessRequester &channelProcessRequester,
-        DbAddr &dbaddr);
+        DbAddr &dbAddr);
     virtual ~V3ChannelProcess();
     ChannelProcessListNode * init();
     virtual epics::pvData::String getRequesterName();
@@ -164,7 +165,7 @@ private:
     static void notifyCallback(struct putNotify *);
     V3Channel &v3Channel;
     epics::pvAccess::ChannelProcessRequester &channelProcessRequester;
-    DbAddr &dbaddr;
+    DbAddr &dbAddr;
     ChannelProcessListNode processListNode;
     std::auto_ptr<struct putNotify> pNotify;
     std::auto_ptr<DbAddr> notifyAddr;
@@ -176,7 +177,7 @@ public:
     V3ChannelGet(
         V3Channel &v3Channel,
         epics::pvAccess::ChannelGetRequester &channelGetRequester,
-        DbAddr &dbaddr);
+        DbAddr &dbAddr);
     virtual ~V3ChannelGet();
     ChannelGetListNode * init(epics::pvData::PVStructure & pvRequest);
     virtual epics::pvData::String getRequesterName();
@@ -189,11 +190,11 @@ private:
     static void notifyCallback(struct putNotify *);
     V3Channel &v3Channel;
     epics::pvAccess::ChannelGetRequester &channelGetRequester;
-    DbAddr &dbaddr;
+    DbAddr &dbAddr;
     ChannelGetListNode getListNode;
     bool process;
     bool firstTime;
-    int whatMask;
+    int propertyMask;
     std::auto_ptr<epics::pvData::PVStructure> pvStructure;
     std::auto_ptr<epics::pvData::BitSet> bitSet;
     std::auto_ptr<struct putNotify> pNotify;
@@ -206,7 +207,7 @@ public:
     V3ChannelPut(
         V3Channel &v3Channel,
         epics::pvAccess::ChannelPutRequester &channelPutRequester,
-        DbAddr &dbaddr);
+        DbAddr &dbAddr);
     virtual ~V3ChannelPut();
     ChannelPutListNode * init(epics::pvData::PVStructure & pvRequest);
     virtual epics::pvData::String getRequesterName();
@@ -220,11 +221,11 @@ private:
     static void notifyCallback(struct putNotify *);
     V3Channel &v3Channel;
     epics::pvAccess::ChannelPutRequester &channelPutRequester;
-    DbAddr &dbaddr;
+    DbAddr &dbAddr;
     ChannelPutListNode putListNode;
+    int propertyMask;
     bool process;
     bool firstTime;
-    int whatMask;
     std::auto_ptr<epics::pvData::PVStructure> pvStructure;
     std::auto_ptr<epics::pvData::BitSet> bitSet;
     std::auto_ptr<struct putNotify> pNotify;
@@ -240,10 +241,11 @@ public:
     V3ChannelMonitor(
         V3Channel &v3Channel,
         epics::pvData::MonitorRequester &monitorRequester,
-        DbAddr &dbaddr
+        DbAddr &dbAddr
     );
     virtual ~V3ChannelMonitor();
-    ChannelMonitorListNode * init(epics::pvData::PVStructure & pvRequest);
+    ChannelMonitorListNode * init(
+        epics::pvData::PVStructure & pvRequest,CAV3Context &context);
     virtual epics::pvData::String getRequesterName();
     virtual void message(
         epics::pvData::String message,
@@ -260,12 +262,13 @@ public:
 private:
     V3Channel &v3Channel;
     epics::pvData::MonitorRequester &monitorRequester;
-    DbAddr &dbaddr;
+    DbAddr &dbAddr;
     ChannelMonitorListNode monitorListNode;
     epics::pvData::Event event;
-    int whatMask;
+    int propertyMask;
     bool firstTime;
     bool gotEvent;
+    bool overrun;
     V3Type v3Type;
     int queueSize;
     epics::pvData::PVStructurePtrArray pvStructurePtrArray;
@@ -278,7 +281,7 @@ public:
     V3ChannelArray(
         V3Channel &v3Channel,
         epics::pvAccess::ChannelArrayRequester &channelArrayRequester,
-        DbAddr &dbaddr);
+        DbAddr &dbAddr);
     virtual ~V3ChannelArray();
     ChannelArrayListNode * init(epics::pvData::PVStructure & pvRequest);
     virtual void destroy();
@@ -288,7 +291,7 @@ public:
 private:
     V3Channel &v3Channel;
     epics::pvAccess::ChannelArrayRequester &channelArrayRequester;
-    DbAddr &dbaddr;
+    DbAddr &dbAddr;
     ChannelArrayListNode arrayListNode;
     std::auto_ptr<epics::pvData::PVScalarArray> pvScalarArray;
 };

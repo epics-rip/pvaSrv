@@ -17,84 +17,30 @@
 #include <stdexcept>
 #include <memory>
 
-#include <cantProceed.h>
-#include <epicsStdio.h>
-#include <epicsMutex.h>
-#include <epicsEvent.h>
-#include <epicsThread.h>
-#include <epicsExit.h>
-#include <dbAccess.h>
-#include <dbCommon.h>
-#include <recSup.h>
-#include <dbBase.h>
 
-#include <epicsExport.h>
-
-#include <noDefaultMethods.h>
-#include <pvIntrospect.h>
 #include <pvData.h>
 #include <pvAccess.h>
-#include "standardField.h"
-#include "standardPVField.h"
-#include "alarm.h"
-#include "control.h"
-#include "display.h"
-#include "timeStamp.h"
-#include "pvAlarm.h"
-#include "pvControl.h"
-#include "pvDisplay.h"
-#include "pvEnumerated.h"
-#include "pvTimeStamp.h"
 
 #include "pvDatabase.h"
 #include "v3Channel.h"
+#include "v3Util.h"
 
-#include "support.h"
 
 namespace epics { namespace pvIOC { 
 
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
-extern "C" {
-typedef long (*get_array_info) (DBADDR *,long *,long *);
-typedef long (*get_enum_strs) (DBADDR *, struct dbr_enumStrs  *);
-typedef long (*get_units) (DBADDR *, char *);
-typedef long (*get_precision) (DBADDR *, long  *);
-typedef long (*get_graphic_double) (DBADDR *, struct dbr_grDouble  *);
-typedef long (*get_control_double) (DBADDR *, struct dbr_ctrlDouble  *);
-}
-
-static int scalarValueBit   = 0x01;
-static int arrayValueBit    = 0x02;
-static int enumValueBit     = 0x04;
-static int timeStampBit     = 0x08;
-static int alarmBit         = 0x10;
-static int displayBit       = 0x20;
-static int controlBit       = 0x40;
-
-static String recordString("record");
-static String processString("process");
-static String fieldString("field");
-static String fieldListString("fieldList");
-static String valueString("value");
-static String timeStampString("timeStamp");
-static String alarmString("alarm");
-static String displayString("display");
-static String controlString("control");
-static String allString("value,timeStamp,alarm,display,control");
-static String indexString("index");
-
 V3ChannelGet::V3ChannelGet(
     V3Channel &v3Channel,
     ChannelGetRequester &channelGetRequester,
-    DbAddr &dbaddr)
+    DbAddr &dbAddr)
 : v3Channel(v3Channel),channelGetRequester(channelGetRequester),
-  dbaddr(dbaddr),
+  dbAddr(dbAddr),
   getListNode(*this),
   process(false),
   firstTime(true),
-  whatMask(0),
+  propertyMask(0),
   pvStructure(0),bitSet(0),
   pNotify(0),
   notifyAddr(0),
@@ -107,218 +53,35 @@ V3ChannelGet::~V3ChannelGet() {}
 
 ChannelGetListNode * V3ChannelGet::init(PVStructure &pvRequest)
 {
-    PVField *pvField = pvRequest.getSubField(recordString);
-    if(pvField!=0) {
-        PVStructure *pvStructure = static_cast<PVStructure *>(pvField);
-        if(pvStructure->getSubField(processString)!=0) {
-            PVString *pvString = pvStructure->getStringField(processString);
-            if(pvString!=0) {
-                String value = pvString->get();
-                if(value.compare("true")==0) process = true;
-            }
-        }
+    propertyMask = V3Util::getProperties(channelGetRequester,pvRequest,dbAddr);
+    pvStructure =  std::auto_ptr<PVStructure>(
+        V3Util::createPVStructure(channelGetRequester, propertyMask, dbAddr));
+    V3Util::getPropertyData(
+        channelGetRequester,propertyMask,dbAddr,*pvStructure);
+    int numFields = pvStructure->getStructure()->getNumberFields();
+    bitSet = std::auto_ptr<BitSet>(new BitSet(numFields));
+    if((propertyMask&V3Util::processBit)!=0) {
+       process = true;
+       pNotify = std::auto_ptr<struct putNotify>(new (struct putNotify)());
+       notifyAddr = std::auto_ptr<DbAddr>(new DbAddr());
+       memcpy(notifyAddr.get(),&dbAddr,sizeof(DbAddr));
+       DbAddr *paddr = notifyAddr.get();
+       struct dbCommon *precord = paddr->precord;
+       char buffer[sizeof(precord->name) + 10];
+       strcpy(buffer,precord->name);
+       strcat(buffer,".PROC");
+       if(dbNameToAddr(buffer,paddr)!=0) {
+            throw std::logic_error(String("dbNameToAddr failed"));
+       }
+       struct putNotify *pn = pNotify.get();
+       pn->userCallback = this->notifyCallback;
+       pn->paddr = paddr;
+       pn->nRequest = 1;
+       pn->dbrType = DBR_CHAR;
+       pn->usrPvt = this;
     }
-    pvField = pvRequest.getSubField(fieldString);
-    PVString *list = 0;
-    if(pvField!=0) {
-        PVStructure * pvStructure = static_cast<PVStructure * >(pvField);
-        if(pvStructure->getSubField(fieldListString)) {
-            list = pvStructure->getStringField(fieldListString);
-        }
-    } else {
-        if( pvRequest.getSubField(fieldListString)) {
-            list = pvRequest.getStringField(fieldListString);
-        }
-    }
-    StandardPVField *standardPVField = getStandardPVField();
-    String properties;
-    String fieldList = ((list!=0) ? list->get() : allString);
-    if(fieldList.find(timeStampString)!=String::npos) {
-        properties+= timeStampString;
-        whatMask |= timeStampBit;
-    }
-    if(fieldList.find(alarmString)!=String::npos) {
-        if(!properties.empty()) properties += ",";
-        properties += alarmString;
-        whatMask |= alarmBit;
-    }
-    if(fieldList.find(displayString)!=String::npos) {
-        if(dbaddr.field_type==DBF_LONG||dbaddr.field_type==DBF_DOUBLE) {
-            if(!properties.empty()) properties += ",";
-            properties += displayString;
-            whatMask |= displayBit;
-        }
-    }
-    if(fieldList.find(controlString)!=String::npos) {
-        if(dbaddr.field_type==DBF_LONG||dbaddr.field_type==DBF_DOUBLE) {
-            if(!properties.empty()) properties += ",";
-            properties += controlString;
-            whatMask |= controlBit;
-        }
-    }
-    if(fieldList.find(valueString)!=String::npos) {
-        Type type = scalar;
-        if(dbaddr.no_elements>1) type = scalarArray;
-        ScalarType scalarType(pvBoolean);
-        // Note that pvBoolean is not a supported type
-        switch(dbaddr.field_type) {
-        case DBF_CHAR:
-        case DBF_UCHAR:
-            scalarType = pvByte; break;
-        case DBF_SHORT:
-        case DBF_USHORT:
-            scalarType = pvShort; break;
-        case DBF_LONG:
-        case DBF_ULONG:
-            scalarType = pvInt; break;
-        case DBF_FLOAT:
-            scalarType = pvFloat; break;
-        case DBF_DOUBLE:
-            scalarType = pvDouble; break;
-        case DBF_STRING:
-            scalarType = pvString; break;
-        default:
-          break;
-        }
-        if(type==scalar&&scalarType!=pvBoolean) {
-           whatMask |= scalarValueBit;
-           pvStructure = std::auto_ptr<PVStructure>(
-               standardPVField->scalarValue(0,scalarType,properties));
-        } else if(type==scalarArray) {
-            whatMask |= arrayValueBit;
-            pvStructure = std::auto_ptr<PVStructure>(
-                standardPVField->scalarArrayValue(0,scalarType,properties));
-        } else if(dbaddr.field_type==DBF_MENU) {
-            whatMask |= enumValueBit;
-            dbMenu *pdbMenu = (dbMenu *)(dbaddr.pfldDes->ftPvt);
-            unsigned long no_str = pdbMenu->nChoice;
-            char **papChoiceValue = pdbMenu->papChoiceValue;
-            int32 length = no_str;
-            String choices[length];
-            for(int i=0; i<length; i++) {
-                choices[i] = String(papChoiceValue[i]);
-            }
-            pvStructure = std::auto_ptr<PVStructure>(
-            standardPVField->enumeratedValue(0,choices,length,properties));
-        } else if(dbaddr.field_type==DBF_ENUM) {
-            whatMask |= enumValueBit;
-            struct dbr_enumStrs enumStrs;
-            struct rset *prset = dbGetRset(&dbaddr);
-            if(prset && prset->get_enum_strs) {
-                get_enum_strs get_strs;
-                get_strs = (get_enum_strs)(prset->get_enum_strs);
-                get_strs(&dbaddr,&enumStrs);
-                int32 length = enumStrs.no_str;
-                String choices[length];
-                for(int i=0; i<length; i++) {
-                     choices[i] = String(enumStrs.strs[i]);
-                }
-                pvStructure = std::auto_ptr<PVStructure>(
-                standardPVField->enumeratedValue(0,choices,length,properties));
-                    standardPVField->enumeratedValue(0,choices,length);
-            } else {
-                channelGetRequester.message(
-                   String("bad enum field in V3 record"),errorMessage);
-                return false;
-            }
-        } else if(dbaddr.field_type==DBF_DEVICE) {
-            whatMask |= enumValueBit;
-            dbDeviceMenu *pdbDeviceMenu = (dbDeviceMenu *)
-                 (dbaddr.pfldDes->ftPvt);
-            if(!pdbDeviceMenu) {
-                channelGetRequester.message(
-                   String("bad device in V3 record"),errorMessage);
-                return false;
-            }
-            char **papChoiceValue = pdbDeviceMenu->papChoice;
-            int32 length = static_cast<int32>(pdbDeviceMenu->nChoice);
-            String choices[length];
-            for(int i=0; i<length; i++) {
-                choices[i] = String(papChoiceValue[i]);
-            }
-            pvStructure = std::auto_ptr<PVStructure>(
-            standardPVField->enumeratedValue(0,choices,length,properties));
-        } else {
-            channelGetRequester.message(
-               String("unsupported field in V3 record"),errorMessage);
-            return false;
-        }
-        if(whatMask&displayBit) {
-            Display display;
-            char units[DB_UNITS_SIZE];
-            units[0] = 0;
-            long precision = 0; 
-            struct rset *prset = dbGetRset(&dbaddr);
-            if(prset && prset->get_units) {
-                get_units gunits;
-                gunits = (get_units)(prset->get_units);
-                gunits(&dbaddr,units);
-                display.setUnits(String(units));
-            }
-            if(prset && prset->get_precision) {
-                get_precision gprec = (get_precision)(prset->get_precision);
-                gprec(&dbaddr,&precision);
-                String format("%f");
-                if(precision>0) {
-                    format += "." + precision;
-                    display.setFormat(format);
-                }
-            }
-            struct dbr_grDouble graphics;
-            if(prset && prset->get_graphic_double) {
-               get_graphic_double gg =
-                    (get_graphic_double)(prset->get_graphic_double);
-               gg(&dbaddr,&graphics);
-               display.setHigh(graphics.upper_disp_limit);
-               display.setLow(graphics.lower_disp_limit);
-            }
-            PVDisplay pvDisplay;
-            PVField *pvField = pvStructure->getSubField(displayString);
-            pvDisplay.attach(pvField);
-            pvDisplay.set(display);
-        }
-        if(whatMask&controlBit) {
-            Control control;
-            struct rset *prset = dbGetRset(&dbaddr);
-            struct dbr_ctrlDouble graphics;
-            if(prset && prset->get_control_double) {
-               get_control_double cc =
-                    (get_control_double)(prset->get_control_double);
-               cc(&dbaddr,&graphics);
-               control.setHigh(graphics.upper_ctrl_limit);
-               control.setLow(graphics.lower_ctrl_limit);
-            }
-            PVControl pvControl;
-            PVField *pvField = pvStructure->getSubField(controlString);
-            pvControl.attach(pvField);
-            pvControl.set(control);
-        }
-        int numFields = pvStructure->getNumberFields();
-        bitSet = std::auto_ptr<BitSet>(new BitSet(numFields));
-        numFields = pvStructure->getNumberFields();
-        bitSet = std::auto_ptr<BitSet>(new BitSet(numFields));
-        if(process) {
-           pNotify = std::auto_ptr<struct putNotify>(new (struct putNotify)());
-           notifyAddr = std::auto_ptr<DbAddr>(new DbAddr());
-           memcpy(notifyAddr.get(),&dbaddr,sizeof(DbAddr));
-           DbAddr *paddr = notifyAddr.get();
-           struct dbCommon *precord = paddr->precord;
-           char buffer[sizeof(precord->name) + 10];
-           strcpy(buffer,precord->name);
-           strcat(buffer,".PROC");
-           if(dbNameToAddr(buffer,paddr)!=0) {
-                throw std::logic_error(String("dbNameToAddr failed"));
-           }
-           struct putNotify *pn = pNotify.get();
-           pn->userCallback = this->notifyCallback;
-           pn->paddr = paddr;
-           pn->nRequest = 1;
-           pn->dbrType = DBR_CHAR;
-           pn->usrPvt = this;
-        }
-        channelGetRequester.channelGetConnect(
-           Status::OK,this,pvStructure.get(),bitSet.get());
-    }
+    channelGetRequester.channelGetConnect(
+       Status::OK,this,pvStructure.get(),bitSet.get());
     return &getListNode;
 }
 
@@ -345,201 +108,16 @@ void V3ChannelGet::get(bool lastRequest)
         event.wait();
     }
     bitSet->clear();
-    dbScanLock(dbaddr.precord);
-    if((whatMask&timeStampBit)!=0) {
-        TimeStamp timeStamp;
-        PVTimeStamp pvTimeStamp;
-        PVField *pvField = pvStructure.get()->getSubField(timeStampString);
-        if(!pvTimeStamp.attach(pvField)) {
-            throw std::logic_error(String("V3ChannelGet::get logic error"));
-        }
-        struct dbCommon *precord = dbaddr.precord;
-        epicsUInt32 secPastEpoch = precord->time.secPastEpoch;
-        epicsUInt32 nsec = precord->time.nsec;
-        int64 seconds = secPastEpoch;
-        seconds += POSIX_TIME_AT_EPICS_EPOCH;
-        int32 nanoseconds = nsec;
-        pvTimeStamp.get(timeStamp);
-        int64 oldSecs = timeStamp.getSecondsPastEpoch();
-        int32 oldNano = timeStamp.getNanoSeconds();
-        if(oldSecs!=seconds || oldNano!=nanoseconds) {
-            timeStamp.put(seconds,nanoseconds);
-            pvTimeStamp.set(timeStamp);
-            bitSet->set(pvField->getFieldOffset());
-        }
-    }
-    if((whatMask&alarmBit)!=0) {
-        Alarm alarm;
-        PVAlarm pvAlarm;
-        PVField *pvField = pvStructure.get()->getSubField(alarmString);
-        if(!pvAlarm.attach(pvField)) {
-            throw std::logic_error(String("V3ChannelGet::get logic error"));
-        }
-        struct dbCommon *precord = dbaddr.precord;
-        epicsEnum16 stat = precord->stat;
-        epicsEnum16 sevr = precord->sevr;
-        pvAlarm.get(alarm);
-        AlarmSeverity prev = alarm.getSeverity();
-        epicsEnum16 prevSevr = static_cast<epicsEnum16>(prev);
-        if(prevSevr!=sevr) {
-            String message("not implemented");
-            AlarmSeverity severity = static_cast<AlarmSeverity>(sevr);
-            alarm.setSeverity(severity);
-            alarm.setMessage(message);
-            pvAlarm.set(alarm);
-            bitSet->set(pvField->getFieldOffset());
-        }
-    }
-    PVField *pvField = pvStructure.get()->getSubField(valueString);
-    if((whatMask&scalarValueBit)!=0) {
-        switch(dbaddr.field_type) {
-        case DBF_CHAR:
-        case DBF_UCHAR: {
-            int8 * val = static_cast<int8 *>(dbaddr.pfield);
-            PVByte *pv = static_cast<PVByte *>(pvField);
-            pv->put(*val);
-            break;
-        }
-        case DBF_SHORT:
-        case DBF_USHORT: {
-            int16 * val = static_cast<int16 *>(dbaddr.pfield);
-            PVShort *pv = static_cast<PVShort *>(pvField);
-            pv->put(*val);
-            break;
-        }
-        case DBF_LONG:
-        case DBF_ULONG: {
-            int32 * val = static_cast<int32 *>(dbaddr.pfield);
-            PVInt *pv = static_cast<PVInt *>(pvField);
-            pv->put(*val);
-            break;
-        }
-        case DBF_FLOAT: {
-            float * val = static_cast<float *>(dbaddr.pfield);
-            PVFloat *pv = static_cast<PVFloat *>(pvField);
-            pv->put(*val);
-            break;
-        }
-        case DBF_DOUBLE: {
-            double * val = static_cast<double *>(dbaddr.pfield);
-            PVDouble *pv = static_cast<PVDouble *>(pvField);
-            pv->put(*val);
-            break;
-        }
-        case DBF_STRING: {
-            char * val = static_cast<char *>(dbaddr.pfield);
-            String sval(val);
-            PVString *pvString = static_cast<PVString *>(pvField);
-            pvString->put(sval);
-        }
-        }
-        bitSet->set(pvField->getFieldOffset());
-    } else if((whatMask&arrayValueBit)!=0) {
-        long length = dbaddr.no_elements;
-        long offset = 0;
-        struct rset *prset = dbGetRset(&dbaddr);
-        if(prset && prset->get_array_info) {
-            get_array_info get_info;
-            get_info = (get_array_info)(prset->get_array_info);
-            get_info(&dbaddr, &length, &offset);
-            if(offset!=0) {
-                dbScanUnlock(dbaddr.precord);
-                channelGetRequester.getDone(
-                    Status(Status::STATUSTYPE_ERROR,
-                       String("offset not supported"),
-                       String("")));
-                return;
-            }
-        }
-        int field_size = dbaddr.field_size;
-        PVArray *pvArray = static_cast<PVArray *>(pvField);
-        int capacity = pvArray->getCapacity();
-        if(capacity!=length) {
-            pvArray->setCapacity(length);
-            pvArray->setLength(length);
-        }
-        switch(dbaddr.field_type) {
-        case DBF_CHAR:
-        case DBF_UCHAR: {
-            PVByteArray *pv = static_cast<PVByteArray *>(pvField);
-            ByteArrayData data;
-            pv->get(0,length,&data);
-            memcpy(data.data,dbaddr.pfield,length*field_size);
-            pv->postPut();
-            break;
-        }
-        case DBF_SHORT:
-        case DBF_USHORT: {
-            PVShortArray *pv = static_cast<PVShortArray *>(pvField);
-            ShortArrayData data;
-            pv->get(0,length,&data);
-            memcpy(data.data,dbaddr.pfield,length*field_size);
-            pv->postPut();
-            break;
-        }
-        case DBF_LONG:
-        case DBF_ULONG: {
-            PVIntArray *pv = static_cast<PVIntArray *>(pvField);
-            IntArrayData data;
-            pv->get(0,length,&data);
-            memcpy(data.data,dbaddr.pfield,length*field_size);
-            pv->postPut();
-            break;
-        }
-        case DBF_FLOAT: {
-            PVFloatArray *pv = static_cast<PVFloatArray *>(pvField);
-            FloatArrayData data;
-            pv->get(0,length,&data);
-            memcpy(data.data,dbaddr.pfield,length*field_size);
-            pv->postPut();
-            break;
-        }
-        case DBF_DOUBLE: {
-            PVDoubleArray *pv = static_cast<PVDoubleArray *>(pvField);
-            DoubleArrayData data;
-            pv->get(0,length,&data);
-            memcpy(data.data,dbaddr.pfield,length*field_size);
-            pv->postPut();
-            break;
-        }
-        case DBF_STRING: {
-            PVStringArray *pv = static_cast<PVStringArray *>(pvField);
-            StringArrayData data;
-            pv->get(0,length,&data);
-            int index = 0;
-            char *pchar = static_cast<char *>(dbaddr.pfield);
-            while(index<length) {
-                data.data[index] = String(pchar);
-                index++;
-                pchar += dbaddr.field_size;
-            }
-            pv->postPut();
-            break;
-        }
-        }
-        bitSet->set(pvField->getFieldOffset());
-    } else if((whatMask&enumValueBit)!=0) {
-        PVStructure *pvEnum = static_cast<PVStructure *>(pvField);
-        PVInt *pvIndex = pvEnum->getIntField(indexString);
-        if(dbaddr.field_type==DBF_MENU) {
-            epicsEnum16 *value = static_cast<epicsEnum16*>(dbaddr.pfield);
-            pvIndex->put(*value);
-        } else if(dbaddr.field_type==DBF_ENUM) {
-            epicsEnum16 *value = static_cast<epicsEnum16*>(dbaddr.pfield);
-            pvIndex->put(*value);
-        } else if(dbaddr.field_type==DBF_DEVICE) {
-            epicsEnum16 value = static_cast<epicsEnum16>(dbaddr.precord->dtyp);
-            pvIndex->put(value);
-        }
-        bitSet->set(pvIndex->getFieldOffset());
-    }
+    dbScanLock(dbAddr.precord);
+    Status status = V3Util::get(
+        channelGetRequester,propertyMask,dbAddr,*pvStructure,*bitSet,0);
+    dbScanUnlock(dbAddr.precord);
     if(firstTime) {
         firstTime = false;
         bitSet->clear();
         bitSet->set(0);
     }
-    dbScanUnlock(dbaddr.precord);
-    channelGetRequester.getDone(Status::OK);
+    channelGetRequester.getDone(status);
     if(lastRequest) destroy();
 }
 

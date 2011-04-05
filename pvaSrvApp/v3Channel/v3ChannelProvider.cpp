@@ -60,6 +60,7 @@ V3ChannelProvider::V3ChannelProvider()
 
 V3ChannelProvider::~V3ChannelProvider()
 {
+    printf("V3ChannelProvider::~V3ChannelProvider() ???");
     while(true) {
         ChannelListNode *node = channelList.removeHead();
         if(node==0) break;
@@ -71,6 +72,7 @@ V3ChannelProvider::~V3ChannelProvider()
 
 void V3ChannelProvider::destroy()
 {
+    printf("V3ChannelProvider::destroy\n");
     Lock xx(mutex);
     if(!isRegistered) return;
     isRegistered = false;
@@ -88,8 +90,8 @@ ChannelFind *V3ChannelProvider::channelFind(
     String channelName,
     ChannelFindRequester *channelFindRequester)
 {
-    struct dbAddr dbaddr;
-    long result = dbNameToAddr(channelName.c_str(),&dbaddr);
+    struct dbAddr dbAddr;
+    long result = dbNameToAddr(channelName.c_str(),&dbAddr);
     if(result!=0) {
         channelFindRequester->channelFindResult(notFoundStatus,0,false);
         return 0;
@@ -112,14 +114,14 @@ Channel *V3ChannelProvider::createChannel(
     short priority,
     String address)
 {
-    struct dbAddr dbaddr;
-    long result = dbNameToAddr(channelName.c_str(),&dbaddr);
+    struct dbAddr dbAddr;
+    long result = dbNameToAddr(channelName.c_str(),&dbAddr);
     if(result!=0) {
         channelRequester->channelCreated(notFoundStatus,0);
         return 0;
     }
     std::auto_ptr<DbAddr> addr(new DbAddr());
-    memcpy(addr.get(),&dbaddr,sizeof(dbaddr));
+    memcpy(addr.get(),&dbAddr,sizeof(dbAddr));
     V3Channel *v3Channel = new V3Channel(*this,*channelRequester,channelName,addr);
     v3Channel->init();
     ChannelListNode *node = new ChannelListNode(*v3Channel);

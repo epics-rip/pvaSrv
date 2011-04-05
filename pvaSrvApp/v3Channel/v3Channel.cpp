@@ -38,15 +38,16 @@ V3Channel::V3Channel(
     channelGetList(),
     channelPutList(),
     channelMonitorList(),
-    channelArrayList()
+    channelArrayList(),
+    context(0)
 {
 }
 
 void V3Channel::init()
 {
     ScalarType scalarType = pvBoolean;
-    DbAddr *dbaddr = addr.get();
-    switch(dbaddr->field_type) {
+    DbAddr *dbAddr = addr.get();
+    switch(dbAddr->field_type) {
     case DBF_CHAR:
         case DBF_UCHAR:
             scalarType = pvByte; break;
@@ -67,7 +68,7 @@ void V3Channel::init()
     }
     if(scalarType!=pvBoolean) {
         StandardField *standardField = getStandardField();
-        bool isArray = (dbaddr->no_elements>1) ? true : false;
+        bool isArray = (dbAddr->no_elements>1) ? true : false;
         if(isArray) {
             recordField = standardField->scalarArrayValue(scalarType,
                 String("value,timeStamp,alarm,display"));
@@ -80,6 +81,7 @@ void V3Channel::init()
 
 V3Channel::~V3Channel()
 {
+    delete context;
 }
 
 void V3Channel::destroy()
@@ -231,7 +233,9 @@ Monitor *V3Channel::createMonitor(
 {
     V3ChannelMonitor *v3ChannelMonitor = new V3ChannelMonitor(
         *this,*monitorRequester,*(addr.get()));
-    ChannelMonitorListNode * node = v3ChannelMonitor->init(*pvRequest);
+    if(context==0) context = new CAV3Context(requester);
+    ChannelMonitorListNode * node = v3ChannelMonitor->init(
+        *pvRequest,*context);
     if(node!=0) channelMonitorList.addTail(*node);
     return v3ChannelMonitor;
 }

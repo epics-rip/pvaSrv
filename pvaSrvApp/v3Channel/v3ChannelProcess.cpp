@@ -17,37 +17,11 @@
 #include <stdexcept>
 #include <memory>
 
-#include <cantProceed.h>
-#include <epicsStdio.h>
-#include <epicsMutex.h>
-#include <epicsEvent.h>
-#include <epicsThread.h>
-#include <epicsExit.h>
-#include <dbAccess.h>
-#include <dbNotify.h>
-
-#include <epicsExport.h>
-
-#include <noDefaultMethods.h>
-#include <pvIntrospect.h>
 #include <pvData.h>
 #include <pvAccess.h>
-#include "standardField.h"
-#include "standardPVField.h"
-#include "alarm.h"
-#include "control.h"
-#include "display.h"
-#include "timeStamp.h"
-#include "pvAlarm.h"
-#include "pvControl.h"
-#include "pvDisplay.h"
-#include "pvEnumerated.h"
-#include "pvTimeStamp.h"
 
 #include "pvDatabase.h"
 #include "v3Channel.h"
-
-#include "support.h"
 
 namespace epics { namespace pvIOC { 
 
@@ -63,9 +37,9 @@ static String valueString("value");
 V3ChannelProcess::V3ChannelProcess(
     V3Channel &v3Channel,
     ChannelProcessRequester &channelProcessRequester,
-    DbAddr &dbaddr)
+    DbAddr &dbAddr)
 : v3Channel(v3Channel),channelProcessRequester(channelProcessRequester),
-  dbaddr(dbaddr),
+  dbAddr(dbAddr),
   processListNode(*this),
   pNotify(0),
   notifyAddr(0),
@@ -80,7 +54,7 @@ ChannelProcessListNode * V3ChannelProcess::init()
 {
    pNotify = std::auto_ptr<struct putNotify>(new (struct putNotify)());
    notifyAddr = std::auto_ptr<DbAddr>(new DbAddr());
-   memcpy(notifyAddr.get(),&dbaddr,sizeof(DbAddr));
+   memcpy(notifyAddr.get(),&dbAddr,sizeof(DbAddr));
    DbAddr *paddr = notifyAddr.get();
    struct dbCommon *precord = paddr->precord;
    char buffer[sizeof(precord->name) + 10];

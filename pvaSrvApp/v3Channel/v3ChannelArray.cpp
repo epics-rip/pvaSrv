@@ -64,9 +64,9 @@ typedef long (*put_array_info) (DBADDR *,long );
 V3ChannelArray::V3ChannelArray(
     V3Channel &v3Channel,
     ChannelArrayRequester &channelArrayRequester,
-    DbAddr &dbaddr)
+    DbAddr &dbAddr)
 : v3Channel(v3Channel),channelArrayRequester(channelArrayRequester),
-  dbaddr(dbaddr),
+  dbAddr(dbAddr),
   arrayListNode(*this),
   pvScalarArray(0)
 {
@@ -77,14 +77,14 @@ V3ChannelArray::~V3ChannelArray() {}
 
 ChannelArrayListNode * V3ChannelArray::init(PVStructure &pvRequest)
 {
-    if(!dbaddr.no_elements>1) {
+    if(!dbAddr.no_elements>1) {
         channelArrayRequester.message(
            String("field in V3 record is not an array"),errorMessage);
         return false;
     }
     ScalarType scalarType(pvBoolean);
     // Note that pvBoolean is not a supported type
-    switch(dbaddr.field_type) {
+    switch(dbAddr.field_type) {
     case DBF_CHAR:
     case DBF_UCHAR:
         scalarType = pvByte; break;
@@ -122,16 +122,16 @@ void V3ChannelArray::destroy() {
 
 void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
 {
-    dbScanLock(dbaddr.precord);
+    dbScanLock(dbAddr.precord);
     long length = 0;
     long v3offset = 0;
-    struct rset *prset = dbGetRset(&dbaddr);
+    struct rset *prset = dbGetRset(&dbAddr);
     if(prset && prset->get_array_info) {
         get_array_info get_info;
         get_info = (get_array_info)(prset->get_array_info);
-        get_info(&dbaddr, &length, &v3offset);
+        get_info(&dbAddr, &length, &v3offset);
         if(v3offset!=0) {
-            dbScanUnlock(dbaddr.precord);
+            dbScanUnlock(dbAddr.precord);
             channelArrayRequester.getArrayDone(
                 Status(Status::STATUSTYPE_ERROR,
                    String("v3offset not supported"),
@@ -143,43 +143,43 @@ void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
     if(count<=0) count = length - offset;
     if((offset+count)>length) count = length -offset;
     if(count<0) {
-        dbScanUnlock(dbaddr.precord);
+        dbScanUnlock(dbAddr.precord);
         channelArrayRequester.getArrayDone(Status::OK);
         if(lastRequest) destroy();
         return;
     }
     pvScalarArray->setLength(count);
-    switch(dbaddr.field_type) {
+    switch(dbAddr.field_type) {
     case DBF_CHAR:
     case DBF_UCHAR: {
         PVByteArray *pv = static_cast<PVByteArray *>(pvScalarArray.get());
-        int8 *from = static_cast<int8 *>(dbaddr.pfield);
+        int8 *from = static_cast<int8 *>(dbAddr.pfield);
         pv->put(0,count,from,offset);
         break;
     }
     case DBF_SHORT:
     case DBF_USHORT: {
         PVShortArray *pv = static_cast<PVShortArray *>(pvScalarArray.get());
-        int16 *from = static_cast<int16 *>(dbaddr.pfield);
+        int16 *from = static_cast<int16 *>(dbAddr.pfield);
         pv->put(0,count,from,offset);
         break;
     }
     case DBF_LONG:
     case DBF_ULONG: {
         PVIntArray *pv = static_cast<PVIntArray *>(pvScalarArray.get());
-        int32 *from = static_cast<int32 *>(dbaddr.pfield);
+        int32 *from = static_cast<int32 *>(dbAddr.pfield);
         pv->put(0,count,from,offset);
         break;
     }
     case DBF_FLOAT: {
         PVFloatArray *pv = static_cast<PVFloatArray *>(pvScalarArray.get());
-        float *from = static_cast<float *>(dbaddr.pfield);
+        float *from = static_cast<float *>(dbAddr.pfield);
         pv->put(0,count,from,offset);
         break;
     }
     case DBF_DOUBLE: {
         PVDoubleArray *pv = static_cast<PVDoubleArray *>(pvScalarArray.get());
-        double *from = static_cast<double *>(dbaddr.pfield);
+        double *from = static_cast<double *>(dbAddr.pfield);
         pv->put(0,count,from,offset);
         break;
     }
@@ -188,55 +188,55 @@ void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
         StringArrayData data;
         pv->get(0,length,&data);
         int index = 0;
-        char *pchar = static_cast<char *>(dbaddr.pfield);
-        pchar += dbaddr.field_size*offset;
+        char *pchar = static_cast<char *>(dbAddr.pfield);
+        pchar += dbAddr.field_size*offset;
         while(index<count) {
             data.data[index] = String(pchar);
             index++;
-            pchar += dbaddr.field_size;
+            pchar += dbAddr.field_size;
         }
         break;
     }
     }
-    dbScanUnlock(dbaddr.precord);
+    dbScanUnlock(dbAddr.precord);
     channelArrayRequester.getArrayDone(Status::OK);
     if(lastRequest) destroy();
 }
 
 void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
 {
-    dbScanLock(dbaddr.precord);
-    long no_elements = dbaddr.no_elements;
+    dbScanLock(dbAddr.precord);
+    long no_elements = dbAddr.no_elements;
     if((offset+count)>no_elements) count = no_elements - count;
     if(count<=0) {
-        dbScanUnlock(dbaddr.precord);
+        dbScanUnlock(dbAddr.precord);
         channelArrayRequester.getArrayDone(Status::OK);
         if(lastRequest) destroy();
         return;
     }
     long length = offset + count;
-    struct rset *prset = dbGetRset(&dbaddr);
+    struct rset *prset = dbGetRset(&dbAddr);
     if(prset && prset->get_array_info) {
         long oldLength = 0;
         long v3offset = 0;
         get_array_info get_info;
         get_info = (get_array_info)(prset->get_array_info);
-        get_info(&dbaddr, &oldLength, &v3offset);
+        get_info(&dbAddr, &oldLength, &v3offset);
         if(length>oldLength) {
            if(prset && prset->put_array_info) {
                put_array_info put_info;
                put_info = (put_array_info)(prset->put_array_info);
-               put_info(&dbaddr, length);
+               put_info(&dbAddr, length);
            }
         }
     }
-    switch(dbaddr.field_type) {
+    switch(dbAddr.field_type) {
     case DBF_CHAR:
     case DBF_UCHAR: {
         PVByteArray *pv = static_cast<PVByteArray *>(pvScalarArray.get());
         ByteArrayData data;
         pv->get(0,count,&data);
-        int8 *to = static_cast<int8 *>(dbaddr.pfield);
+        int8 *to = static_cast<int8 *>(dbAddr.pfield);
         int8 *from = data.data;
         for(int i=0; i<count; i++)  to[offset+i] = from[i];
         break;
@@ -246,7 +246,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
         PVShortArray *pv = static_cast<PVShortArray *>(pvScalarArray.get());
         ShortArrayData data;
         pv->get(0,count,&data);
-        int16 *to = static_cast<int16 *>(dbaddr.pfield);
+        int16 *to = static_cast<int16 *>(dbAddr.pfield);
         int16 *from = data.data;
         for(int i=0; i<count; i++)  to[offset+i] = from[i];
         break;
@@ -256,7 +256,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
         PVIntArray *pv = static_cast<PVIntArray *>(pvScalarArray.get());
         IntArrayData data;
         pv->get(0,count,&data);
-        int32 *to = static_cast<int32 *>(dbaddr.pfield);
+        int32 *to = static_cast<int32 *>(dbAddr.pfield);
         int32 *from = data.data;
         for(int i=0; i<count; i++)  to[offset+i] = from[i];
         break;
@@ -265,7 +265,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
         PVFloatArray *pv = static_cast<PVFloatArray *>(pvScalarArray.get());
         FloatArrayData data;
         pv->get(0,count,&data);
-        float *to = static_cast<float *>(dbaddr.pfield);
+        float *to = static_cast<float *>(dbAddr.pfield);
         float *from = data.data;
         for(int i=0; i<count; i++)  to[offset+i] = from[i];
         break;
@@ -275,7 +275,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
         PVDoubleArray *pv = static_cast<PVDoubleArray *>(pvScalarArray.get());
         DoubleArrayData data;
         pv->get(0,count,&data);
-        double *to = static_cast<double *>(dbaddr.pfield);
+        double *to = static_cast<double *>(dbAddr.pfield);
         double *from = data.data;
         for(int i=0; i<count; i++)  to[offset+i] = from[i];
         break;
@@ -285,8 +285,8 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
         StringArrayData data;
         pv->get(0,length,&data);
         int index = 0;
-        char *to = static_cast<char *>(dbaddr.pfield);
-        int len = dbaddr.field_size;
+        char *to = static_cast<char *>(dbAddr.pfield);
+        int len = dbAddr.field_size;
         while(index<length) {
             const char * from = data.data[index].c_str();
             if(from!=0) {
@@ -299,23 +299,23 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
         break;
     }
     }
-    dbScanUnlock(dbaddr.precord);
+    dbScanUnlock(dbAddr.precord);
     channelArrayRequester.getArrayDone(Status::OK);
     if(lastRequest) destroy();
 }
 
 void V3ChannelArray::setLength(bool lastRequest,int length,int capacity)
 {
-    dbScanLock(dbaddr.precord);
-    long no_elements = dbaddr.no_elements;
+    dbScanLock(dbAddr.precord);
+    long no_elements = dbAddr.no_elements;
     if(length>no_elements) length = no_elements;
-    struct rset *prset = dbGetRset(&dbaddr);
+    struct rset *prset = dbGetRset(&dbAddr);
     if(prset && prset->put_array_info) {
         put_array_info put_info;
         put_info = (put_array_info)(prset->put_array_info);
-        put_info(&dbaddr, length);
+        put_info(&dbAddr, length);
     }
-    dbScanUnlock(dbaddr.precord);
+    dbScanUnlock(dbAddr.precord);
     channelArrayRequester.setLengthDone(Status::OK);
     if(lastRequest) destroy();
 }
