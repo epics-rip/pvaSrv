@@ -19,18 +19,6 @@
 #include <requester.h>
 #include <lock.h>
 
-class CAV3Context {
-public:
-    CAV3Context(epics::pvData::Requester &requester);
-    ~CAV3Context();
-    void start();
-
-    epics::pvData::Requester &requester;
-private:
-    epics::pvData::Mutex mutex;
-    struct ca_client_context *context;
-};
-
 enum V3Type {
     v3Enum,
     v3Byte,
@@ -72,13 +60,12 @@ public:
     CAV3Monitor(
         CAV3MonitorRequester &requester,
         epics::pvData::String pvName,
-        V3Type v3Type,
-        CAV3Context &context);
+        V3Type v3Type);
     ~CAV3Monitor();
     CAV3Data & getData();
     void connect();
     void start();
-    void disconnect();
+    void stop();
     const char * getStatusString(long status);
     bool hasReadAccess();
     bool hasWriteAccess();

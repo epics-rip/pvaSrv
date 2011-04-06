@@ -33,6 +33,7 @@
 #include "v3Channel.h"
 #include "support.h"
 
+#include "CAV3Context.h"
 #include "v3CAMonitor.h"
 #include "v3Util.h"
 
@@ -74,7 +75,7 @@ V3ChannelMonitor::~V3ChannelMonitor() {
 
 
 ChannelMonitorListNode * V3ChannelMonitor::init(
-    PVStructure &pvRequest,CAV3Context &context)
+    PVStructure &pvRequest)
 {
     String queueSizeString(V3Util::queueSizeString);
     PVField *pvField = pvRequest.getSubField(queueSizeString);
@@ -120,7 +121,7 @@ ChannelMonitorListNode * V3ChannelMonitor::init(
         getConvert()->copyStructure(pvStructurePtrArray[0],pvStructurePtrArray[i]);
     }
     caV3Monitor = std::auto_ptr<CAV3Monitor>(
-        new CAV3Monitor( *this, pvName, v3Type,context));
+        new CAV3Monitor( *this, pvName, v3Type));
     caV3Monitor.get()->connect();
     event.wait();
     monitorRequester.monitorConnect(
@@ -152,7 +153,7 @@ Status V3ChannelMonitor::start()
 
 Status V3ChannelMonitor::stop()
 {
-    caV3Monitor.get()->disconnect();
+    caV3Monitor.get()->stop();
     return Status::OK;
 }
 

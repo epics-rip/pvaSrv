@@ -20,48 +20,10 @@
 #include <dbDefs.h>
 #include <alarmString.h>
 
-#include <v3CAMonitor.h>
+#include "v3CAMonitor.h"
+#include "CAV3Context.h"
 
 using namespace epics::pvData;
-
-extern "C" {
-
-static void exceptionCallback(struct exception_handler_args args)
-{
-    CAV3Context *pvt = static_cast<CAV3Context *>(args.usr);   
-    String message(ca_message(args.stat));
-    pvt->requester.message(message,errorMessage);
-}
-
-} //extern "C"
-
-CAV3Context::CAV3Context(Requester &requester)
-: requester(requester),
-  mutex(),
-  context(0)
-{}
-
-CAV3Context::~CAV3Context()
-{
-    Lock xx(mutex);
-    if(context!=0) ca_context_destroy();
-    context = 0;
-}
-
-void CAV3Context::start()
-{
-    Lock xx(mutex);
-    if(context!=0) return;
-    int status = 0;
-    SEVCHK(ca_context_create(ca_enable_preemptive_callback),
-        "CAV3MonitorPvt calling ca_context_create");
-    status = ca_add_exception_event(exceptionCallback,this);
-    if(status!=ECA_NORMAL) {
-        requester.message(String(
-            "ca_add_exception_event failed"),warningMessage);
-    }
-    context = ca_current_context();
-}
 
 CAV3Data::CAV3Data()
 : doubleValue(0.0),timeStamp(),
@@ -78,7 +40,7 @@ public:
     CAV3Data & getData();
     void connect();
     void start();
-    void disconnect();
+    void stop();
 
     CAV3MonitorRequester &requester;
     String pvName;
@@ -86,6 +48,7 @@ public:
     CAV3Data data;
     chanId chid;
     evid myevid;
+    CAV3Context &context;
 };
 
 extern "C" {
@@ -191,20 +154,23 @@ CAV3MonitorPvt::CAV3MonitorPvt(
     CAV3MonitorRequester &requester,
     String pvName,V3Type v3Type)
 : requester(requester),pvName(pvName),v3Type(v3Type),
-  data(),chid(0),myevid(0)
+  data(),chid(0),myevid(0),context(CAV3ContextCreate::get(requester))
 { }
 
 CAV3MonitorPvt::~CAV3MonitorPvt()
 {
     if(chid!=0) {
+        context.checkContext();
         ca_clear_channel(chid);
         chid = 0;
     }
+    context.release();
 }
 
 void CAV3MonitorPvt::connect()
 {
     int status = 0;
+    context.checkContext();
     status = ca_create_channel(
         pvName.c_str(),connectionCallback,this,20,&chid);
     if(status!=ECA_NORMAL) {
@@ -232,6 +198,7 @@ void CAV3MonitorPvt::start()
         case v3Double: type = DBR_TIME_DOUBLE; break;
         case v3String: type = DBR_TIME_STRING; break;
     }
+    context.checkContext();
     int status = ca_create_subscription(
         type, 1, chid, DBE_VALUE|DBE_ALARM,
         eventCallback, this, &myevid);
@@ -241,16 +208,17 @@ void CAV3MonitorPvt::start()
     }
 }
 
-void CAV3MonitorPvt::disconnect()
+void CAV3MonitorPvt::stop()
 {
-    ca_clear_channel(chid);
+    context.checkContext();
+    ca_clear_subscription(myevid);
 }
 
 CAV3Monitor::CAV3Monitor(
     CAV3MonitorRequester &requester,
-    String pvName,V3Type v3Type,CAV3Context &context)
+    String pvName,V3Type v3Type)
 : pImpl(new CAV3MonitorPvt(requester,pvName,v3Type))
-{context.start(); }
+{}
 
 CAV3Monitor::~CAV3Monitor()
 {
@@ -272,9 +240,9 @@ void CAV3Monitor::start()
     pImpl->start();
 }
 
-void CAV3Monitor::disconnect()
+void CAV3Monitor::stop()
 {
-    pImpl->disconnect();
+    pImpl->stop();
 }
 
 const char *CAV3Monitor::getStatusString(long status)

@@ -144,7 +144,6 @@ private:
     ChannelPutList channelPutList;
     ChannelMonitorList channelMonitorList;
     ChannelArrayList channelArrayList;
-    CAV3Context *context;
 };
 
 class V3ChannelProcess : public virtual epics::pvAccess::ChannelProcess {
@@ -245,7 +244,7 @@ public:
     );
     virtual ~V3ChannelMonitor();
     ChannelMonitorListNode * init(
-        epics::pvData::PVStructure & pvRequest,CAV3Context &context);
+        epics::pvData::PVStructure & pvRequest);
     virtual epics::pvData::String getRequesterName();
     virtual void message(
         epics::pvData::String message,

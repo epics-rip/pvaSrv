@@ -38,8 +38,7 @@ V3Channel::V3Channel(
     channelGetList(),
     channelPutList(),
     channelMonitorList(),
-    channelArrayList(),
-    context(0)
+    channelArrayList()
 {
 }
 
@@ -81,7 +80,6 @@ void V3Channel::init()
 
 V3Channel::~V3Channel()
 {
-    delete context;
 }
 
 void V3Channel::destroy()
@@ -233,9 +231,8 @@ Monitor *V3Channel::createMonitor(
 {
     V3ChannelMonitor *v3ChannelMonitor = new V3ChannelMonitor(
         *this,*monitorRequester,*(addr.get()));
-    if(context==0) context = new CAV3Context(requester);
     ChannelMonitorListNode * node = v3ChannelMonitor->init(
-        *pvRequest,*context);
+        *pvRequest);
     if(node!=0) channelMonitorList.addTail(*node);
     return v3ChannelMonitor;
 }

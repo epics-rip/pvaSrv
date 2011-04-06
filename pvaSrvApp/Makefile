@@ -31,6 +31,7 @@ LIBSRCS += util.cpp
 SRC_DIRS += $(IOC)/v3Channel
 INC += v3Channel.h
 INC += v3CAMonitor.h
+LIBSRCS += CAV3Context.cpp
 LIBSRCS += v3Array.cpp
 LIBSRCS += v3Util.cpp
 LIBSRCS += v3Channel.cpp
