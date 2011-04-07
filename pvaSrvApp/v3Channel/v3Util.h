@@ -87,7 +87,11 @@ public:
     static epics::pvData::Status put(
         epics::pvData::Requester &requester,
         int mask,DbAddr &dbAddr,
-        epics::pvData::PVStructure &pvStructure);
+        epics::pvData::PVField *pvField);
+    static epics::pvData::Status putField(
+        epics::pvData::Requester &requester,
+        int mask,DbAddr &dbAddr,
+        epics::pvData::PVField *pvField);
     static epics::pvData::ScalarType getScalarType(
         epics::pvData::Requester &requester,
         DbAddr &dbAddr);

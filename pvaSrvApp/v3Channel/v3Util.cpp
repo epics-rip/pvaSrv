@@ -132,7 +132,7 @@ int V3Util::getProperties(
         case DBF_ENUM:
             propertyMask |= enumValueBit; break;
         case DBF_MENU:
-            propertyMask |= (enumValueBit|noModBit); break;
+            propertyMask |= (enumValueBit|dbPutBit); break;
         case DBF_DEVICE:
             propertyMask |= enumValueBit; break;
         case DBF_INLINK:
@@ -629,55 +629,54 @@ Status  V3Util::get(
 Status  V3Util::put(
         Requester &requester,
         int propertyMask,DbAddr &dbAddr,
-        PVStructure &pvStructure)
+        PVField *pvField)
 {
-    PVFieldPtrArray pvFields = pvStructure.getPVFields();
-    PVFieldPtr pvField = pvFields[0];
     if((propertyMask&scalarValueBit)!=0) {
-        switch(dbAddr.field_type) {
-        case DBF_CHAR:
-        case DBF_UCHAR: {
+        PVScalar *pvScalar = static_cast<PVScalar *>(pvField);
+        ScalarType scalarType = pvScalar->getScalar()->getScalarType();
+        switch(scalarType) {
+        case pvByte: {
             int8 * val = static_cast<int8 *>(dbAddr.pfield);
             PVByte *pv = static_cast<PVByte *>(pvField);
             *val = pv->get();
             break;
         }
-        case DBF_SHORT:
-        case DBF_USHORT: {
+        case pvShort: {
             int16 * val = static_cast<int16 *>(dbAddr.pfield);
             PVShort *pv = static_cast<PVShort *>(pvField);
             *val = pv->get();
             break;
         }
-        case DBF_LONG:
-        case DBF_ULONG: {
+        case pvInt: {
             int32 * val = static_cast<int32 *>(dbAddr.pfield);
             PVInt *pv = static_cast<PVInt *>(pvField);
             *val = pv->get();
             break;
         }
-        case DBF_FLOAT: {
+        case pvFloat: {
             float * val = static_cast<float *>(dbAddr.pfield);
             PVFloat *pv = static_cast<PVFloat *>(pvField);
             *val = pv->get();
             break;
         }
-        case DBF_DOUBLE: {
+        case pvDouble: {
             double * val = static_cast<double *>(dbAddr.pfield);
             PVDouble *pv = static_cast<PVDouble *>(pvField);
             *val = pv->get();
             break;
         }
-        case DBF_STRING: {
+        case pvString: {
             char * to = static_cast<char *>(dbAddr.pfield);
             PVString *pvString = static_cast<PVString *>(pvField);
             int len = dbAddr.field_size;
             strncpy(to,pvString->get().c_str(),len -1);
             *(to + len -1) = 0;
         }
+        default:
+            requester.message(
+                String("Logic Error did not handle scalarType"),errorMessage);
+            return Status::OK;
         }
-    } else if((propertyMask&arrayValueBit)!=0) {
-         // nothing to do deserialization did it
     } else if((propertyMask&enumValueBit)!=0) {
         PVStructure *pvEnum = static_cast<PVStructure *>(pvField);
         PVInt *pvIndex = pvEnum->getIntField(indexString);
@@ -690,11 +689,95 @@ Status  V3Util::put(
         } else {
             requester.message(
                 String("Logic Error unknown enum field"),errorMessage);
+            return Status::OK;
         }
+    } else {
+        requester.message(
+            String("Logic Error unknown field to put"),errorMessage);
+            return Status::OK;
     }
     dbFldDes *pfldDes = dbAddr.pfldDes;
     if(dbIsValueField(pfldDes)) {
         dbAddr.precord->udf = 0;
+    }
+    return Status::OK;
+}
+
+Status  V3Util::putField(
+        Requester &requester,
+        int propertyMask,DbAddr &dbAddr,
+        PVField *pvField)
+{
+    const void *pbuffer = 0;
+    short dbrType = 0;
+    int8 bvalue;
+    int16 svalue;
+    int32 ivalue;
+    float fvalue;
+    double dvalue;
+    String string;
+    if((propertyMask&scalarValueBit)!=0) {
+        PVScalar *pvScalar = static_cast<PVScalar *>(pvField);
+        ScalarType scalarType = pvScalar->getScalar()->getScalarType();
+        switch(scalarType) {
+        case pvByte: {
+            PVByte *pv = static_cast<PVByte *>(pvField);
+            bvalue = pv->get(); pbuffer = &bvalue;
+            dbrType = DBF_CHAR;
+            break;
+        }
+        case pvShort: {
+            PVShort *pv = static_cast<PVShort *>(pvField);
+            svalue = pv->get(); pbuffer = &svalue;
+            dbrType = DBF_SHORT;
+            break;
+        }
+        case pvInt: {
+            PVInt *pv = static_cast<PVInt *>(pvField);
+            ivalue = pv->get(); pbuffer = &ivalue;
+            dbrType = DBF_LONG;
+            break;
+        }
+        case pvFloat: {
+            PVFloat *pv = static_cast<PVFloat *>(pvField);
+            fvalue = pv->get(); pbuffer = &fvalue;
+            dbrType = DBF_FLOAT;
+            break;
+        }
+        case pvDouble: {
+            PVDouble *pv = static_cast<PVDouble *>(pvField);
+            dvalue = pv->get(); pbuffer = &dvalue;
+            dbrType = DBF_DOUBLE;
+            break;
+        }
+        case pvString: {
+            PVString *pvString = static_cast<PVString *>(pvField);
+            string = pvString->get();
+            pbuffer = string.c_str();
+            dbrType = DBF_STRING;
+            break;
+        }
+        default:
+            requester.message(
+                String("Logic Error did not handle scalarType"),errorMessage);
+            return Status::OK;
+        }
+    } else if((propertyMask&enumValueBit)!=0) {
+        PVStructure *pvEnum = static_cast<PVStructure *>(pvField);
+        PVInt *pvIndex = pvEnum->getIntField(indexString);
+        svalue = pvIndex->get(); pbuffer = &svalue;
+        dbrType = DBF_ENUM;
+    } else {
+        requester.message(
+                String("Logic Error unknown field to put"),errorMessage);
+        return Status::OK;
+    }
+    long status = dbPutField(&dbAddr,dbrType,pbuffer,1);
+    if(status!=0) {
+        char buf[30];
+        sprintf(buf,"dbPutField returned error 0x%lx",status);
+        String message(buf);
+        requester.message(message,warningMessage);
     }
     return Status::OK;
 }

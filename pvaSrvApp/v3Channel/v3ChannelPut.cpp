@@ -60,21 +60,25 @@ ChannelPutListNode * V3ChannelPut::init(PVStructure &pvRequest)
 {
     propertyMask = V3Util::getProperties(channelPutRequester,pvRequest,dbAddr);
     if(propertyMask==V3Util::noAccessBit) return 0;
-    if(propertyMask&V3Util::dbPutBit) {
-         channelPutRequester.message(
-             String("logic error. MUST implement V3CAPUT"),errorMessage);
-         return 0;
+    if(propertyMask==V3Util::noModBit) {
+        channelPutRequester.message(
+             String("field not allowed to be changed"),errorMessage);
+        return 0;
     }
-    propertyMask &= (
-         V3Util::processBit
-        |V3Util::shareArrayBit
-        |V3Util::scalarValueBit
-        |V3Util::arrayValueBit
-        |V3Util::enumValueBit
+    propertyMask &= ~(
+        V3Util::timeStampBit
+        |V3Util::alarmBit
+        |V3Util::displayBit
+        |V3Util::controlBit
     );
     pvStructure =  std::auto_ptr<PVStructure>(
         V3Util::createPVStructure(channelPutRequester, propertyMask, dbAddr));
-    if((propertyMask&V3Util::processBit)!=0) {
+    if((propertyMask&V3Util::dbPutBit)!=0) {
+        if((propertyMask&V3Util::processBit)!=0) {
+            channelPutRequester.message(
+             String("process determined by dbPutField"),errorMessage);
+        }
+    } else if((propertyMask&V3Util::processBit)!=0) {
        process = true;
        pNotify = std::auto_ptr<struct putNotify>(new (struct putNotify)());
        notifyAddr = std::auto_ptr<DbAddr>(new DbAddr());
@@ -117,9 +121,17 @@ void V3ChannelPut::destroy() {
 
 void V3ChannelPut::put(bool lastRequest)
 {
+    PVField *pvField = pvStructure.get()->getPVFields()[0];
+    if(propertyMask&V3Util::dbPutBit) {
+        Status status = V3Util::putField(
+            channelPutRequester,propertyMask,dbAddr,pvField);
+        channelPutRequester.putDone(status);
+        if(lastRequest) destroy();
+        return;
+    }
     dbScanLock(dbAddr.precord);
     Status status = V3Util::put(
-        channelPutRequester,propertyMask,dbAddr,*pvStructure);
+        channelPutRequester,propertyMask,dbAddr,pvField);
     dbScanUnlock(dbAddr.precord);
     if(process) {
         epicsUInt8 value = 1;
