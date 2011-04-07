@@ -10,6 +10,8 @@
 
 #include <dbAccess.h>
 #include <dbNotify.h>
+#include <special.h>
+#include <link.h>
 
 #include <pvIntrospect.h>
 #include <pvData.h>
@@ -42,6 +44,11 @@ int V3Util::timeStampBit     = 0x0020;
 int V3Util::alarmBit         = 0x0040;
 int V3Util::displayBit       = 0x0080;
 int V3Util::controlBit       = 0x0100;
+// leave bit for alarmLimitBit 0x0200
+int V3Util::noAccessBit      = 0x0400;
+int V3Util::noModBit         = 0x0800;
+int V3Util::dbPutBit         = 0x1000;
+int V3Util::isLinkBit        = 0x2000;
 
 String V3Util::recordString("record");
 String V3Util::processString("record.process");
@@ -103,11 +110,12 @@ int V3Util::getProperties(
         if(pvRequest->getSubField(valueString)!=0) getValue = true;
     }
     if(getValue) {
-        Type type = scalar;
-        if(dbAddr.no_elements>1) type = scalarArray;
+        Type type = (dbAddr.special==SPC_DBADDR) ? scalarArray : scalar;
         ScalarType scalarType(pvBoolean);
         // Note that pvBoolean is not a supported type
         switch(dbAddr.field_type) {
+        case DBF_STRING:
+            scalarType = pvString; break;
         case DBF_CHAR:
         case DBF_UCHAR:
             scalarType = pvByte; break;
@@ -121,21 +129,48 @@ int V3Util::getProperties(
             scalarType = pvFloat; break;
         case DBF_DOUBLE:
             scalarType = pvDouble; break;
-        case DBF_STRING:
-            scalarType = pvString; break;
+        case DBF_ENUM:
+            propertyMask |= enumValueBit; break;
+        case DBF_MENU:
+            propertyMask |= (enumValueBit|noModBit); break;
+        case DBF_DEVICE:
+            propertyMask |= enumValueBit; break;
+        case DBF_INLINK:
+        case DBF_OUTLINK:
+        case DBF_FWDLINK:
+            scalarType = pvString;
+            propertyMask |= (isLinkBit|dbPutBit); break;
+        case DBF_NOACCESS:
+            requester.message(String("access is not allowed"),errorMessage);
+            propertyMask = noAccessBit; return propertyMask;
         default:
-          break;
+            requester.message(String(
+                "logic error unknown DBF type"),errorMessage);
+            propertyMask = noAccessBit; return propertyMask;
         }
         if(type==scalar&&scalarType!=pvBoolean) {
            propertyMask |= scalarValueBit;
-        } else if(type==scalarArray) {
-            propertyMask |= arrayValueBit;
-        } else if(dbAddr.field_type==DBF_ENUM) {
-            propertyMask |= enumValueBit;
-        } else {
-            requester.message(
-               String("unsupported field in V3 record"),errorMessage);
-            return 0;
+        }
+    }
+    if(dbAddr.special!=0) {
+        switch(dbAddr.special) {
+        case SPC_NOMOD:
+            propertyMask |= noModBit; break;
+        case SPC_DBADDR: // already used
+            break;
+        case SPC_SCAN:
+        case SPC_ALARMACK:
+        case SPC_AS:
+        case SPC_ATTRIBUTE:
+        case SPC_MOD:
+        case SPC_RESET:
+        case SPC_LINCONV:
+        case SPC_CALC:
+            propertyMask |= dbPutBit; break;
+        default:
+            requester.message(String(
+                "logic error unknown special type"),errorMessage);
+            propertyMask = noAccessBit; return propertyMask;
         }
     }
     if(fieldList.length()!=0) {
@@ -229,6 +264,31 @@ PVStructure *V3Util::createPVStructure(
             PVStructure *pvStructure = standardPVField->enumeratedValue(
                      0,choices,length,properties);
             return pvStructure;
+        } else if(dbAddr.field_type==DBF_DEVICE) {
+            dbFldDes *pdbFldDes = dbAddr.pfldDes;
+            dbDeviceMenu *pdbDeviceMenu
+                = static_cast<dbDeviceMenu *>(pdbFldDes->ftPvt);
+            int length = pdbDeviceMenu->nChoice;
+            char **papChoice = pdbDeviceMenu->papChoice;
+            String choices[length];
+            for(int i=0; i<length; i++) {
+                 choices[i] = String(papChoice[i]);
+            }
+            PVStructure *pvStructure = standardPVField->enumeratedValue(
+                     0,choices,length,properties);
+            return pvStructure;
+        } else if(dbAddr.field_type==DBF_MENU) {
+            dbFldDes *pdbFldDes = dbAddr.pfldDes;
+            dbMenu *pdbMenu = static_cast<dbMenu *>(pdbFldDes->ftPvt);
+            int length = pdbMenu->nChoice;
+            char **papChoice = pdbMenu->papChoiceValue;
+            String choices[length];
+            for(int i=0; i<length; i++) {
+                 choices[i] = String(papChoice[i]);
+            }
+            PVStructure *pvStructure = standardPVField->enumeratedValue(
+                     0,choices,length,properties);
+            return pvStructure;
         } else {
             requester.message(
                String("bad enum field in V3 record"),errorMessage);
@@ -254,7 +314,11 @@ PVStructure *V3Util::createPVStructure(
         case DBF_STRING:
             scalarType = pvString; break;
         default:
-            throw std::logic_error(String("Should never get here"));
+             if(propertyMask&isLinkBit) {
+                  scalarType = pvString; break;
+             } else {
+                throw std::logic_error(String("Should never get here"));
+             }
     }
     if((propertyMask&scalarValueBit)!=0) {
         PVStructure *pvStructure =
@@ -458,7 +522,19 @@ Status  V3Util::get(
             break;
         }
         case pvString: {
-            char * val = static_cast<char *>(dbAddr.pfield);
+            char * val = 0;
+            if(propertyMask&isLinkBit) {
+                char buffer[100];
+                for(int i=0; i<100; i++) buffer[i]  = 0;
+                long result = dbGetField(&dbAddr,DBR_STRING,
+                    buffer,0,0,0);
+                if(result!=0) {
+                    requester.message(String("dbGetField error"),errorMessage);
+                }
+                val = buffer;
+            } else {
+                val = static_cast<char *>(dbAddr.pfield);
+            }
             String sval(val);
             PVString *pvString = static_cast<PVString *>(pvField);
             if((pvString->get().compare(sval))!=0) {
@@ -608,12 +684,12 @@ Status  V3Util::put(
         if(dbAddr.field_type==DBF_MENU) {
             requester.message(
                 String("Not allowed to change a menu field"),errorMessage);
-        } else if(dbAddr.field_type==DBF_ENUM) {
+        } else if(dbAddr.field_type==DBF_ENUM||dbAddr.field_type==DBF_DEVICE) {
             epicsEnum16 *value = static_cast<epicsEnum16*>(dbAddr.pfield);
             *value = pvIndex->get();
-        } else if(dbAddr.field_type==DBF_DEVICE) {
+        } else {
             requester.message(
-                String("Changing the DTYP field not supported"),errorMessage);
+                String("Logic Error unknown enum field"),errorMessage);
         }
     }
     dbFldDes *pfldDes = dbAddr.pfldDes;

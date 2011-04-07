@@ -59,6 +59,12 @@ V3ChannelPut::~V3ChannelPut() {}
 ChannelPutListNode * V3ChannelPut::init(PVStructure &pvRequest)
 {
     propertyMask = V3Util::getProperties(channelPutRequester,pvRequest,dbAddr);
+    if(propertyMask==V3Util::noAccessBit) return 0;
+    if(propertyMask&V3Util::dbPutBit) {
+         channelPutRequester.message(
+             String("logic error. MUST implement V3CAPUT"),errorMessage);
+         return 0;
+    }
     propertyMask &= (
          V3Util::processBit
         |V3Util::shareArrayBit

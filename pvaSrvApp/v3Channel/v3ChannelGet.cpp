@@ -54,6 +54,7 @@ V3ChannelGet::~V3ChannelGet() {}
 ChannelGetListNode * V3ChannelGet::init(PVStructure &pvRequest)
 {
     propertyMask = V3Util::getProperties(channelGetRequester,pvRequest,dbAddr);
+    if(propertyMask==V3Util::noAccessBit) return 0;
     pvStructure =  std::auto_ptr<PVStructure>(
         V3Util::createPVStructure(channelGetRequester, propertyMask, dbAddr));
     V3Util::getPropertyData(

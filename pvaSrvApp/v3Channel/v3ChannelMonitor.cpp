@@ -88,6 +88,12 @@ ChannelMonitorListNode * V3ChannelMonitor::init(
     }
     pvStructurePtrArray = new PVStructurePtr[queueSize];
     propertyMask = V3Util::getProperties(monitorRequester,pvRequest,dbAddr);
+    if(propertyMask==V3Util::noAccessBit) return 0;
+    if(propertyMask&V3Util::isLinkBit) {
+        monitorRequester.message(
+             String("can not monitor a link field"),errorMessage);
+        return 0;
+    }
     pvStructurePtrArray[0] = V3Util::createPVStructure(
         monitorRequester,propertyMask,dbAddr);
     PVDataCreate * pvDataCreate = getPVDataCreate();
