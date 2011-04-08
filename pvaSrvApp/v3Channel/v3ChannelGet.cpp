@@ -57,6 +57,7 @@ ChannelGetListNode * V3ChannelGet::init(PVStructure &pvRequest)
     if(propertyMask==V3Util::noAccessBit) return 0;
     pvStructure =  std::auto_ptr<PVStructure>(
         V3Util::createPVStructure(channelGetRequester, propertyMask, dbAddr));
+    if(pvStructure.get()==0) return 0;
     V3Util::getPropertyData(
         channelGetRequester,propertyMask,dbAddr,*pvStructure);
     int numFields = pvStructure->getStructure()->getNumberFields();

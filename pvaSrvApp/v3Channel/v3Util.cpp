@@ -151,6 +151,9 @@ int V3Util::getProperties(
         if(type==scalar&&scalarType!=pvBoolean) {
            propertyMask |= scalarValueBit;
         }
+        if(type==scalarArray&&scalarType!=pvBoolean) {
+           propertyMask |= arrayValueBit;
+        }
     }
     if(dbAddr.special!=0) {
         switch(dbAddr.special) {
@@ -548,7 +551,54 @@ Status  V3Util::get(
         }
         if(wasChanged) bitSet.set(pvField->getFieldOffset());
     } else if((propertyMask&arrayValueBit)!=0) {
-        // nothing to do serialize takes care of it
+        PVScalarArray* pvArray = static_cast<PVScalarArray *>(pvField);
+        ScalarType scalarType = pvArray->getScalarArray()->getElementType();
+        switch(scalarType) {
+        case pvByte: {
+            PVByteArray *pva = static_cast<PVByteArray *>(pvArray);
+            ByteArrayData data;
+            int length = pva->getLength();
+            pva->get(0,length,&data);
+            break;
+        }
+        case pvShort: {
+            PVShortArray *pva = static_cast<PVShortArray *>(pvArray);
+            ShortArrayData data;
+            int length = pva->getLength();
+            pva->get(0,length,&data);
+            break;
+        }
+        case pvInt: {
+            PVIntArray *pva = static_cast<PVIntArray *>(pvArray);
+            IntArrayData data;
+            int length = pva->getLength();
+            pva->get(0,length,&data);
+            break;
+        }
+        case pvFloat: {
+            PVFloatArray *pva = static_cast<PVFloatArray *>(pvArray);
+            FloatArrayData data;
+            int length = pva->getLength();
+            pva->get(0,length,&data);
+            break;
+        }
+        case pvDouble: {
+            PVDoubleArray *pva = static_cast<PVDoubleArray *>(pvArray);
+            DoubleArrayData data;
+            int length = pva->getLength();
+            pva->get(0,length,&data);
+            break;
+        }
+        case pvString: {
+            PVStringArray *pva = static_cast<PVStringArray *>(pvArray);
+            StringArrayData data;
+            int length = pva->getLength();
+            pva->get(0,length,&data);
+            break;
+        }
+        default:
+             throw std::logic_error(String("Should never get here"));
+        }
         bitSet.set(pvField->getFieldOffset());
     } else if((propertyMask&enumValueBit)!=0) {
         PVStructure *pvEnum = static_cast<PVStructure *>(pvField);
@@ -677,6 +727,8 @@ Status  V3Util::put(
                 String("Logic Error did not handle scalarType"),errorMessage);
             return Status::OK;
         }
+    } else if((propertyMask&arrayValueBit)!=0) {
+        // client or deserialize already handled this.
     } else if((propertyMask&enumValueBit)!=0) {
         PVStructure *pvEnum = static_cast<PVStructure *>(pvField);
         PVInt *pvIndex = pvEnum->getIntField(indexString);

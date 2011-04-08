@@ -73,6 +73,7 @@ ChannelPutListNode * V3ChannelPut::init(PVStructure &pvRequest)
     );
     pvStructure =  std::auto_ptr<PVStructure>(
         V3Util::createPVStructure(channelPutRequester, propertyMask, dbAddr));
+    if(pvStructure.get()==0) return 0;
     if((propertyMask&V3Util::dbPutBit)!=0) {
         if((propertyMask&V3Util::processBit)!=0) {
             channelPutRequester.message(
