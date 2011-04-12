@@ -257,7 +257,7 @@ public:
     virtual void exceptionCallback(long status,long op);
     virtual void connectionCallback();
     virtual void accessRightsCallback();
-    virtual void eventCallback(long status);
+    virtual void eventCallback(const char *);
 private:
     V3Channel &v3Channel;
     epics::pvData::MonitorRequester &monitorRequester;
@@ -267,12 +267,13 @@ private:
     int propertyMask;
     bool firstTime;
     bool gotEvent;
-    bool overrun;
     V3Type v3Type;
     int queueSize;
     epics::pvData::PVStructurePtrArray pvStructurePtrArray;
     std::auto_ptr<epics::pvData::MonitorQueue> monitorQueue;
     std::auto_ptr<CAV3Monitor> caV3Monitor;
+    epics::pvData::MonitorElement * currentElement;
+    epics::pvData::MonitorElement * nextElement;
 };
 
 class V3ChannelArray : public epics::pvAccess::ChannelArray {

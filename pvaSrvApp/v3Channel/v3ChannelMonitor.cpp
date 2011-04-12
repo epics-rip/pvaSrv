@@ -54,12 +54,13 @@ V3ChannelMonitor::V3ChannelMonitor(
   propertyMask(0),
   firstTime(true),
   gotEvent(false),
-  overrun(false),
   v3Type(v3Byte),
   queueSize(2),
   pvStructurePtrArray(0),
   monitorQueue(std::auto_ptr<MonitorQueue>(0)),
-  caV3Monitor(std::auto_ptr<CAV3Monitor>(0))
+  caV3Monitor(std::auto_ptr<CAV3Monitor>(0)),
+  currentElement(0),
+  nextElement(0)
 {
 }
 
@@ -98,8 +99,8 @@ ChannelMonitorListNode * V3ChannelMonitor::init(
         monitorRequester,propertyMask,dbAddr);
     PVDataCreate * pvDataCreate = getPVDataCreate();
     for(int i=1; i<queueSize; i++) {
-        pvStructurePtrArray[i] = pvDataCreate->createPVStructure(
-            0,String(""),pvStructurePtrArray[0]);
+        pvStructurePtrArray[i] = V3Util::createPVStructure(
+        monitorRequester,propertyMask,dbAddr);
     }
     V3Util::getPropertyData(
         monitorRequester,propertyMask,dbAddr,*pvStructurePtrArray[0]);
@@ -153,6 +154,17 @@ void V3ChannelMonitor::destroy() {
 
 Status V3ChannelMonitor::start()
 {
+    currentElement = monitorQueue->getFree();
+    if(currentElement==0) {
+        throw std::logic_error(String("V3ChannelMonitor::start no free queue element"));
+    }
+    BitSet *bitSet = currentElement->getChangedBitSet();
+    bitSet->clear();
+    nextElement = monitorQueue->getFree();
+    if(nextElement!=0) {
+        BitSet *bitSet = nextElement->getChangedBitSet();
+        bitSet->clear();
+    }
     caV3Monitor.get()->start();
     return Status::OK;
 }
@@ -186,31 +198,57 @@ void V3ChannelMonitor::accessRightsCallback()
 {
 }
 
-void V3ChannelMonitor::eventCallback(long status)
+void V3ChannelMonitor::eventCallback(const char *status)
 {
-    if(status!=1) {
-         // what to do?
+    if(status!=0) {
+         monitorRequester.message(String(status),errorMessage);
     }
-    MonitorElement *element = monitorQueue->getFree();
-    if(element==0) {
-        overrun = true;
-        return;
-    }
-    PVStructure *pvStructure = element->getPVStructure();
-    BitSet *bitSet = element->getChangedBitSet();
+    PVStructure *pvStructure = currentElement->getPVStructure();
+    BitSet *bitSet = currentElement->getChangedBitSet();
     dbScanLock(dbAddr.precord);
     CAV3Data &caV3Data = caV3Monitor.get()->getData();
+    BitSet *overrunBitSet = currentElement->getOverrunBitSet();
     Status stat = V3Util::get(
        monitorRequester,propertyMask,dbAddr,
-       *pvStructure,*bitSet,
+       *pvStructure,*overrunBitSet,
        &caV3Data);
+    int index = overrunBitSet->nextSetBit(0);
+    while(index>=0) {
+        bool wasSet = bitSet->get(index);
+        if(!wasSet) {
+            bitSet->set(index);
+            overrunBitSet->clear(index);
+        }
+        index = overrunBitSet->nextSetBit(index+1);
+    }
+    if(bitSet->nextSetBit(0)>=0) {
+        if(nextElement==0) nextElement = monitorQueue->getFree();
+        if(nextElement!=0) {
+            PVStructure *pvNext = nextElement->getPVStructure();
+            BitSet *bitSetNext = nextElement->getChangedBitSet();
+            Status stat = V3Util::get(
+                monitorRequester,propertyMask,dbAddr,
+               *pvNext,*bitSetNext,
+               &caV3Data);
+            bitSetNext->clear();
+            *bitSetNext |= *bitSet;
+        }
+    }
     dbScanUnlock(dbAddr.precord);
     if(firstTime) {
         firstTime = false;
         bitSet->clear();
         bitSet->set(0);
     }
-    monitorQueue->setUsed(element);
+    if(bitSet->nextSetBit(0)<0) return;
+    if(nextElement==0) return;
+    monitorQueue->setUsed(currentElement);
+    currentElement = nextElement;
+    nextElement = monitorQueue->getFree();
+    if(nextElement!=0) {
+        nextElement->getChangedBitSet()->clear();
+        nextElement->getOverrunBitSet()->clear();
+    }
     monitorRequester.monitorEvent(this);
 }
 

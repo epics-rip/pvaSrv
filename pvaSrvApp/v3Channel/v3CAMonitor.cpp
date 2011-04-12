@@ -26,8 +26,8 @@
 using namespace epics::pvData;
 
 CAV3Data::CAV3Data()
-: doubleValue(0.0),timeStamp(),
-  sevr(0),status(0)
+: doubleValue(0.0),
+  sevr(0),stat(0),status(0)
 {}
 
 CAV3Data::~CAV3Data() { }
@@ -69,7 +69,7 @@ static void eventCallback(struct event_handler_args eha)
 {
     CAV3MonitorPvt *pvt = static_cast<CAV3MonitorPvt *>(ca_puser(eha.chid));   
     if(eha.status!=ECA_NORMAL) {
-        pvt->requester.eventCallback(eha.status);
+        pvt->requester.eventCallback(ca_message(eha.status));
         return;
     }
     switch(pvt->v3Type) {
@@ -155,7 +155,8 @@ CAV3MonitorPvt::CAV3MonitorPvt(
     String pvName,V3Type v3Type)
 : requester(requester),pvName(pvName),v3Type(v3Type),
   data(),chid(0),myevid(0),context(CAV3ContextCreate::get(requester))
-{ }
+{
+}
 
 CAV3MonitorPvt::~CAV3MonitorPvt()
 {
@@ -218,7 +219,8 @@ CAV3Monitor::CAV3Monitor(
     CAV3MonitorRequester &requester,
     String pvName,V3Type v3Type)
 : pImpl(new CAV3MonitorPvt(requester,pvName,v3Type))
-{}
+{
+}
 
 CAV3Monitor::~CAV3Monitor()
 {

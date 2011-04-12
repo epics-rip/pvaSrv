@@ -9,6 +9,7 @@
 #include <stdexcept>
 
 #include <dbAccess.h>
+#include <dbEvent.h>
 #include <dbNotify.h>
 #include <special.h>
 #include <link.h>
@@ -613,8 +614,10 @@ Status  V3Util::get(
             }
         }
         PVInt *pvIndex = pvEnum->getIntField(indexString);
-        if(pvIndex->get()!=val) pvIndex->put(val);
-        bitSet.set(pvIndex->getFieldOffset());
+        if(pvIndex->get()!=val) {
+            pvIndex->put(val);
+            bitSet.set(pvIndex->getFieldOffset());
+        }
     }
     if((propertyMask&timeStampBit)!=0) {
         TimeStamp timeStamp;
@@ -748,10 +751,14 @@ Status  V3Util::put(
             String("Logic Error unknown field to put"),errorMessage);
             return Status::OK;
     }
+    dbCommon *precord = dbAddr.precord;
     dbFldDes *pfldDes = dbAddr.pfldDes;
-    if(dbIsValueField(pfldDes)) {
-        dbAddr.precord->udf = 0;
-    }
+    int isValueField = dbIsValueField(pfldDes);
+    if(isValueField) precord->udf = 0;
+    bool post = false;
+    if(!(propertyMask&processBit)) post = true;
+    if(precord->mlis.count && !(isValueField && pfldDes->process_passive)) post = true;
+    if(post) db_post_events(precord, dbAddr.pfield, DBE_VALUE | DBE_LOG);
     return Status::OK;
 }
 

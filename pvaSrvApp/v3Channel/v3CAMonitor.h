@@ -52,7 +52,7 @@ public:
     virtual void exceptionCallback(long status,long op) = 0;
     virtual void connectionCallback() = 0;
     virtual void accessRightsCallback() = 0;
-    virtual void eventCallback(long status) = 0;
+    virtual void eventCallback(const char *status) = 0;
 };
 
 class CAV3Monitor : private epics::pvData::NoDefaultMethods {

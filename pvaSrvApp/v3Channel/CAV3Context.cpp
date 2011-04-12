@@ -87,11 +87,11 @@ void CAV3Context::checkContext()
     epicsThreadId id = epicsThreadGetIdSelf();
     if(id==threadId) return;
     threadListIter iter = std::find(
-        auxThreadList.begin(),auxThreadList.end(),id);
-    if(iter==auxThreadList.end()) return;
+       auxThreadList.begin(),auxThreadList.end(),id);
+    if(iter!=auxThreadList.end()) return;
     auxThreadList.push_front(id);
     SEVCHK(ca_attach_context(context),
-        "CAV3Context::stop calling ca_context_create");
+        "CAV3Context::checkContext calling ca_context_create");
 }
 
 void CAV3Context::release()
