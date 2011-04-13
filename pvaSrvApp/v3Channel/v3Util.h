@@ -46,7 +46,6 @@ public:
     static int displayBit;       // get display info
     static int controlBit;       // get control info
     // MUST ALSO IMPLEMENT alarmLimit
-    // MARTY THESE ARE NEW
     static int noAccessBit;      // fields can not be accessed
     static int noModBit;         // fields can not be modified
     static int dbPutBit;         // Must call dbPutField

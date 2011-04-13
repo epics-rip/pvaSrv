@@ -65,12 +65,6 @@ ChannelPutListNode * V3ChannelPut::init(PVStructure &pvRequest)
              String("field not allowed to be changed"),errorMessage);
         return 0;
     }
-    propertyMask &= ~(
-        V3Util::timeStampBit
-        |V3Util::alarmBit
-        |V3Util::displayBit
-        |V3Util::controlBit
-    );
     pvStructure =  std::auto_ptr<PVStructure>(
         V3Util::createPVStructure(channelPutRequester, propertyMask, dbAddr));
     if(pvStructure.get()==0) return 0;

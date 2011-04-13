@@ -131,7 +131,7 @@ ChannelProvider *V3Channel::getProvider()
 
 String V3Channel::getRemoteAddress()
 {
-    return provider.getProviderName();
+    return String("local");
 }
 
 Channel::ConnectionState V3Channel::getConnectionState()

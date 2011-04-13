@@ -87,7 +87,6 @@ ChannelMonitorListNode * V3ChannelMonitor::init(
              queueSize = atoi(value.c_str());
         }
     }
-    pvStructurePtrArray = new PVStructurePtr[queueSize];
     propertyMask = V3Util::getProperties(monitorRequester,pvRequest,dbAddr);
     if(propertyMask==V3Util::noAccessBit) return 0;
     if(propertyMask&V3Util::isLinkBit) {
@@ -95,15 +94,13 @@ ChannelMonitorListNode * V3ChannelMonitor::init(
              String("can not monitor a link field"),errorMessage);
         return 0;
     }
-    pvStructurePtrArray[0] = V3Util::createPVStructure(
-        monitorRequester,propertyMask,dbAddr);
-    PVDataCreate * pvDataCreate = getPVDataCreate();
-    for(int i=1; i<queueSize; i++) {
+    pvStructurePtrArray = new PVStructurePtr[queueSize];
+    for(int i=0; i<queueSize; i++) {
         pvStructurePtrArray[i] = V3Util::createPVStructure(
         monitorRequester,propertyMask,dbAddr);
+        V3Util::getPropertyData(
+        monitorRequester,propertyMask,dbAddr,*pvStructurePtrArray[i]);
     }
-    V3Util::getPropertyData(
-        monitorRequester,propertyMask,dbAddr,*pvStructurePtrArray[0]);
     if((propertyMask&V3Util::enumValueBit)!=0) {
         v3Type = v3Enum;
     } else {
@@ -124,9 +121,6 @@ ChannelMonitorListNode * V3ChannelMonitor::init(
     monitorQueue = std::auto_ptr<MonitorQueue>(
         new MonitorQueue(array,queueSize));
     String pvName = v3Channel.getChannelName();
-    for(int i=1; i<queueSize; i++) {
-        getConvert()->copyStructure(pvStructurePtrArray[0],pvStructurePtrArray[i]);
-    }
     caV3Monitor = std::auto_ptr<CAV3Monitor>(
         new CAV3Monitor( *this, pvName, v3Type));
     caV3Monitor.get()->connect();
