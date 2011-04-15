@@ -86,6 +86,7 @@ void CAV3Context::checkContext()
 {
     epicsThreadId id = epicsThreadGetIdSelf();
     if(id==threadId) return;
+    Lock xx(mutex);
     threadListIter iter = std::find(
        auxThreadList.begin(),auxThreadList.end(),id);
     if(iter!=auxThreadList.end()) return;

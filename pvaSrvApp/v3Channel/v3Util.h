@@ -36,16 +36,18 @@ typedef long (*get_control_double) (DBADDR *, struct dbr_ctrlDouble  *);
 
 class V3Util : private epics::pvData::NoDefaultMethods {
 public:
+    // client request bits
     static int processBit;       // is processing requested
     static int shareArrayBit;    // share V3array instead of copy
-    static int scalarValueBit;   // value is a scalar
-    static int arrayValueBit;    // value is an array
-    static int enumValueBit;     // value is an enum
     static int timeStampBit;     // get timeStamp;
     static int alarmBit;         // get alarm
     static int displayBit;       // get display info
     static int controlBit;       // get control info
     // MUST ALSO IMPLEMENT alarmLimit
+    // V3 data characteristics
+    static int scalarValueBit;   // value is a scalar
+    static int arrayValueBit;    // value is an array
+    static int enumValueBit;     // value is an enum
     static int noAccessBit;      // fields can not be accessed
     static int noModBit;         // fields can not be modified
     static int dbPutBit;         // Must call dbPutField

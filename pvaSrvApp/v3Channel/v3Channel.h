@@ -44,6 +44,17 @@ typedef struct dbAddr DbAddr;
 typedef epics::pvData::LinkedListNode<V3Channel> ChannelListNode;
 typedef epics::pvData::LinkedList<V3Channel> ChannelList;
 
+typedef epics::pvData::LinkedListNode<V3ChannelProcess> ChannelProcessListNode;
+typedef epics::pvData::LinkedList<V3ChannelProcess> ChannelProcessList;
+typedef epics::pvData::LinkedListNode<V3ChannelGet> ChannelGetListNode;
+typedef epics::pvData::LinkedList<V3ChannelGet> ChannelGetList;
+typedef epics::pvData::LinkedListNode<V3ChannelPut> ChannelPutListNode;
+typedef epics::pvData::LinkedList<V3ChannelPut> ChannelPutList;
+typedef epics::pvData::LinkedListNode<V3ChannelMonitor> ChannelMonitorListNode;
+typedef epics::pvData::LinkedList<V3ChannelMonitor> ChannelMonitorList;
+typedef epics::pvData::LinkedListNode<V3ChannelArray> ChannelArrayListNode;
+typedef epics::pvData::LinkedList<V3ChannelArray> ChannelArrayList;
+
 class V3ChannelProvider : public epics::pvAccess::ChannelProvider {
 public:
     static V3ChannelProvider &getChannelProvider();
@@ -61,23 +72,13 @@ public:
         epics::pvAccess::ChannelRequester *channelRequester,
         short priority,
         epics::pvData::String address);
+    void removeChannel(ChannelListNode &node);
 private:
     V3ChannelProvider();
     ~V3ChannelProvider();
     epics::pvData::String providerName;
     ChannelList channelList;
 };
-
-typedef epics::pvData::LinkedListNode<V3ChannelProcess> ChannelProcessListNode;
-typedef epics::pvData::LinkedList<V3ChannelProcess> ChannelProcessList;
-typedef epics::pvData::LinkedListNode<V3ChannelGet> ChannelGetListNode;
-typedef epics::pvData::LinkedList<V3ChannelGet> ChannelGetList;
-typedef epics::pvData::LinkedListNode<V3ChannelPut> ChannelPutListNode;
-typedef epics::pvData::LinkedList<V3ChannelPut> ChannelPutList;
-typedef epics::pvData::LinkedListNode<V3ChannelMonitor> ChannelMonitorListNode;
-typedef epics::pvData::LinkedList<V3ChannelMonitor> ChannelMonitorList;
-typedef epics::pvData::LinkedListNode<V3ChannelArray> ChannelArrayListNode;
-typedef epics::pvData::LinkedList<V3ChannelArray> ChannelArrayList;
 
 class V3Channel : public virtual epics::pvAccess::Channel {
 public:
@@ -87,7 +88,7 @@ public:
         epics::pvData::String name,
         std::auto_ptr<DbAddr> addr
         );
-    void init();
+    ChannelListNode& init();
     virtual void destroy();
     virtual epics::pvData::String getRequesterName();
     virtual void message(
@@ -144,6 +145,7 @@ private:
     ChannelPutList channelPutList;
     ChannelMonitorList channelMonitorList;
     ChannelArrayList channelArrayList;
+    ChannelListNode channelListNode;
 };
 
 class V3ChannelProcess : public virtual epics::pvAccess::ChannelProcess {

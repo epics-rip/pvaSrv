@@ -38,11 +38,12 @@ V3Channel::V3Channel(
     channelGetList(),
     channelPutList(),
     channelMonitorList(),
-    channelArrayList()
+    channelArrayList(),
+    channelListNode(*this)
 {
 }
 
-void V3Channel::init()
+ChannelListNode &V3Channel::init()
 {
     ScalarType scalarType = pvBoolean;
     DbAddr *dbAddr = addr.get();
@@ -76,6 +77,7 @@ void V3Channel::init()
                 String("value,timeStamp,alarm,display,control"));
         }
     }
+    return channelListNode;
 }
 
 V3Channel::~V3Channel()
@@ -84,6 +86,38 @@ V3Channel::~V3Channel()
 
 void V3Channel::destroy()
 {
+printf("V3Channel::destroy\n");
+    while(true) {
+        ChannelProcessListNode *node = channelProcessList.getHead();
+        if(node==0) break;
+        V3ChannelProcess &channelProcess = node->getObject();
+        channelProcess.destroy();
+    }
+    while(true) {
+        ChannelGetListNode *node = channelGetList.getHead();
+        if(node==0) break;
+        V3ChannelGet &channelGet = node->getObject();
+        channelGet.destroy();
+    }
+    while(true) {
+        ChannelPutListNode *node = channelPutList.getHead();
+        if(node==0) break;
+        V3ChannelPut &channelPut = node->getObject();
+        channelPut.destroy();
+    }
+    while(true) {
+        ChannelMonitorListNode *node = channelMonitorList.getHead();
+        if(node==0) break;
+        V3ChannelMonitor &channelMonitor = node->getObject();
+        channelMonitor.destroy();
+    }
+    while(true) {
+        ChannelArrayListNode *node = channelArrayList.getHead();
+        if(node==0) break;
+        V3ChannelArray &channelArray = node->getObject();
+        channelArray.destroy();
+    }
+    provider.removeChannel(channelListNode);
     delete this;
 }
 

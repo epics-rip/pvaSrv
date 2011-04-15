@@ -38,14 +38,14 @@ using namespace epics::pvData;
 
 int V3Util::processBit       = 0x0001;
 int V3Util::shareArrayBit    = 0x0002;
-int V3Util::scalarValueBit   = 0x0004;
-int V3Util::arrayValueBit    = 0x0008;
-int V3Util::enumValueBit     = 0x0010;
-int V3Util::timeStampBit     = 0x0020;
-int V3Util::alarmBit         = 0x0040;
-int V3Util::displayBit       = 0x0080;
-int V3Util::controlBit       = 0x0100;
-// leave bit for alarmLimitBit 0x0200
+int V3Util::timeStampBit     = 0x0004;
+int V3Util::alarmBit         = 0x0008;
+int V3Util::displayBit       = 0x0010;
+int V3Util::controlBit       = 0x0020;
+// leave bit for alarmLimitBit 0x0040
+int V3Util::scalarValueBit   = 0x0080;
+int V3Util::arrayValueBit    = 0x0100;
+int V3Util::enumValueBit     = 0x0200;
 int V3Util::noAccessBit      = 0x0400;
 int V3Util::noModBit         = 0x0800;
 int V3Util::dbPutBit         = 0x1000;
@@ -331,8 +331,6 @@ PVStructure *V3Util::createPVStructure(
     }
     if((propertyMask&arrayValueBit)!=0) {
          bool share = (propertyMask&shareArrayBit) ? true : false;
-         PVStructure *pvParent = getPVDataCreate()->createPVStructure(
-             0,String(),0,0);
          PVFieldPtr pvField = 0;
          ScalarArrayConstPtr scalarArray = getStandardField()->scalarArray(
               valueString,scalarType);
@@ -340,44 +338,53 @@ PVStructure *V3Util::createPVStructure(
          switch(scalarType) {
          case pvByte:
             pvField = v3ValueArrayCreate->createByteArray(
-                pvParent,scalarArray,dbAddr,share);
+                0,scalarArray,dbAddr,share);
             break;
          case pvShort:
             pvField = v3ValueArrayCreate->createShortArray(
-                pvParent,scalarArray,dbAddr,share);
+                0,scalarArray,dbAddr,share);
             break;
          case pvInt:
             pvField = v3ValueArrayCreate->createIntArray(
-                pvParent,scalarArray,dbAddr,share);
+                0,scalarArray,dbAddr,share);
             break;
          case pvFloat:
             pvField = v3ValueArrayCreate->createFloatArray(
-                pvParent,scalarArray,dbAddr,share);
+                0,scalarArray,dbAddr,share);
             break;
          case pvDouble:
             pvField = v3ValueArrayCreate->createDoubleArray(
-                pvParent,scalarArray,dbAddr,share);
+                0,scalarArray,dbAddr,share);
             break;
          case pvString:
             pvField = v3ValueArrayCreate->createStringArray(
-                pvParent,scalarArray,dbAddr);
+                0,scalarArray,dbAddr);
             break;
          default:
             throw std::logic_error(String("Should never get here"));
          }
-         pvParent->appendPVField(pvField);
+         int numberFields = 1;
+         if((propertyMask&timeStampBit)!=0) numberFields++;
+         if((propertyMask&alarmBit)!=0) numberFields++;
+         if((propertyMask&displayBit)!=0) numberFields++;
+         if((propertyMask&controlBit)!=0) numberFields++;
+         PVFieldPtr *pvFields = new PVFieldPtr[numberFields];
+         int indField = 0;
+         pvFields[indField++] = pvField;
          if((propertyMask&timeStampBit)!=0) {
-            pvParent->appendPVField(standardPVField->timeStamp(pvParent));
+            pvFields[indField++] = standardPVField->timeStamp(0);
          }
          if((propertyMask&alarmBit)!=0) {
-            pvParent->appendPVField(standardPVField->alarm(pvParent));
+            pvFields[indField++] = standardPVField->alarm(0);
          }
          if((propertyMask&displayBit)!=0) {
-            pvParent->appendPVField(standardPVField->display(pvParent));
+            pvFields[indField++] = standardPVField->display(0);
          }
          if((propertyMask&controlBit)!=0) {
-            pvParent->appendPVField(standardPVField->control(pvParent));
+            pvFields[indField++] = standardPVField->control(0);
          }
+         PVStructure *pvParent = getPVDataCreate()->createPVStructure(
+             0,String(),numberFields,pvFields);
          return pvParent;
     }
     requester.message(String("did not ask for value"),errorMessage);

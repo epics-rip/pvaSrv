@@ -60,24 +60,21 @@ V3ChannelProvider::V3ChannelProvider()
 
 V3ChannelProvider::~V3ChannelProvider()
 {
-    printf("V3ChannelProvider::~V3ChannelProvider() ???");
-    while(true) {
-        ChannelListNode *node = channelList.removeHead();
-        if(node==0) break;
-        V3Channel &v3Channel = node->getObject();
-        v3Channel.destroy();
-        delete node;
-    }
 }
 
 void V3ChannelProvider::destroy()
 {
-    printf("V3ChannelProvider::destroy\n");
+printf("V3ChannelProvider::destroy\n");
     Lock xx(mutex);
     if(!isRegistered) return;
     isRegistered = false;
     unregisterChannelProvider(this);
-    // do not destroy since is singleton
+    while(true) {
+        ChannelListNode *node = channelList.getHead();
+        if(node==0) break;
+        V3Channel &v3Channel = node->getObject();
+        v3Channel.destroy();
+    }
 }
 
 String V3ChannelProvider::getProviderName()
@@ -123,11 +120,15 @@ Channel *V3ChannelProvider::createChannel(
     std::auto_ptr<DbAddr> addr(new DbAddr());
     memcpy(addr.get(),&dbAddr,sizeof(dbAddr));
     V3Channel *v3Channel = new V3Channel(*this,*channelRequester,channelName,addr);
-    v3Channel->init();
-    ChannelListNode *node = new ChannelListNode(*v3Channel);
-    channelList.addTail(*node);
+    ChannelListNode & node = v3Channel->init();
+    channelList.addTail(node);
     channelRequester->channelCreated(Status::OK,v3Channel);
     return v3Channel;
+}
+
+void V3ChannelProvider::removeChannel(ChannelListNode &node)
+{
+     channelList.remove(node);   
 }
 
 }}

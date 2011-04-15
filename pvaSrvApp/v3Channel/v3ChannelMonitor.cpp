@@ -62,9 +62,11 @@ V3ChannelMonitor::V3ChannelMonitor(
   currentElement(0),
   nextElement(0)
 {
+printf("V3ChannelMonitor construct\n");
 }
 
 V3ChannelMonitor::~V3ChannelMonitor() {
+printf("~V3ChannelMonitor\n");
     if(pvStructurePtrArray!=0) {
         for(int i=0; i<queueSize; i++) {
             delete pvStructurePtrArray[i];
@@ -142,6 +144,7 @@ void V3ChannelMonitor::message(String message,MessageType messageType)
 }
 
 void V3ChannelMonitor::destroy() {
+printf("V3ChannelMonitor::destroy\n");
     v3Channel.removeChannelMonitor(monitorListNode);
     delete this;
 }
