@@ -12,9 +12,8 @@ INC += monitorAlgorithm.h
 
 SRC_DIRS += $(IOC)/database
 INC += pvDatabase.h
-LIBSRCS += pvDatabase.cpp
 LIBSRCS += pvRecord.cpp
-LIBSRCS += pvReplace.cpp
+LIBSRCS += pvDatabase.cpp
 
 SRC_DIRS += $(IOC)/install
 INC += install.h
