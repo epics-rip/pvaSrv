@@ -69,24 +69,24 @@ String V3Util::indexString("index");
 
 
 int V3Util::getProperties(
-    Requester &requester,PVStructure &request,DbAddr &dbAddr)
+    Requester::shared_pointer const &requester,PVStructure::shared_pointer const &request,DbAddr &dbAddr)
 {
     int propertyMask = 0;
-    PVField *pvField = request.getSubField(processString);
+    PVField *pvField = request->getSubField(processString);
     if(pvField!=0) {
-        PVString *pvString = request.getStringField(processString);
+        PVString *pvString = request->getStringField(processString);
         if(pvString!=0) {
             String value = pvString->get();
             if(value.compare("true")==0) propertyMask |= processBit;
         }
     }
-    PVStructure *pvRequest = &request;
-    PVField *pvTemp = request.getSubField(fieldString);
+    PVStructure *pvRequest = request.get();
+    PVField *pvTemp = request->getSubField(fieldString);
     if(pvTemp!=0) pvRequest = static_cast<PVStructure * >(pvTemp);
     PVString *pvShareString = 0;
-    pvField = request.getSubField(recordShareString);
+    pvField = request->getSubField(recordShareString);
     if(pvField!=0) {
-         pvShareString = request.getStringField(recordShareString);
+         pvShareString = request->getStringField(recordShareString);
     } else {
          pvField = pvRequest->getSubField(valueShareArrayString);
          if(pvField!=0) pvShareString =
@@ -142,10 +142,10 @@ int V3Util::getProperties(
             scalarType = pvString;
             propertyMask |= (isLinkBit|dbPutBit); break;
         case DBF_NOACCESS:
-            requester.message(String("access is not allowed"),errorMessage);
+            requester->message(String("access is not allowed"),errorMessage);
             propertyMask = noAccessBit; return propertyMask;
         default:
-            requester.message(String(
+            requester->message(String(
                 "logic error unknown DBF type"),errorMessage);
             propertyMask = noAccessBit; return propertyMask;
         }
@@ -172,7 +172,7 @@ int V3Util::getProperties(
         case SPC_CALC:
             propertyMask |= dbPutBit; break;
         default:
-            requester.message(String(
+            requester->message(String(
                 "logic error unknown special type"),errorMessage);
             propertyMask = noAccessBit; return propertyMask;
         }
@@ -236,7 +236,7 @@ int V3Util::getProperties(
 }
 
 PVStructure *V3Util::createPVStructure(
-    Requester &requester,int propertyMask,DbAddr &dbAddr)
+    Requester::shared_pointer const &requester,int propertyMask,DbAddr &dbAddr)
 {
     StandardPVField *standardPVField = getStandardPVField();
     String properties;
@@ -294,7 +294,7 @@ PVStructure *V3Util::createPVStructure(
                      0,choices,length,properties);
             return pvStructure;
         } else {
-            requester.message(
+            requester->message(
                String("bad enum field in V3 record"),errorMessage);
             return 0;
         }
@@ -387,14 +387,14 @@ PVStructure *V3Util::createPVStructure(
              0,String(),numberFields,pvFields);
          return pvParent;
     }
-    requester.message(String("did not ask for value"),errorMessage);
+    requester->message(String("did not ask for value"),errorMessage);
     return 0;
 }
 
 void  V3Util::getPropertyData(
-        Requester &requester,
+        Requester::shared_pointer const &requester,
         int propertyMask,DbAddr &dbAddr,
-        PVStructure &pvStructure)
+        PVStructure::shared_pointer const &pvStructure)
 {
     if(propertyMask&displayBit) {
         Display display;
@@ -426,7 +426,7 @@ void  V3Util::getPropertyData(
            display.setLow(graphics.lower_disp_limit);
         }
         PVDisplay pvDisplay;
-        PVField *pvField = pvStructure.getSubField(displayString);
+        PVField *pvField = pvStructure->getSubField(displayString);
         pvDisplay.attach(pvField);
         pvDisplay.set(display);
     }
@@ -442,20 +442,20 @@ void  V3Util::getPropertyData(
            control.setLow(graphics.lower_ctrl_limit);
         }
         PVControl pvControl;
-        PVField *pvField = pvStructure.getSubField(controlString);
+        PVField *pvField = pvStructure->getSubField(controlString);
         pvControl.attach(pvField);
         pvControl.set(control);
     }
 }
 
 Status  V3Util::get(
-        Requester &requester,
+        Requester::shared_pointer const &requester,
         int propertyMask,DbAddr &dbAddr,
-        PVStructure &pvStructure,
-        BitSet &bitSet,
+        PVStructure::shared_pointer const &pvStructure,
+        BitSet::shared_pointer const &bitSet,
         CAV3Data *caV3Data)
 {
-    PVFieldPtrArray pvFields = pvStructure.getPVFields();
+    PVFieldPtrArray pvFields = pvStructure->getPVFields();
     PVFieldPtr pvField = pvFields[0];
     if((propertyMask&V3Util::scalarValueBit)!=0) {
         PVScalar* pvScalar = static_cast<PVScalar *>(pvField);
@@ -540,7 +540,7 @@ Status  V3Util::get(
                 long result = dbGetField(&dbAddr,DBR_STRING,
                     buffer,0,0,0);
                 if(result!=0) {
-                    requester.message(String("dbGetField error"),errorMessage);
+                    requester->message(String("dbGetField error"),errorMessage);
                 }
                 val = buffer;
             } else {
@@ -557,7 +557,7 @@ Status  V3Util::get(
         default:
              throw std::logic_error(String("Should never get here"));
         }
-        if(wasChanged) bitSet.set(pvField->getFieldOffset());
+        if(wasChanged) bitSet->set(pvField->getFieldOffset());
     } else if((propertyMask&arrayValueBit)!=0) {
         PVScalarArray* pvArray = static_cast<PVScalarArray *>(pvField);
         ScalarType scalarType = pvArray->getScalarArray()->getElementType();
@@ -607,7 +607,7 @@ Status  V3Util::get(
         default:
              throw std::logic_error(String("Should never get here"));
         }
-        bitSet.set(pvField->getFieldOffset());
+        bitSet->set(pvField->getFieldOffset());
     } else if((propertyMask&enumValueBit)!=0) {
         PVStructure *pvEnum = static_cast<PVStructure *>(pvField);
         int32 val = 0;
@@ -623,13 +623,13 @@ Status  V3Util::get(
         PVInt *pvIndex = pvEnum->getIntField(indexString);
         if(pvIndex->get()!=val) {
             pvIndex->put(val);
-            bitSet.set(pvIndex->getFieldOffset());
+            bitSet->set(pvIndex->getFieldOffset());
         }
     }
     if((propertyMask&timeStampBit)!=0) {
         TimeStamp timeStamp;
         PVTimeStamp pvTimeStamp;
-        PVField *pvField = pvStructure.getSubField(timeStampString);
+        PVField *pvField = pvStructure->getSubField(timeStampString);
         if(!pvTimeStamp.attach(pvField)) {
             throw std::logic_error(String("V3ChannelGet::get logic error"));
         }
@@ -651,13 +651,13 @@ Status  V3Util::get(
         if(oldSecs!=seconds || oldNano!=nanoseconds) {
             timeStamp.put(seconds,nanoseconds);
             pvTimeStamp.set(timeStamp);
-            bitSet.set(pvField->getFieldOffset());
+            bitSet->set(pvField->getFieldOffset());
         }
     }
      if((propertyMask&alarmBit)!=0) {
         Alarm alarm;
         PVAlarm pvAlarm;
-        PVField *pvField = pvStructure.getSubField(alarmString);
+        PVField *pvField = pvStructure->getSubField(alarmString);
         if(!pvAlarm.attach(pvField)) {
             throw std::logic_error(String("V3ChannelGet::get logic error"));
         }
@@ -680,14 +680,14 @@ Status  V3Util::get(
             alarm.setSeverity(severity);
             alarm.setMessage(message);
             pvAlarm.set(alarm);
-            bitSet.set(pvField->getFieldOffset());
+            bitSet->set(pvField->getFieldOffset());
         }
     }
     return Status::OK;
 }
 
 Status  V3Util::put(
-        Requester &requester,
+        Requester::shared_pointer const &requester,
         int propertyMask,DbAddr &dbAddr,
         PVField *pvField)
 {
@@ -733,7 +733,7 @@ Status  V3Util::put(
             *(to + len -1) = 0;
         }
         default:
-            requester.message(
+            requester->message(
                 String("Logic Error did not handle scalarType"),errorMessage);
             return Status::OK;
         }
@@ -743,18 +743,18 @@ Status  V3Util::put(
         PVStructure *pvEnum = static_cast<PVStructure *>(pvField);
         PVInt *pvIndex = pvEnum->getIntField(indexString);
         if(dbAddr.field_type==DBF_MENU) {
-            requester.message(
+            requester->message(
                 String("Not allowed to change a menu field"),errorMessage);
         } else if(dbAddr.field_type==DBF_ENUM||dbAddr.field_type==DBF_DEVICE) {
             epicsEnum16 *value = static_cast<epicsEnum16*>(dbAddr.pfield);
             *value = pvIndex->get();
         } else {
-            requester.message(
+            requester->message(
                 String("Logic Error unknown enum field"),errorMessage);
             return Status::OK;
         }
     } else {
-        requester.message(
+        requester->message(
             String("Logic Error unknown field to put"),errorMessage);
             return Status::OK;
     }
@@ -770,7 +770,7 @@ Status  V3Util::put(
 }
 
 Status  V3Util::putField(
-        Requester &requester,
+        Requester::shared_pointer const &requester,
         int propertyMask,DbAddr &dbAddr,
         PVField *pvField)
 {
@@ -824,7 +824,7 @@ Status  V3Util::putField(
             break;
         }
         default:
-            requester.message(
+            requester->message(
                 String("Logic Error did not handle scalarType"),errorMessage);
             return Status::OK;
         }
@@ -834,7 +834,7 @@ Status  V3Util::putField(
         svalue = pvIndex->get(); pbuffer = &svalue;
         dbrType = DBF_ENUM;
     } else {
-        requester.message(
+        requester->message(
                 String("Logic Error unknown field to put"),errorMessage);
         return Status::OK;
     }
@@ -843,12 +843,12 @@ Status  V3Util::putField(
         char buf[30];
         sprintf(buf,"dbPutField returned error 0x%lx",status);
         String message(buf);
-        requester.message(message,warningMessage);
+        requester->message(message,warningMessage);
     }
     return Status::OK;
 }
 
-ScalarType V3Util::getScalarType(Requester &requester, DbAddr &dbAddr)
+ScalarType V3Util::getScalarType(Requester::shared_pointer const &requester, DbAddr &dbAddr)
 {
     switch(dbAddr.field_type) {
         case DBF_CHAR:

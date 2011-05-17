@@ -65,8 +65,8 @@ printf("v3ChannelGet destruct\n");
 ChannelPutListNode * V3ChannelPut::init(PVStructure::shared_pointer const &pvRequest)
 {
     propertyMask = V3Util::getProperties(
-        *channelPutRequester.get(),
-        *pvRequest.get(),
+        channelPutRequester,
+        pvRequest,
         dbAddr);
     if(propertyMask==V3Util::noAccessBit) return 0;
     if(propertyMask==V3Util::noModBit) {
@@ -76,7 +76,7 @@ ChannelPutListNode * V3ChannelPut::init(PVStructure::shared_pointer const &pvReq
     }
     pvStructure =  PVStructure::shared_pointer(
         V3Util::createPVStructure(
-            *channelPutRequester.get(),
+            channelPutRequester,
             propertyMask,
             dbAddr));
     if(pvStructure.get()==0) return 0;
@@ -134,14 +134,14 @@ void V3ChannelPut::put(bool lastRequest)
     PVField *pvField = pvStructure.get()->getPVFields()[0];
     if(propertyMask&V3Util::dbPutBit) {
         Status status = V3Util::putField(
-            *channelPutRequester.get(),propertyMask,dbAddr,pvField);
+            channelPutRequester,propertyMask,dbAddr,pvField);
         channelPutRequester->putDone(status);
         if(lastRequest) destroy();
         return;
     }
     dbScanLock(dbAddr.precord);
     Status status = V3Util::put(
-        *channelPutRequester.get(),propertyMask,dbAddr,pvField);
+        channelPutRequester,propertyMask,dbAddr,pvField);
     dbScanUnlock(dbAddr.precord);
     if(process) {
         epicsUInt8 value = 1;
@@ -171,10 +171,10 @@ void V3ChannelPut::get()
     bitSet->clear();
     dbScanLock(dbAddr.precord);
     Status status = V3Util::get(
-        *channelPutRequester.get(),
+        channelPutRequester,
         propertyMask,dbAddr,
-        *pvStructure.get(),
-        *bitSet.get(),
+        pvStructure,
+        bitSet,
         0);
     if(firstTime) {
         firstTime = false;

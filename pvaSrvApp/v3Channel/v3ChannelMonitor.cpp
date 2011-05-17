@@ -57,7 +57,6 @@ V3ChannelMonitor::V3ChannelMonitor(
   gotEvent(false),
   v3Type(v3Byte),
   queueSize(2),
-  pvStructurePtrArray(0),
   monitorQueue(std::auto_ptr<MonitorQueue>()),
   caV3Monitor(std::auto_ptr<CAV3Monitor>()),
   currentElement(MonitorElement::shared_pointer()),
@@ -69,13 +68,6 @@ printf("V3ChannelMonitor construct\n");
 
 V3ChannelMonitor::~V3ChannelMonitor() {
 printf("~V3ChannelMonitor\n");
-    if(pvStructurePtrArray!=0) {
-        for(int i=0; i<queueSize; i++) {
-            delete pvStructurePtrArray[i];
-        }
-        delete[]pvStructurePtrArray;
-        pvStructurePtrArray = 0;
-    }
 }
 
 
@@ -92,8 +84,8 @@ ChannelMonitorListNode * V3ChannelMonitor::init(
         }
     }
     propertyMask = V3Util::getProperties(
-        *monitorRequester.get(),
-        *pvRequest.get(),
+        monitorRequester,
+        pvRequest,
         dbAddr);
     if(propertyMask==V3Util::noAccessBit) return 0;
     if(propertyMask&V3Util::isLinkBit) {
@@ -101,23 +93,27 @@ ChannelMonitorListNode * V3ChannelMonitor::init(
              String("can not monitor a link field"),errorMessage);
         return 0;
     }
-    pvStructurePtrArray = new PVStructurePtr[queueSize];
+    PVStructurePtrArray pvStructurePtrArray = new PVStructurePtr[queueSize];
     for(int i=0; i<queueSize; i++) {
         pvStructurePtrArray[i] = V3Util::createPVStructure(
-            *monitorRequester.get(),
-            propertyMask,
-            dbAddr);
+                monitorRequester,
+                propertyMask,
+                dbAddr);
+    }
+    PVStructureSharedPointerPtrArray array = 
+        MonitorQueue::createStructures( pvStructurePtrArray,queueSize);
+    for(int i=0; i<queueSize; i++) {
         V3Util::getPropertyData(
-            *monitorRequester.get(),
+            monitorRequester,
             propertyMask,
             dbAddr,
-            *pvStructurePtrArray[i]);
+            *array[i]);
     }
     if((propertyMask&V3Util::enumValueBit)!=0) {
         v3Type = v3Enum;
     } else {
         ScalarType scalarType = V3Util::getScalarType(
-            *monitorRequester.get(),
+            monitorRequester,
             dbAddr);
         switch(scalarType) {
         case pvByte: v3Type = v3Byte; break;
@@ -130,8 +126,6 @@ ChannelMonitorListNode * V3ChannelMonitor::init(
             throw std::logic_error(String("bad scalarType"));
         }
     }
-    PVStructureSharedPointerPtrArray array = 
-        MonitorQueue::createStructures( pvStructurePtrArray,queueSize);
     monitorQueue = std::auto_ptr<MonitorQueue>(
         new MonitorQueue(array,queueSize));
     String pvName = v3Channel.get()->getChannelName();
@@ -221,11 +215,11 @@ void V3ChannelMonitor::eventCallback(const char *status)
     CAV3Data &caV3Data = caV3Monitor.get()->getData();
     BitSet::shared_pointer overrunBitSet = currentElement->getOverrunBitSet();
     Status stat = V3Util::get(
-       *monitorRequester.get(),
+       monitorRequester,
        propertyMask,
        dbAddr,
-       *pvStructure.get(),
-       *overrunBitSet.get(),
+       pvStructure,
+       overrunBitSet,
        &caV3Data);
     int index = overrunBitSet->nextSetBit(0);
     while(index>=0) {
@@ -242,12 +236,12 @@ void V3ChannelMonitor::eventCallback(const char *status)
             PVStructure::shared_pointer pvNext = nextElement->getPVStructure();
             BitSet::shared_pointer bitSetNext = nextElement->getChangedBitSet();
             Status stat = V3Util::get(
-                *monitorRequester.get(),
+                monitorRequester,
                 propertyMask,
                 dbAddr,
-               *pvNext.get(),
-               *bitSetNext.get(),
-               &caV3Data);
+                pvNext,
+                bitSetNext,
+                &caV3Data);
             bitSetNext->clear();
             *bitSetNext |= *bitSet;
         }

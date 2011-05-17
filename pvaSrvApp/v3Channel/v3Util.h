@@ -70,31 +70,31 @@ public:
 
 
 
-    static int getProperties(epics::pvData::Requester &requester,
-        epics::pvData::PVStructure &pvRequest,DbAddr &dbAddr);
-    static epics::pvData::PVStructure *createPVStructure(
-        epics::pvData::Requester &requester,
+    static int getProperties(epics::pvData::Requester::shared_pointer const &requester,
+        epics::pvData::PVStructure::shared_pointer const &pvRequest,DbAddr &dbAddr);
+    static epics::pvData::PVStructure * createPVStructure(
+        epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr);
     static void getPropertyData(
-        epics::pvData::Requester &requester,
+        epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr,
-        epics::pvData::PVStructure &pvStructure);
+        epics::pvData::PVStructure::shared_pointer const &pvStructure);
     static epics::pvData::Status get(
-        epics::pvData::Requester &requester,
+        epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr,
-        epics::pvData::PVStructure &pvStructure,
-        epics::pvData::BitSet &bitSet,
+        epics::pvData::PVStructure::shared_pointer const &pvStructure,
+        epics::pvData::BitSet::shared_pointer const &bitSet,
         CAV3Data *caV3Data);
     static epics::pvData::Status put(
-        epics::pvData::Requester &requester,
+        epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr,
         epics::pvData::PVField *pvField);
     static epics::pvData::Status putField(
-        epics::pvData::Requester &requester,
+        epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr,
         epics::pvData::PVField *pvField);
     static epics::pvData::ScalarType getScalarType(
-        epics::pvData::Requester &requester,
+        epics::pvData::Requester::shared_pointer const &requester,
         DbAddr &dbAddr);
 };
 

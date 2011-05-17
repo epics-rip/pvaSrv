@@ -62,18 +62,18 @@ printf("V3ChannelGet destruct\n");
 ChannelGetListNode * V3ChannelGet::init(PVStructure::shared_pointer const &pvRequest)
 {
     propertyMask = V3Util::getProperties(
-        *channelGetRequester.get(),
-        *pvRequest.get(),
+        channelGetRequester,
+        pvRequest,
         dbAddr);
     if(propertyMask==V3Util::noAccessBit) return 0;
     pvStructure =  PVStructure::shared_pointer(
         V3Util::createPVStructure(
-             *channelGetRequester.get(),
+             channelGetRequester,
              propertyMask,
              dbAddr));
     if(pvStructure.get()==0) return 0;
     V3Util::getPropertyData(
-        *channelGetRequester.get(),propertyMask,dbAddr,*pvStructure);
+        channelGetRequester,propertyMask,dbAddr,pvStructure);
     int numFields = pvStructure->getStructure()->getNumberFields();
     bitSet = BitSet::shared_pointer(new BitSet(numFields));
     if((propertyMask&V3Util::processBit)!=0) {
@@ -139,7 +139,11 @@ printf("bitSet %p\n",&bitSet);
 BitSet *zzz = bitSet.get();
 printf("zzz %p\n",zzz);
     Status status = V3Util::get(
-        *channelGetRequester.get(),propertyMask,dbAddr,*pvStructure.get(),*bitSet.get(),0);
+        channelGetRequester,
+        propertyMask,dbAddr,
+        pvStructure,
+        bitSet,
+        0);
     dbScanUnlock(dbAddr.precord);
     if(firstTime) {
         firstTime = false;

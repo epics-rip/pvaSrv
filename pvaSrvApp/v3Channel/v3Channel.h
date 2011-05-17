@@ -285,7 +285,6 @@ private:
     bool gotEvent;
     V3Type v3Type;
     int queueSize;
-    epics::pvData::PVStructurePtrArray pvStructurePtrArray;
     std::auto_ptr<epics::pvData::MonitorQueue> monitorQueue;
     std::auto_ptr<CAV3Monitor> caV3Monitor;
     epics::pvData::MonitorElement::shared_pointer currentElement;

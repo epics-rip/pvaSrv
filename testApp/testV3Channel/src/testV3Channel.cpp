@@ -140,6 +140,7 @@ static void testV3ChannelCallFunc(const iocshArgBuf *args)
     printf("providerName %s\n",providerName.c_str());
     FindRequester::shared_pointer findRequester
         = FindRequester::shared_pointer(new FindRequester());
+printf("findRequester %p %p\n",&findRequester,findRequester.get());
     channelProvider->channelFind(
         channelName,
         findRequester);
