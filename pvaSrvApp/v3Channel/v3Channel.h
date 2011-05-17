@@ -140,8 +140,8 @@ public:
     void removeChannelMonitor(ChannelMonitorListNode &);
     void removeChannelArray(ChannelArrayListNode &);
 private:
-    V3ChannelProvider::shared_pointer const & provider;
-    epics::pvAccess::ChannelRequester::shared_pointer const & requester;
+    V3ChannelProvider::shared_pointer  provider;
+    epics::pvAccess::ChannelRequester::shared_pointer requester;
     epics::pvData::String name;
     std::auto_ptr<DbAddr> dbAddr;
     epics::pvData::FieldConstPtr recordField; 
@@ -171,8 +171,8 @@ public:
     virtual void process(bool lastRequest);
 private:
     static void notifyCallback(struct putNotify *);
-    V3Channel::shared_pointer const & v3Channel;
-    epics::pvAccess::ChannelProcessRequester::shared_pointer const & channelProcessRequester;
+    V3Channel::shared_pointer v3Channel;
+    epics::pvAccess::ChannelProcessRequester::shared_pointer channelProcessRequester;
     DbAddr &dbAddr;
     ChannelProcessListNode processListNode;
     std::auto_ptr<struct putNotify> pNotify;
@@ -198,8 +198,8 @@ public:
     virtual void get(bool lastRequest);
 private:
     static void notifyCallback(struct putNotify *);
-    V3Channel::shared_pointer const & v3Channel;
-    epics::pvAccess::ChannelGetRequester::shared_pointer const & channelGetRequester;
+    V3Channel::shared_pointer v3Channel;
+    epics::pvAccess::ChannelGetRequester::shared_pointer channelGetRequester;
     DbAddr &dbAddr;
     ChannelGetListNode getListNode;
     bool process;
@@ -231,8 +231,8 @@ public:
     virtual void get();
 private:
     static void notifyCallback(struct putNotify *);
-    V3Channel::shared_pointer const & v3Channel;
-    epics::pvAccess::ChannelPutRequester::shared_pointer const & channelPutRequester;
+    V3Channel::shared_pointer v3Channel;
+    epics::pvAccess::ChannelPutRequester::shared_pointer channelPutRequester;
     DbAddr &dbAddr;
     ChannelPutListNode putListNode;
     int propertyMask;
@@ -275,8 +275,8 @@ public:
     virtual void accessRightsCallback();
     virtual void eventCallback(const char *);
 private:
-    V3Channel::shared_pointer const & v3Channel;
-    epics::pvData::MonitorRequester::shared_pointer const & monitorRequester;
+    V3Channel::shared_pointer v3Channel;
+    epics::pvData::MonitorRequester::shared_pointer  monitorRequester;
     DbAddr &dbAddr;
     ChannelMonitorListNode monitorListNode;
     epics::pvData::Event event;
@@ -306,8 +306,8 @@ public:
     virtual void getArray(bool lastRequest, int offset, int count);
     virtual void setLength(bool lastRequest, int length, int capacity);
 private:
-    V3Channel::shared_pointer const & v3Channel;
-    epics::pvAccess::ChannelArrayRequester::shared_pointer const & channelArrayRequester;
+    V3Channel::shared_pointer v3Channel;
+    epics::pvAccess::ChannelArrayRequester::shared_pointer channelArrayRequester;
     DbAddr &dbAddr;
     ChannelArrayListNode arrayListNode;
     epics::pvData::PVScalarArray::shared_pointer pvScalarArray;
