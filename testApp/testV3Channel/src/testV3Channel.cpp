@@ -132,6 +132,8 @@ static void testV3ChannelCallFunc(const iocshArgBuf *args)
 {
     char *pvName = args[0].sval;
     printf("testV3Channel pvName %s\n",pvName);
+    String channelName(pvName);
+    printf("channelName %s\n",channelName.c_str());
     ChannelProvider::shared_pointer const &channelProvider
         = V3ChannelProvider::getChannelProvider();
     String providerName = channelProvider->getProviderName();
@@ -139,12 +141,15 @@ static void testV3ChannelCallFunc(const iocshArgBuf *args)
     FindRequester::shared_pointer findRequester
         = FindRequester::shared_pointer(new FindRequester());
     channelProvider->channelFind(
-        String(pvName),
+        channelName,
         findRequester);
     MyRequester::shared_pointer  myRequester
          = MyRequester::shared_pointer(new MyRequester());
     Channel::shared_pointer channel = channelProvider->createChannel(
-         String(pvName),myRequester,0,String(""));
+         channelName,
+         myRequester,
+         0,
+         String(""));
     CreateRequest::shared_pointer createRequest = getCreateRequest();
     PVStructure::shared_pointer pvRequest = createRequest->createRequest(
         String("record[process=true]field(value,timeStamp,alarm)"));
