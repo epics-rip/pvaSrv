@@ -47,10 +47,12 @@ ChannelProvider::shared_pointer const &V3ChannelProvider::getChannelProvider()
 V3ChannelProvider::V3ChannelProvider()
 : providerName("v3Channel"),channelList()
 {
+printf("V3ChannelProvider::V3ChannelProvider\n");
 }
 
 V3ChannelProvider::~V3ChannelProvider()
 {
+printf("V3ChannelProvider::~V3ChannelProvider\n");
 }
 
 void V3ChannelProvider::destroy()

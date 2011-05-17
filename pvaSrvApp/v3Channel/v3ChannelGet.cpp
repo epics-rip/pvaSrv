@@ -49,8 +49,7 @@ V3ChannelGet::V3ChannelGet(
   event(),
   v3ChannelGetPtr(V3ChannelGet::shared_pointer(this))
 {
-printf("V3ChannelGet construct channelGetRequester %p %p\n",
-&channelGetRequester,channelGetRequester.get());
+printf("V3ChannelGet construct ");
 }
 
 V3ChannelGet::~V3ChannelGet()
@@ -68,12 +67,9 @@ ChannelGetListNode * V3ChannelGet::init(PVStructure::shared_pointer const &pvReq
     if(propertyMask==V3Util::noAccessBit) return 0;
     pvStructure =  PVStructure::shared_pointer(
         V3Util::createPVStructure(
-             channelGetRequester,
-             propertyMask,
-             dbAddr));
+             channelGetRequester, propertyMask, dbAddr));
     if(pvStructure.get()==0) return 0;
-    V3Util::getPropertyData(
-        channelGetRequester,propertyMask,dbAddr,pvStructure);
+    V3Util::getPropertyData( channelGetRequester,propertyMask,dbAddr,pvStructure);
     int numFields = pvStructure->getStructure()->getNumberFields();
     bitSet = BitSet::shared_pointer(new BitSet(numFields));
     if((propertyMask&V3Util::processBit)!=0) {
@@ -129,15 +125,6 @@ void V3ChannelGet::get(bool lastRequest)
     }
     bitSet->clear();
     dbScanLock(dbAddr.precord);
-printf("channelGetRequester %p\n",&channelGetRequester);
-ChannelGetRequester *xxx = channelGetRequester.get();
-printf("xxx %p\n",xxx);
-printf("pvStructure %p\n",&pvStructure);
-PVStructure *yyy = pvStructure.get();
-printf("yyy %p\n",yyy);
-printf("bitSet %p\n",&bitSet);
-BitSet *zzz = bitSet.get();
-printf("zzz %p\n",zzz);
     Status status = V3Util::get(
         channelGetRequester,
         propertyMask,dbAddr,

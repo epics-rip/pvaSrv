@@ -54,11 +54,12 @@ V3ChannelPut::V3ChannelPut(
   event(),
   v3ChannelPutPtr(V3ChannelPut::shared_pointer(this))
 {
+printf("V3ChannelPut::V3ChannelPut()\n");
 }
 
 V3ChannelPut::~V3ChannelPut()
 {
-printf("v3ChannelGet destruct\n");
+printf("V3ChannelPut::~V3ChannelPut()\n");
 }
 
 

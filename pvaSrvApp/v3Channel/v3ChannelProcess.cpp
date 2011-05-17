@@ -47,9 +47,13 @@ V3ChannelProcess::V3ChannelProcess(
   event(),
   v3ChannelProcessPtr(V3ChannelProcess::shared_pointer(this))
 {
+printf("V3ChannelProcess::V3ChannelProcess\n");
 }
 
-V3ChannelProcess::~V3ChannelProcess() {}
+V3ChannelProcess::~V3ChannelProcess()
+{
+printf("V3ChannelProcess::~V3ChannelProcess\n");
+}
 
 
 ChannelProcessListNode * V3ChannelProcess::init()
@@ -85,6 +89,7 @@ void V3ChannelProcess::message(String message,MessageType messageType)
 }
 
 void V3ChannelProcess::destroy() {
+printf("V3ChannelProcess::destroy\n");
     v3Channel->removeChannelProcess(processListNode);
     delete this;
 }
@@ -104,7 +109,6 @@ void V3ChannelProcess::notifyCallback(struct putNotify *pn)
     V3ChannelProcess * cp = static_cast<V3ChannelProcess *>(pn->usrPvt);
     cp->event.signal();
 }
-
 
 }}
 

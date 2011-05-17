@@ -44,6 +44,7 @@ V3Channel::V3Channel(
     channelListNode(*this),
     v3ChannelPtr(V3Channel::shared_pointer(this))
 {
+printf("V3Channel::V3Channel\n");
 }
 
 ChannelListNode &V3Channel::init()
@@ -85,6 +86,7 @@ ChannelListNode &V3Channel::init()
 
 V3Channel::~V3Channel()
 {
+printf("V3Channel::~V3Channel\n");
 }
 
 void V3Channel::destroy()
@@ -163,8 +165,7 @@ void V3Channel::message(
 
 epics::pvAccess::ChannelProvider::shared_pointer const & V3Channel::getProvider()
 {
-    ChannelProvider::shared_pointer const & xxx = 
-        static_cast<ChannelProvider::shared_pointer const &>(provider);
+    ChannelProvider::shared_pointer const & xxx = provider;
     return xxx;
 }
 
@@ -309,7 +310,5 @@ void V3Channel::printInfo(StringBuilder out)
 {
     *out += "V3Channel provides access to V3 records";
 }
-
-
 
 }}
