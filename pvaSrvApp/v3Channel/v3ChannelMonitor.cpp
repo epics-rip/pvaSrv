@@ -44,10 +44,11 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 
 V3ChannelMonitor::V3ChannelMonitor(
-    V3Channel &v3Channel,
-    MonitorRequester &monitorRequester,
+    V3Channel::shared_pointer const &v3Channel,
+    MonitorRequester::shared_pointer const &monitorRequester,
     DbAddr &dbAddr)
-: v3Channel(v3Channel),monitorRequester(monitorRequester),
+: v3Channel(v3Channel),
+  monitorRequester(monitorRequester),
   dbAddr(dbAddr),
   monitorListNode(*this),
   event(),
@@ -57,10 +58,11 @@ V3ChannelMonitor::V3ChannelMonitor(
   v3Type(v3Byte),
   queueSize(2),
   pvStructurePtrArray(0),
-  monitorQueue(std::auto_ptr<MonitorQueue>(0)),
-  caV3Monitor(std::auto_ptr<CAV3Monitor>(0)),
-  currentElement(0),
-  nextElement(0)
+  monitorQueue(std::auto_ptr<MonitorQueue>()),
+  caV3Monitor(std::auto_ptr<CAV3Monitor>()),
+  currentElement(MonitorElement::shared_pointer()),
+  nextElement(MonitorElement::shared_pointer()),
+  v3ChannelMonitorPtr(V3ChannelMonitor::shared_pointer(this))
 {
 printf("V3ChannelMonitor construct\n");
 }
@@ -78,35 +80,45 @@ printf("~V3ChannelMonitor\n");
 
 
 ChannelMonitorListNode * V3ChannelMonitor::init(
-    PVStructure &pvRequest)
+    PVStructure::shared_pointer const &pvRequest)
 {
     String queueSizeString(V3Util::queueSizeString);
-    PVField *pvField = pvRequest.getSubField(queueSizeString);
+    PVField *pvField = pvRequest.get()->getSubField(queueSizeString);
     if(pvField!=0) {
-        PVString *pvString = pvRequest.getStringField(queueSizeString);
+        PVString *pvString = pvRequest.get()->getStringField(queueSizeString);
         if(pvString!=0) {
              String value = pvString->get();
              queueSize = atoi(value.c_str());
         }
     }
-    propertyMask = V3Util::getProperties(monitorRequester,pvRequest,dbAddr);
+    propertyMask = V3Util::getProperties(
+        *monitorRequester.get(),
+        *pvRequest.get(),
+        dbAddr);
     if(propertyMask==V3Util::noAccessBit) return 0;
     if(propertyMask&V3Util::isLinkBit) {
-        monitorRequester.message(
+        monitorRequester->message(
              String("can not monitor a link field"),errorMessage);
         return 0;
     }
     pvStructurePtrArray = new PVStructurePtr[queueSize];
     for(int i=0; i<queueSize; i++) {
         pvStructurePtrArray[i] = V3Util::createPVStructure(
-        monitorRequester,propertyMask,dbAddr);
+            *monitorRequester.get(),
+            propertyMask,
+            dbAddr);
         V3Util::getPropertyData(
-        monitorRequester,propertyMask,dbAddr,*pvStructurePtrArray[i]);
+            *monitorRequester.get(),
+            propertyMask,
+            dbAddr,
+            *pvStructurePtrArray[i]);
     }
     if((propertyMask&V3Util::enumValueBit)!=0) {
         v3Type = v3Enum;
     } else {
-        ScalarType scalarType = V3Util::getScalarType(monitorRequester,dbAddr);
+        ScalarType scalarType = V3Util::getScalarType(
+            *monitorRequester.get(),
+            dbAddr);
         switch(scalarType) {
         case pvByte: v3Type = v3Byte; break;
         case pvShort: v3Type = v3Short; break;
@@ -118,48 +130,49 @@ ChannelMonitorListNode * V3ChannelMonitor::init(
             throw std::logic_error(String("bad scalarType"));
         }
     }
-    MonitorElement** array = MonitorQueue::createElements(
-        pvStructurePtrArray,queueSize);
+    PVStructureSharedPointerPtrArray array = 
+        MonitorQueue::createStructures( pvStructurePtrArray,queueSize);
     monitorQueue = std::auto_ptr<MonitorQueue>(
         new MonitorQueue(array,queueSize));
-    String pvName = v3Channel.getChannelName();
+    String pvName = v3Channel.get()->getChannelName();
     caV3Monitor = std::auto_ptr<CAV3Monitor>(
         new CAV3Monitor( *this, pvName, v3Type));
     caV3Monitor.get()->connect();
     event.wait();
-    monitorRequester.monitorConnect(
+    monitorRequester->monitorConnect(
        Status::OK,
-       this,
+       v3ChannelMonitorPtr,
        pvStructurePtrArray[0]->getStructure());
     return &monitorListNode;
 }
 
 String V3ChannelMonitor::getRequesterName() {
-    return monitorRequester.getRequesterName();
+    return monitorRequester.get()->getRequesterName();
 }
 
 void V3ChannelMonitor::message(String message,MessageType messageType)
 {
-    monitorRequester.message(message,messageType);
+    monitorRequester->message(message,messageType);
 }
 
 void V3ChannelMonitor::destroy() {
 printf("V3ChannelMonitor::destroy\n");
-    v3Channel.removeChannelMonitor(monitorListNode);
+    v3Channel->removeChannelMonitor(monitorListNode);
     delete this;
 }
 
 Status V3ChannelMonitor::start()
 {
     currentElement = monitorQueue->getFree();
-    if(currentElement==0) {
-        throw std::logic_error(String("V3ChannelMonitor::start no free queue element"));
+    if(currentElement.get()==0) {
+        throw std::logic_error(String(
+            "V3ChannelMonitor::start no free queue element"));
     }
-    BitSet *bitSet = currentElement->getChangedBitSet();
+    BitSet::shared_pointer bitSet = currentElement->getChangedBitSet();
     bitSet->clear();
     nextElement = monitorQueue->getFree();
-    if(nextElement!=0) {
-        BitSet *bitSet = nextElement->getChangedBitSet();
+    if(nextElement.get()!=0) {
+        BitSet::shared_pointer bitSet = nextElement->getChangedBitSet();
         bitSet->clear();
     }
     caV3Monitor.get()->start();
@@ -172,12 +185,14 @@ Status V3ChannelMonitor::stop()
     return Status::OK;
 }
 
-MonitorElement* V3ChannelMonitor::poll()
+MonitorElement::shared_pointer const & V3ChannelMonitor::poll()
 {
-    return monitorQueue->getUsed();
+    MonitorElement::shared_pointer element = monitorQueue->getUsed();
+    MonitorElement::shared_pointer const & xxx = element;
+    return xxx;
 }
 
-void V3ChannelMonitor::release(MonitorElement* monitorElement)
+void V3ChannelMonitor::release(MonitorElement::shared_pointer const & monitorElement)
 {
     monitorQueue->releaseUsed(monitorElement);
 }
@@ -198,16 +213,19 @@ void V3ChannelMonitor::accessRightsCallback()
 void V3ChannelMonitor::eventCallback(const char *status)
 {
     if(status!=0) {
-         monitorRequester.message(String(status),errorMessage);
+         monitorRequester->message(String(status),errorMessage);
     }
-    PVStructure *pvStructure = currentElement->getPVStructure();
-    BitSet *bitSet = currentElement->getChangedBitSet();
+    PVStructure::shared_pointer pvStructure = currentElement->getPVStructure();
+    BitSet::shared_pointer bitSet = currentElement->getChangedBitSet();
     dbScanLock(dbAddr.precord);
     CAV3Data &caV3Data = caV3Monitor.get()->getData();
-    BitSet *overrunBitSet = currentElement->getOverrunBitSet();
+    BitSet::shared_pointer overrunBitSet = currentElement->getOverrunBitSet();
     Status stat = V3Util::get(
-       monitorRequester,propertyMask,dbAddr,
-       *pvStructure,*overrunBitSet,
+       *monitorRequester.get(),
+       propertyMask,
+       dbAddr,
+       *pvStructure.get(),
+       *overrunBitSet.get(),
        &caV3Data);
     int index = overrunBitSet->nextSetBit(0);
     while(index>=0) {
@@ -219,13 +237,16 @@ void V3ChannelMonitor::eventCallback(const char *status)
         index = overrunBitSet->nextSetBit(index+1);
     }
     if(bitSet->nextSetBit(0)>=0) {
-        if(nextElement==0) nextElement = monitorQueue->getFree();
-        if(nextElement!=0) {
-            PVStructure *pvNext = nextElement->getPVStructure();
-            BitSet *bitSetNext = nextElement->getChangedBitSet();
+        if(nextElement.get()==0) nextElement = monitorQueue->getFree();
+        if(nextElement.get()!=0) {
+            PVStructure::shared_pointer pvNext = nextElement->getPVStructure();
+            BitSet::shared_pointer bitSetNext = nextElement->getChangedBitSet();
             Status stat = V3Util::get(
-                monitorRequester,propertyMask,dbAddr,
-               *pvNext,*bitSetNext,
+                *monitorRequester.get(),
+                propertyMask,
+                dbAddr,
+               *pvNext.get(),
+               *bitSetNext.get(),
                &caV3Data);
             bitSetNext->clear();
             *bitSetNext |= *bitSet;
@@ -238,7 +259,7 @@ void V3ChannelMonitor::eventCallback(const char *status)
         bitSet->set(0);
     }
     if(bitSet->nextSetBit(0)<0) return;
-    if(nextElement==0) return;
+    if(nextElement.get()==0) return;
     monitorQueue->setUsed(currentElement);
     currentElement = nextElement;
     nextElement = monitorQueue->getFree();
@@ -246,7 +267,8 @@ void V3ChannelMonitor::eventCallback(const char *status)
         nextElement->getChangedBitSet()->clear();
         nextElement->getOverrunBitSet()->clear();
     }
-    monitorRequester.monitorEvent(this);
+    monitorRequester->monitorEvent(v3ChannelMonitorPtr);
+
 }
 
 }}

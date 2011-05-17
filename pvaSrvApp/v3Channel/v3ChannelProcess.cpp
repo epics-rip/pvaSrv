@@ -35,15 +35,17 @@ static String fieldListString("fieldList");
 static String valueString("value");
 
 V3ChannelProcess::V3ChannelProcess(
-    V3Channel &v3Channel,
-    ChannelProcessRequester &channelProcessRequester,
+    V3Channel::shared_pointer const &v3Channel,
+    ChannelProcessRequester::shared_pointer const &channelProcessRequester,
     DbAddr &dbAddr)
-: v3Channel(v3Channel),channelProcessRequester(channelProcessRequester),
+: v3Channel(v3Channel),
+  channelProcessRequester(channelProcessRequester),
   dbAddr(dbAddr),
   processListNode(*this),
   pNotify(0),
   notifyAddr(0),
-  event()
+  event(),
+  v3ChannelProcessPtr(V3ChannelProcess::shared_pointer(this))
 {
 }
 
@@ -69,21 +71,21 @@ ChannelProcessListNode * V3ChannelProcess::init()
    pn->nRequest = 1;
    pn->dbrType = DBR_CHAR;
    pn->usrPvt = this;
-   channelProcessRequester.channelProcessConnect(Status::OK,this);
+   channelProcessRequester->channelProcessConnect(Status::OK,v3ChannelProcessPtr);
    return &processListNode;
 }
 
 String V3ChannelProcess::getRequesterName() {
-    return channelProcessRequester.getRequesterName();
+    return channelProcessRequester->getRequesterName();
 }
 
 void V3ChannelProcess::message(String message,MessageType messageType)
 {
-    channelProcessRequester.message(message,messageType);
+    channelProcessRequester->message(message,messageType);
 }
 
 void V3ChannelProcess::destroy() {
-    v3Channel.removeChannelProcess(processListNode);
+    v3Channel->removeChannelProcess(processListNode);
     delete this;
 }
 
@@ -93,7 +95,7 @@ void V3ChannelProcess::process(bool lastRequest)
     pNotify.get()->pbuffer = &value;
     dbPutNotify(pNotify.get());
     event.wait();
-    channelProcessRequester.processDone(Status::OK);
+    channelProcessRequester->processDone(Status::OK);
     
 }
 

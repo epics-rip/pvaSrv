@@ -34,11 +34,15 @@ public:
     FindRequester(){}
     virtual ~FindRequester(){}
     virtual void channelFindResult(
-        const Status &status,ChannelFind *channelFind,bool wasFound);
+        const Status &status,
+        ChannelFind::shared_pointer const &channelFind,
+        bool wasFound);
 };
 
 void FindRequester::channelFindResult(
-    const Status &status,ChannelFind *channelFind,bool wasFound)
+    const Status &status,
+    ChannelFind::shared_pointer const &channelFind,
+    bool wasFound)
 {
     String message = status.getMessage();
     printf("channelFindResult status %s wasFound %s\n",
@@ -46,13 +50,21 @@ void FindRequester::channelFindResult(
         (wasFound ? "true" : "false"));
 }
 
-class MyRequester :  public virtual Requester, public ChannelRequester , public ChannelGetRequester
+class MyRequester :
+    public virtual Requester,
+    public ChannelRequester,
+    public ChannelGetRequester
 {
 public:
+    POINTER_DEFINITIONS(MyRequester);
     MyRequester()
-    : name(String("testV3Channel")),channel(0),channelGet(0),pvStructure(0),bitSet(0)
+    : name(String("testV3Channel")),
+      channelPtr(Channel::shared_pointer()),
+      channelGetPtr(ChannelGet::shared_pointer()),
+      pvStructurePtr(PVStructure::shared_pointer()),
+      bitSetPtr(BitSet::shared_pointer())
     { }
-    Channel *getChannel() {return channel;}
+    Channel::shared_pointer const & getChannel() {return channelPtr;}
     virtual ~MyRequester() { }
     virtual String getRequesterName()
     {
@@ -64,27 +76,33 @@ public:
         printf("ChannelRequester message %s messageType %s\n",
             message.c_str(),typeName.c_str());
     }
-    virtual void channelCreated(const Status &status, Channel *channel)
+    virtual void channelCreated(
+        const Status &status,
+        Channel::shared_pointer const &channel)
     {
-        this->channel = channel;
+        channelPtr = channel;
         String message = status.getMessage();
         bool isOK = status.isOK();
         printf("channelCreated status %s statusOK %s\n",
         message.c_str(),
         (isOK ? "true" : "false"));
     }
-    virtual void channelStateChange(Channel *c, Channel::ConnectionState connectionState)
+    virtual void channelStateChange(
+        Channel::shared_pointer const & c,
+        Channel::ConnectionState connectionState)
     {
         String state = Channel::ConnectionStateNames[connectionState];
         printf("channelStateChange %s\n",state.c_str());
     }
     virtual void channelGetConnect(
-        const Status &status,ChannelGet *channelGet,
-        PVStructure *pvStructure,BitSet *bitSet)
+        const Status &status,
+        ChannelGet::shared_pointer const &channelGet,
+        PVStructure::shared_pointer const &pvStructure,
+        BitSet::shared_pointer const &bitSet)
     {
-        this->channelGet = channelGet;
-        this->pvStructure = pvStructure;
-        this->bitSet = bitSet;
+        channelGetPtr = channelGet;
+        pvStructurePtr = pvStructure;
+        bitSetPtr = bitSet;
         printf("channelGetConnect statusOK %s\n",
             (status.isOK() ? "true" : "false"));
     }
@@ -93,15 +111,15 @@ public:
         printf("getDone statusOK %s\n",
             (status.isOK() ? "true" : "false"));
         String buffer("");
-        pvStructure->toString(&buffer);
+        pvStructurePtr->toString(&buffer);
         printf("%s\n",buffer.c_str());
     }
 private:
     String name;
-    Channel *channel;
-    ChannelGet *channelGet;
-    PVStructure *pvStructure;
-    BitSet *bitSet;
+    Channel::shared_pointer channelPtr;
+    ChannelGet::shared_pointer channelGetPtr;
+    PVStructure::shared_pointer pvStructurePtr;
+    BitSet::shared_pointer bitSetPtr;
 };
 
 static const iocshArg testArg0 = { "pvName", iocshArgString };
@@ -114,20 +132,24 @@ static void testV3ChannelCallFunc(const iocshArgBuf *args)
 {
     char *pvName = args[0].sval;
     printf("testV3Channel pvName %s\n",pvName);
-    V3ChannelProvider &channelProvider = V3ChannelProvider::getChannelProvider();
-    String providerName = channelProvider.getProviderName();
+    ChannelProvider::shared_pointer const &channelProvider
+        = V3ChannelProvider::getChannelProvider();
+    String providerName = channelProvider->getProviderName();
     printf("providerName %s\n",providerName.c_str());
-    std::auto_ptr<FindRequester> findRequester(new FindRequester());
-    channelProvider.channelFind(String(pvName),findRequester.get());
-    std::auto_ptr<MyRequester> myRequester(new MyRequester());
-    Channel *channel = channelProvider.createChannel(
-         String(pvName),myRequester.get(),0,String(""));
-    CreateRequest *createRequest = getCreateRequest();
-    PVStructure *pvRequest = createRequest->createRequest(
-        String("record[process=true]field(value,timeStamp,alarm)"),
-        myRequester.get());
-    ChannelGet *channelGet = channel->createChannelGet(
-        myRequester.get(),pvRequest);
+    FindRequester::shared_pointer findRequester
+        = FindRequester::shared_pointer(new FindRequester());
+    channelProvider->channelFind(
+        String(pvName),
+        findRequester);
+    MyRequester::shared_pointer  myRequester
+         = MyRequester::shared_pointer(new MyRequester());
+    Channel::shared_pointer channel = channelProvider->createChannel(
+         String(pvName),myRequester,0,String(""));
+    CreateRequest::shared_pointer createRequest = getCreateRequest();
+    PVStructure::shared_pointer pvRequest = createRequest->createRequest(
+        String("record[process=true]field(value,timeStamp,alarm)"));
+    ChannelGet::shared_pointer channelGet = channel->createChannelGet(
+        myRequester,pvRequest);
     channelGet->get(false);
     channelGet->destroy();
     if(channel!=0) {

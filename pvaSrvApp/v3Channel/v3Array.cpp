@@ -262,13 +262,13 @@ void V3ValueArray<T>::serialize(ByteBuffer *pbuffer,
 template<typename T>
 bool V3ValueArray<T>::operator==(PVField& pv)
 {
-    return getConvert()->equals(this, &pv);
+    return getConvert()->equals(*this, pv);
 }
 
 template<typename T>
 bool V3ValueArray<T>::operator!=(PVField& pv)
 {
-    return !(getConvert()->equals(this, &pv));
+    return !(getConvert()->equals(*this, pv));
 }
 
 template<>

@@ -1,16 +1,18 @@
-/* v3CAContext.h */
+/* CAV3Context.h */
 /**
  * Copyright - See the COPYRIGHT that is included with this distribution.
  * EPICS pvDataCPP is distributed subject to a Software License Agreement found
  * in file LICENSE that is included with this distribution.
  */
-/* Marty Kraimer 2011.03 */
-/* This connects to a V3 record and calls V3CA to monitor data.
- * Only numeric scalar, timeStamp, and alarm are provided.
+/* Marty Kraimer 2011.03 
+ * This creates a CAV3 context the first time a thread calls 
+ * CAV3ContextCreate::create and then calls ca_attach_context
+ * from checkContext if the caller is a thread that is not the
+ * thread that called CAV3ContextCreate,create.
  */
 
-#ifndef V3CACONTEXT_H
-#define V3CACONTEXT_H
+#ifndef CAV3CONTEXT_H
+#define CAV3CONTEXT_H
 
 #include <map>
 #include <list>
@@ -52,4 +54,4 @@ private:
     friend class CAV3Context;
 };
 
-#endif  /* V3CACONTEXT_H */
+#endif  /* CAV3CONTEXT_H */

@@ -25,32 +25,23 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 
 static Status notFoundStatus(Status::STATUSTYPE_ERROR,String("pv not found"));
+static String providerName("v3Channel");
 
-static V3ChannelProvider *channelProvider = 0;
 static Mutex mutex;
 static bool isRegistered = false;
 
-static void myDestroy(void*)
-{
-    Lock xx(mutex);
-    if(channelProvider==0) return;
-    channelProvider->destroy();
-    channelProvider = 0;
-}
+static V3ChannelProvider::shared_pointer channelProvider(
+    V3ChannelProvider::shared_pointer(new V3ChannelProvider()));
 
-V3ChannelProvider &V3ChannelProvider::getChannelProvider()
+ChannelProvider::shared_pointer const &V3ChannelProvider::getChannelProvider()
 {
     Lock xx(mutex);
-    if(channelProvider==0){
-        channelProvider = new V3ChannelProvider();
-        epicsAtExit(&myDestroy,0);
-    }
     if(!isRegistered) {
         isRegistered = true;
         registerChannelProvider(channelProvider);
     }
-    return *channelProvider;
-
+    ChannelProvider::shared_pointer const & provider = channelProvider;
+    return provider;
 }
 
 V3ChannelProvider::V3ChannelProvider()
@@ -68,7 +59,7 @@ printf("V3ChannelProvider::destroy\n");
     Lock xx(mutex);
     if(!isRegistered) return;
     isRegistered = false;
-    unregisterChannelProvider(this);
+    unregisterChannelProvider(channelProvider);
     while(true) {
         ChannelListNode *node = channelList.getHead();
         if(node==0) break;
@@ -83,43 +74,52 @@ String V3ChannelProvider::getProviderName()
 }
 
 
-ChannelFind *V3ChannelProvider::channelFind(
+ChannelFind::shared_pointer V3ChannelProvider::channelFind(
     String channelName,
-    ChannelFindRequester *channelFindRequester)
+    ChannelFindRequester::shared_pointer const &channelFindRequester)
 {
     struct dbAddr dbAddr;
     long result = dbNameToAddr(channelName.c_str(),&dbAddr);
     if(result!=0) {
-        channelFindRequester->channelFindResult(notFoundStatus,0,false);
-        return 0;
+        channelFindRequester.get()->channelFindResult(
+            notFoundStatus,
+            ChannelFind::shared_pointer(),
+            false);
+        return ChannelFind::shared_pointer();
     }
-    channelFindRequester->channelFindResult(Status::OK,0,true);
-    return 0;
+    channelFindRequester->channelFindResult(
+        Status::OK,
+        ChannelFind::shared_pointer(),
+        true);
+    return ChannelFind::shared_pointer();
 }
 
-Channel *V3ChannelProvider::createChannel(
+Channel::shared_pointer V3ChannelProvider::createChannel(
     String channelName,
-    ChannelRequester *channelRequester,
+    ChannelRequester::shared_pointer  const &channelRequester,
     short priority)
 {
     return createChannel(channelName,channelRequester,priority,"");
 }
 
-Channel *V3ChannelProvider::createChannel(
+Channel::shared_pointer V3ChannelProvider::createChannel(
     String channelName,
-    ChannelRequester *channelRequester,
+    ChannelRequester::shared_pointer  const &channelRequester,
     short priority,
     String address)
 {
     struct dbAddr dbAddr;
     long result = dbNameToAddr(channelName.c_str(),&dbAddr);
     if(result!=0) {
-        channelRequester->channelCreated(notFoundStatus,0);
-        return 0;
+        channelRequester->channelCreated(
+            notFoundStatus,
+            Channel::shared_pointer());
+        return Channel::shared_pointer();
     }
     std::auto_ptr<DbAddr> addr(new DbAddr());
     memcpy(addr.get(),&dbAddr,sizeof(dbAddr));
-    V3Channel *v3Channel = new V3Channel(*this,*channelRequester,channelName,addr);
+    V3Channel::shared_pointer v3Channel = V3Channel::shared_pointer(
+        new V3Channel(channelProvider,channelRequester,channelName,addr));
     ChannelListNode & node = v3Channel->init();
     channelList.addTail(node);
     channelRequester->channelCreated(Status::OK,v3Channel);

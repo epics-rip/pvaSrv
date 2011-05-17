@@ -37,40 +37,52 @@ using namespace epics::pvAccess;
 
 
 V3ChannelPut::V3ChannelPut(
-    V3Channel &v3Channel,
-    ChannelPutRequester &channelPutRequester,
+    V3Channel::shared_pointer const &v3Channel,
+    ChannelPutRequester::shared_pointer const &channelPutRequester,
     DbAddr &dbAddr)
-: v3Channel(v3Channel),channelPutRequester(channelPutRequester),
+: v3Channel(v3Channel),
+  channelPutRequester(channelPutRequester),
   dbAddr(dbAddr),
   putListNode(*this),
   propertyMask(0),
   process(false),
   firstTime(true),
-  pvStructure(0),bitSet(0),
+  pvStructure(PVStructure::shared_pointer()),
+  bitSet(BitSet::shared_pointer()),
   pNotify(0),
   notifyAddr(0),
-  event()
+  event(),
+  v3ChannelPutPtr(V3ChannelPut::shared_pointer(this))
 {
 }
 
-V3ChannelPut::~V3ChannelPut() {}
-
-
-ChannelPutListNode * V3ChannelPut::init(PVStructure &pvRequest)
+V3ChannelPut::~V3ChannelPut()
 {
-    propertyMask = V3Util::getProperties(channelPutRequester,pvRequest,dbAddr);
+printf("v3ChannelGet destruct\n");
+}
+
+
+ChannelPutListNode * V3ChannelPut::init(PVStructure::shared_pointer const &pvRequest)
+{
+    propertyMask = V3Util::getProperties(
+        *channelPutRequester.get(),
+        *pvRequest.get(),
+        dbAddr);
     if(propertyMask==V3Util::noAccessBit) return 0;
     if(propertyMask==V3Util::noModBit) {
-        channelPutRequester.message(
+        channelPutRequester->message(
              String("field not allowed to be changed"),errorMessage);
         return 0;
     }
-    pvStructure =  std::auto_ptr<PVStructure>(
-        V3Util::createPVStructure(channelPutRequester, propertyMask, dbAddr));
+    pvStructure =  PVStructure::shared_pointer(
+        V3Util::createPVStructure(
+            *channelPutRequester.get(),
+            propertyMask,
+            dbAddr));
     if(pvStructure.get()==0) return 0;
     if((propertyMask&V3Util::dbPutBit)!=0) {
         if((propertyMask&V3Util::processBit)!=0) {
-            channelPutRequester.message(
+            channelPutRequester->message(
              String("process determined by dbPutField"),errorMessage);
         }
     } else if((propertyMask&V3Util::processBit)!=0) {
@@ -94,23 +106,26 @@ ChannelPutListNode * V3ChannelPut::init(PVStructure &pvRequest)
        pn->usrPvt = this;
     }
     int numFields = pvStructure->getStructure()->getNumberFields();
-    bitSet = std::auto_ptr<BitSet>(new BitSet(numFields));
-    channelPutRequester.channelPutConnect(
-       Status::OK,this,pvStructure.get(),bitSet.get());
+    bitSet = BitSet::shared_pointer(new BitSet(numFields));
+    channelPutRequester->channelPutConnect(
+       Status::OK,
+       v3ChannelPutPtr,
+       pvStructure,
+       bitSet);
     return &putListNode;
 }
 
 String V3ChannelPut::getRequesterName() {
-    return channelPutRequester.getRequesterName();
+    return channelPutRequester->getRequesterName();
 }
 
 void V3ChannelPut::message(String message,MessageType messageType)
 {
-    channelPutRequester.message(message,messageType);
+    channelPutRequester->message(message,messageType);
 }
 
 void V3ChannelPut::destroy() {
-    v3Channel.removeChannelPut(putListNode);
+    v3Channel->removeChannelPut(putListNode);
     delete this;
 }
 
@@ -119,14 +134,14 @@ void V3ChannelPut::put(bool lastRequest)
     PVField *pvField = pvStructure.get()->getPVFields()[0];
     if(propertyMask&V3Util::dbPutBit) {
         Status status = V3Util::putField(
-            channelPutRequester,propertyMask,dbAddr,pvField);
-        channelPutRequester.putDone(status);
+            *channelPutRequester.get(),propertyMask,dbAddr,pvField);
+        channelPutRequester->putDone(status);
         if(lastRequest) destroy();
         return;
     }
     dbScanLock(dbAddr.precord);
     Status status = V3Util::put(
-        channelPutRequester,propertyMask,dbAddr,pvField);
+        *channelPutRequester.get(),propertyMask,dbAddr,pvField);
     dbScanUnlock(dbAddr.precord);
     if(process) {
         epicsUInt8 value = 1;
@@ -141,7 +156,7 @@ void V3ChannelPut::put(bool lastRequest)
     if (precord->mlis.count &&
         !(isValueField && pfldDes->process_passive))
         db_post_events(precord, dbAddr.pfield, DBE_VALUE | DBE_LOG);
-    channelPutRequester.putDone(status);
+    channelPutRequester->putDone(status);
     if(lastRequest) destroy();
 }
 
@@ -156,13 +171,17 @@ void V3ChannelPut::get()
     bitSet->clear();
     dbScanLock(dbAddr.precord);
     Status status = V3Util::get(
-        channelPutRequester,propertyMask,dbAddr,*pvStructure,*bitSet,0);
+        *channelPutRequester.get(),
+        propertyMask,dbAddr,
+        *pvStructure.get(),
+        *bitSet.get(),
+        0);
     if(firstTime) {
         firstTime = false;
         bitSet->set(pvStructure->getFieldOffset());
     }
     dbScanUnlock(dbAddr.precord);
-    channelPutRequester.getDone(Status::OK);
+    channelPutRequester->getDone(Status::OK);
 }
 
 }}

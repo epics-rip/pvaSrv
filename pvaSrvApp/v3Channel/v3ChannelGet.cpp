@@ -32,21 +32,25 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 
 V3ChannelGet::V3ChannelGet(
-    V3Channel &v3Channel,
-    ChannelGetRequester &channelGetRequester,
+    V3Channel::shared_pointer const &v3Channel,
+    ChannelGetRequester::shared_pointer const &channelGetRequester,
     DbAddr &dbAddr)
-: v3Channel(v3Channel),channelGetRequester(channelGetRequester),
+: v3Channel(v3Channel),
+  channelGetRequester(channelGetRequester),
   dbAddr(dbAddr),
   getListNode(*this),
   process(false),
   firstTime(true),
   propertyMask(0),
-  pvStructure(0),bitSet(0),
+  pvStructure(PVStructure::shared_pointer()),
+  bitSet(BitSet::shared_pointer()),
   pNotify(0),
   notifyAddr(0),
-  event()
+  event(),
+  v3ChannelGetPtr(V3ChannelGet::shared_pointer(this))
 {
-printf("V3ChannelGet construct\n");
+printf("V3ChannelGet construct channelGetRequester %p %p\n",
+&channelGetRequester,channelGetRequester.get());
 }
 
 V3ChannelGet::~V3ChannelGet()
@@ -55,17 +59,23 @@ printf("V3ChannelGet destruct\n");
 }
 
 
-ChannelGetListNode * V3ChannelGet::init(PVStructure &pvRequest)
+ChannelGetListNode * V3ChannelGet::init(PVStructure::shared_pointer const &pvRequest)
 {
-    propertyMask = V3Util::getProperties(channelGetRequester,pvRequest,dbAddr);
+    propertyMask = V3Util::getProperties(
+        *channelGetRequester.get(),
+        *pvRequest.get(),
+        dbAddr);
     if(propertyMask==V3Util::noAccessBit) return 0;
-    pvStructure =  std::auto_ptr<PVStructure>(
-        V3Util::createPVStructure(channelGetRequester, propertyMask, dbAddr));
+    pvStructure =  PVStructure::shared_pointer(
+        V3Util::createPVStructure(
+             *channelGetRequester.get(),
+             propertyMask,
+             dbAddr));
     if(pvStructure.get()==0) return 0;
     V3Util::getPropertyData(
-        channelGetRequester,propertyMask,dbAddr,*pvStructure);
+        *channelGetRequester.get(),propertyMask,dbAddr,*pvStructure);
     int numFields = pvStructure->getStructure()->getNumberFields();
-    bitSet = std::auto_ptr<BitSet>(new BitSet(numFields));
+    bitSet = BitSet::shared_pointer(new BitSet(numFields));
     if((propertyMask&V3Util::processBit)!=0) {
        process = true;
        pNotify = std::auto_ptr<struct putNotify>(new (struct putNotify)());
@@ -86,23 +96,26 @@ ChannelGetListNode * V3ChannelGet::init(PVStructure &pvRequest)
        pn->dbrType = DBR_CHAR;
        pn->usrPvt = this;
     }
-    channelGetRequester.channelGetConnect(
-       Status::OK,this,pvStructure.get(),bitSet.get());
+    channelGetRequester->channelGetConnect(
+       Status::OK,
+       v3ChannelGetPtr,
+       pvStructure,
+       bitSet);
     return &getListNode;
 }
 
 String V3ChannelGet::getRequesterName() {
-    return channelGetRequester.getRequesterName();
+    return channelGetRequester->getRequesterName();
 }
 
 void V3ChannelGet::message(String message,MessageType messageType)
 {
-    channelGetRequester.message(message,messageType);
+    channelGetRequester->message(message,messageType);
 }
 
 void V3ChannelGet::destroy() {
 printf("V3ChannelGet::destroy\n");
-    v3Channel.removeChannelGet(getListNode);
+    v3Channel->removeChannelGet(getListNode);
     delete this;
 }
 
@@ -116,15 +129,24 @@ void V3ChannelGet::get(bool lastRequest)
     }
     bitSet->clear();
     dbScanLock(dbAddr.precord);
+printf("channelGetRequester %p\n",&channelGetRequester);
+ChannelGetRequester *xxx = channelGetRequester.get();
+printf("xxx %p\n",xxx);
+printf("pvStructure %p\n",&pvStructure);
+PVStructure *yyy = pvStructure.get();
+printf("yyy %p\n",yyy);
+printf("bitSet %p\n",&bitSet);
+BitSet *zzz = bitSet.get();
+printf("zzz %p\n",zzz);
     Status status = V3Util::get(
-        channelGetRequester,propertyMask,dbAddr,*pvStructure,*bitSet,0);
+        *channelGetRequester.get(),propertyMask,dbAddr,*pvStructure.get(),*bitSet.get(),0);
     dbScanUnlock(dbAddr.precord);
     if(firstTime) {
         firstTime = false;
         bitSet->clear();
         bitSet->set(0);
     }
-    channelGetRequester.getDone(status);
+    channelGetRequester->getDone(status);
     if(lastRequest) destroy();
 }
 

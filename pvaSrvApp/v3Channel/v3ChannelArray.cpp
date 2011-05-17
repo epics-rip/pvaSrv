@@ -62,23 +62,29 @@ typedef long (*put_array_info) (DBADDR *,long );
 }
 
 V3ChannelArray::V3ChannelArray(
-    V3Channel &v3Channel,
-    ChannelArrayRequester &channelArrayRequester,
+    V3Channel::shared_pointer const &v3Channel,
+    ChannelArrayRequester::shared_pointer const &channelArrayRequester,
     DbAddr &dbAddr)
-: v3Channel(v3Channel),channelArrayRequester(channelArrayRequester),
+: v3Channel(v3Channel),
+  channelArrayRequester(channelArrayRequester),
   dbAddr(dbAddr),
   arrayListNode(*this),
-  pvScalarArray(0)
+  pvScalarArray(PVScalarArray::shared_pointer()),
+  v3ChannelArrayPtr(V3ChannelArray::shared_pointer(this))
 {
+printf("V3ChannelArray construct\n");
 }
 
-V3ChannelArray::~V3ChannelArray() {}
+V3ChannelArray::~V3ChannelArray()
+{
+printf("V3ChannelArray::~V3ChannelArray()\n");
+}
 
 
-ChannelArrayListNode * V3ChannelArray::init(PVStructure &pvRequest)
+ChannelArrayListNode * V3ChannelArray::init(PVStructure::shared_pointer const &pvRequest)
 {
     if(!dbAddr.no_elements>1) {
-        channelArrayRequester.message(
+        channelArrayRequester.get()->message(
            String("field in V3 record is not an array"),errorMessage);
         return false;
     }
@@ -104,19 +110,22 @@ ChannelArrayListNode * V3ChannelArray::init(PVStructure &pvRequest)
       break;
     }
     if(scalarType==pvBoolean) {
-        channelArrayRequester.message(
+        channelArrayRequester->message(
            String("unsupported field in V3 record"),errorMessage);
         return false;
     }
     StandardPVField *standardPVField = getStandardPVField();
-    pvScalarArray = std::auto_ptr<PVScalarArray>(
+    pvScalarArray = PVScalarArray::shared_pointer(
         standardPVField->scalarArrayValue(0,scalarType));
-    channelArrayRequester.channelArrayConnect(Status::OK,this,pvScalarArray.get());
+    channelArrayRequester->channelArrayConnect(
+        Status::OK,
+        v3ChannelArrayPtr,
+        pvScalarArray);
     return &arrayListNode;
 }
 
 void V3ChannelArray::destroy() {
-    v3Channel.removeChannelArray(arrayListNode);
+    v3Channel->removeChannelArray(arrayListNode);
     delete this;
 }
 
@@ -132,7 +141,7 @@ void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
         get_info(&dbAddr, &length, &v3offset);
         if(v3offset!=0) {
             dbScanUnlock(dbAddr.precord);
-            channelArrayRequester.getArrayDone(
+            channelArrayRequester->getArrayDone(
                 Status(Status::STATUSTYPE_ERROR,
                    String("v3offset not supported"),
                    String("")));
@@ -144,7 +153,7 @@ void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
     if((offset+count)>length) count = length -offset;
     if(count<0) {
         dbScanUnlock(dbAddr.precord);
-        channelArrayRequester.getArrayDone(Status::OK);
+        channelArrayRequester->getArrayDone(Status::OK);
         if(lastRequest) destroy();
         return;
     }
@@ -199,7 +208,7 @@ void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
     }
     }
     dbScanUnlock(dbAddr.precord);
-    channelArrayRequester.getArrayDone(Status::OK);
+    channelArrayRequester->getArrayDone(Status::OK);
     if(lastRequest) destroy();
 }
 
@@ -210,7 +219,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
     if((offset+count)>no_elements) count = no_elements - count;
     if(count<=0) {
         dbScanUnlock(dbAddr.precord);
-        channelArrayRequester.getArrayDone(Status::OK);
+        channelArrayRequester->getArrayDone(Status::OK);
         if(lastRequest) destroy();
         return;
     }
@@ -300,7 +309,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
     }
     }
     dbScanUnlock(dbAddr.precord);
-    channelArrayRequester.getArrayDone(Status::OK);
+    channelArrayRequester->getArrayDone(Status::OK);
     if(lastRequest) destroy();
 }
 
@@ -316,7 +325,7 @@ void V3ChannelArray::setLength(bool lastRequest,int length,int capacity)
         put_info(&dbAddr, length);
     }
     dbScanUnlock(dbAddr.precord);
-    channelArrayRequester.setLengthDone(Status::OK);
+    channelArrayRequester->setLengthDone(Status::OK);
     if(lastRequest) destroy();
 }
 
