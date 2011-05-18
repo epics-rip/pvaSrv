@@ -42,14 +42,14 @@ V3ChannelGet::V3ChannelGet(
   process(false),
   firstTime(true),
   propertyMask(0),
-  pvStructure(PVStructure::shared_pointer()),
-  bitSet(BitSet::shared_pointer()),
+  pvStructure(),
+  bitSet(),
   pNotify(0),
   notifyAddr(0),
   event(),
-  v3ChannelGetPtr(V3ChannelGet::shared_pointer(this))
+  v3ChannelGetPtr()
 {
-printf("V3ChannelGet construct ");
+printf("V3ChannelGet construct\n");
 }
 
 V3ChannelGet::~V3ChannelGet()

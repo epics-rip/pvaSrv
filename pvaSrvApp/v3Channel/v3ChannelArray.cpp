@@ -69,8 +69,8 @@ V3ChannelArray::V3ChannelArray(
   channelArrayRequester(channelArrayRequester),
   dbAddr(dbAddr),
   arrayListNode(*this),
-  pvScalarArray(PVScalarArray::shared_pointer()),
-  v3ChannelArrayPtr(V3ChannelArray::shared_pointer(this))
+  pvScalarArray(),
+  v3ChannelArrayPtr()
 {
 printf("V3ChannelArray construct\n");
 }

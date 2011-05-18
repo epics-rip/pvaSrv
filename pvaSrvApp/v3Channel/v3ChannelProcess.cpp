@@ -45,7 +45,7 @@ V3ChannelProcess::V3ChannelProcess(
   pNotify(0),
   notifyAddr(0),
   event(),
-  v3ChannelProcessPtr(V3ChannelProcess::shared_pointer(this))
+  v3ChannelProcessPtr()
 {
 printf("V3ChannelProcess::V3ChannelProcess\n");
 }

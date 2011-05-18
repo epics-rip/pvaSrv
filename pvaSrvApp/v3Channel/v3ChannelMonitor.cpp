@@ -59,9 +59,9 @@ V3ChannelMonitor::V3ChannelMonitor(
   queueSize(2),
   monitorQueue(std::auto_ptr<MonitorQueue>()),
   caV3Monitor(std::auto_ptr<CAV3Monitor>()),
-  currentElement(MonitorElement::shared_pointer()),
-  nextElement(MonitorElement::shared_pointer()),
-  v3ChannelMonitorPtr(V3ChannelMonitor::shared_pointer(this))
+  currentElement(),
+  nextElement(),
+  v3ChannelMonitorPtr()
 {
 printf("V3ChannelMonitor construct\n");
 }
@@ -159,6 +159,7 @@ Status V3ChannelMonitor::start()
 {
     currentElement = monitorQueue->getFree();
     if(currentElement.get()==0) {
+printf("V3ChannelMonitor::start will throw\n");
         throw std::logic_error(String(
             "V3ChannelMonitor::start no free queue element"));
     }

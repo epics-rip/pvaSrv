@@ -42,7 +42,7 @@ V3Channel::V3Channel(
     channelMonitorList(),
     channelArrayList(),
     channelListNode(*this),
-    v3ChannelPtr(V3Channel::shared_pointer(this))
+    v3ChannelPtr()
 {
 printf("V3Channel::V3Channel\n");
 }

@@ -765,7 +765,9 @@ Status  V3Util::put(
     bool post = false;
     if(!(propertyMask&processBit)) post = true;
     if(precord->mlis.count && !(isValueField && pfldDes->process_passive)) post = true;
-    if(post) db_post_events(precord, dbAddr.pfield, DBE_VALUE | DBE_LOG);
+    if(post) {
+        db_post_events(precord, dbAddr.pfield, DBE_VALUE | DBE_LOG);
+    }
     return Status::OK;
 }
 

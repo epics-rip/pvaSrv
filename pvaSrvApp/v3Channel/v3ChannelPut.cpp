@@ -47,12 +47,12 @@ V3ChannelPut::V3ChannelPut(
   propertyMask(0),
   process(false),
   firstTime(true),
-  pvStructure(PVStructure::shared_pointer()),
-  bitSet(BitSet::shared_pointer()),
+  pvStructure(),
+  bitSet(),
   pNotify(0),
   notifyAddr(0),
   event(),
-  v3ChannelPutPtr(V3ChannelPut::shared_pointer(this))
+  v3ChannelPutPtr()
 {
 printf("V3ChannelPut::V3ChannelPut()\n");
 }
@@ -154,9 +154,9 @@ void V3ChannelPut::put(bool lastRequest)
     struct dbCommon *precord = dbAddr.precord;
     int isValueField = dbIsValueField(pfldDes);
     if (isValueField) precord->udf = FALSE;
-    if (precord->mlis.count &&
-        !(isValueField && pfldDes->process_passive))
+    if (precord->mlis.count && !(isValueField && pfldDes->process_passive)) {
         db_post_events(precord, dbAddr.pfield, DBE_VALUE | DBE_LOG);
+    }
     channelPutRequester->putDone(status);
     if(lastRequest) destroy();
 }
