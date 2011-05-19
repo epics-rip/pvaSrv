@@ -294,7 +294,8 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
         int index = 0;
         char *to = static_cast<char *>(dbAddr.pfield);
         int len = dbAddr.field_size;
-        while(index<length) {
+        to += len*offset;
+        while(index<count) {
             const char * from = data.data[index].c_str();
             if(from!=0) {
                 strncpy(to,from,len-1);
