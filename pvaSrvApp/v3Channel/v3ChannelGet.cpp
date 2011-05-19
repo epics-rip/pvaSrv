@@ -46,8 +46,7 @@ V3ChannelGet::V3ChannelGet(
   bitSet(),
   pNotify(0),
   notifyAddr(0),
-  event(),
-  v3ChannelGetPtr()
+  event()
 {
 printf("V3ChannelGet construct\n");
 }
@@ -94,7 +93,7 @@ ChannelGetListNode * V3ChannelGet::init(PVStructure::shared_pointer const &pvReq
     }
     channelGetRequester->channelGetConnect(
        Status::OK,
-       v3ChannelGetPtr,
+       getPtrSelf(),
        pvStructure,
        bitSet);
     return &getListNode;

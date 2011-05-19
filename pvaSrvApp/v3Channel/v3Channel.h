@@ -82,7 +82,10 @@ private:
     ChannelList channelList;
 };
 
-class V3Channel : public virtual epics::pvAccess::Channel {
+class V3Channel :
+  public virtual epics::pvAccess::Channel,
+  public std::tr1::enable_shared_from_this<V3Channel>
+{
 public:
     POINTER_DEFINITIONS(V3Channel);
     V3Channel(
@@ -140,6 +143,10 @@ public:
     void removeChannelMonitor(ChannelMonitorListNode &);
     void removeChannelArray(ChannelArrayListNode &);
 private:
+    V3Channel::shared_pointer getPtrSelf()
+    {
+        return shared_from_this();
+    }
     V3ChannelProvider::shared_pointer  provider;
     epics::pvAccess::ChannelRequester::shared_pointer requester;
     epics::pvData::String name;
@@ -151,10 +158,12 @@ private:
     ChannelMonitorList channelMonitorList;
     ChannelArrayList channelArrayList;
     ChannelListNode channelListNode;
-    V3Channel::shared_pointer v3ChannelPtr;
 };
 
-class V3ChannelProcess : public virtual epics::pvAccess::ChannelProcess {
+class V3ChannelProcess :
+  public virtual epics::pvAccess::ChannelProcess,
+  public std::tr1::enable_shared_from_this<V3ChannelProcess>
+{
 public:
     POINTER_DEFINITIONS(V3ChannelProcess);
     V3ChannelProcess(
@@ -170,6 +179,10 @@ public:
     virtual void destroy();
     virtual void process(bool lastRequest);
 private:
+    V3ChannelProcess::shared_pointer getPtrSelf()
+    {
+        return shared_from_this();
+    }
     static void notifyCallback(struct putNotify *);
     V3Channel::shared_pointer v3Channel;
     epics::pvAccess::ChannelProcessRequester::shared_pointer channelProcessRequester;
@@ -178,10 +191,12 @@ private:
     std::auto_ptr<struct putNotify> pNotify;
     std::auto_ptr<DbAddr> notifyAddr;
     epics::pvData::Event event;
-    V3ChannelProcess::shared_pointer v3ChannelProcessPtr;
 };
 
-class V3ChannelGet : public virtual epics::pvAccess::ChannelGet {
+class V3ChannelGet :
+  public virtual epics::pvAccess::ChannelGet,
+  public std::tr1::enable_shared_from_this<V3ChannelGet>
+{
 public:
     POINTER_DEFINITIONS(V3ChannelGet);
     V3ChannelGet(
@@ -197,6 +212,11 @@ public:
     virtual void destroy();
     virtual void get(bool lastRequest);
 private:
+    V3ChannelGet::shared_pointer getPtrSelf()
+
+    {
+        return shared_from_this();
+    }
     static void notifyCallback(struct putNotify *);
     V3Channel::shared_pointer v3Channel;
     epics::pvAccess::ChannelGetRequester::shared_pointer channelGetRequester;
@@ -210,10 +230,12 @@ private:
     std::auto_ptr<struct putNotify> pNotify;
     std::auto_ptr<DbAddr> notifyAddr;
     epics::pvData::Event event;
-    V3ChannelGet::shared_pointer v3ChannelGetPtr;
 };
 
-class V3ChannelPut : public virtual epics::pvAccess::ChannelPut {
+class V3ChannelPut :
+  public virtual epics::pvAccess::ChannelPut,
+  public std::tr1::enable_shared_from_this<V3ChannelPut>
+{
 public:
     POINTER_DEFINITIONS(V3ChannelPut);
     V3ChannelPut(
@@ -230,6 +252,10 @@ public:
     virtual void put(bool lastRequest);
     virtual void get();
 private:
+    V3ChannelPut::shared_pointer getPtrSelf()
+    {
+        return shared_from_this();
+    }
     static void notifyCallback(struct putNotify *);
     V3Channel::shared_pointer v3Channel;
     epics::pvAccess::ChannelPutRequester::shared_pointer channelPutRequester;
@@ -243,12 +269,12 @@ private:
     std::auto_ptr<struct putNotify> pNotify;
     std::auto_ptr<DbAddr> notifyAddr;
     epics::pvData::Event event;
-    V3ChannelPut::shared_pointer v3ChannelPutPtr;
 };
 
 class V3ChannelMonitor
 : public virtual epics::pvData::Monitor,
-  public virtual CAV3MonitorRequester
+  public virtual CAV3MonitorRequester,
+  public std::tr1::enable_shared_from_this<V3ChannelMonitor>
 {
 public:
     POINTER_DEFINITIONS(V3ChannelMonitor);
@@ -275,6 +301,10 @@ public:
     virtual void accessRightsCallback();
     virtual void eventCallback(const char *);
 private:
+    V3ChannelMonitor::shared_pointer getPtrSelf()
+    {
+        return shared_from_this();
+    }
     V3Channel::shared_pointer v3Channel;
     epics::pvData::MonitorRequester::shared_pointer  monitorRequester;
     DbAddr &dbAddr;
@@ -289,10 +319,12 @@ private:
     std::auto_ptr<CAV3Monitor> caV3Monitor;
     epics::pvData::MonitorElement::shared_pointer currentElement;
     epics::pvData::MonitorElement::shared_pointer nextElement;
-    V3ChannelMonitor::shared_pointer v3ChannelMonitorPtr;
 };
 
-class V3ChannelArray : public epics::pvAccess::ChannelArray {
+class V3ChannelArray :
+  public epics::pvAccess::ChannelArray,
+  public std::tr1::enable_shared_from_this<V3ChannelArray>
+{
 public:
     POINTER_DEFINITIONS(V3ChannelArray);
     V3ChannelArray(
@@ -306,12 +338,15 @@ public:
     virtual void getArray(bool lastRequest, int offset, int count);
     virtual void setLength(bool lastRequest, int length, int capacity);
 private:
+    V3ChannelArray::shared_pointer getPtrSelf()
+    {
+        return shared_from_this();
+    }
     V3Channel::shared_pointer v3Channel;
     epics::pvAccess::ChannelArrayRequester::shared_pointer channelArrayRequester;
     DbAddr &dbAddr;
     ChannelArrayListNode arrayListNode;
     epics::pvData::PVScalarArray::shared_pointer pvScalarArray;
-    V3ChannelArray::shared_pointer v3ChannelArrayPtr;
 };
 
 }}

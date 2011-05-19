@@ -51,8 +51,7 @@ V3ChannelPut::V3ChannelPut(
   bitSet(),
   pNotify(0),
   notifyAddr(0),
-  event(),
-  v3ChannelPutPtr()
+  event()
 {
 printf("V3ChannelPut::V3ChannelPut()\n");
 }
@@ -110,7 +109,7 @@ ChannelPutListNode * V3ChannelPut::init(PVStructure::shared_pointer const &pvReq
     bitSet = BitSet::shared_pointer(new BitSet(numFields));
     channelPutRequester->channelPutConnect(
        Status::OK,
-       v3ChannelPutPtr,
+       getPtrSelf(),
        pvStructure,
        bitSet);
     return &putListNode;

@@ -41,8 +41,7 @@ V3Channel::V3Channel(
     channelPutList(),
     channelMonitorList(),
     channelArrayList(),
-    channelListNode(*this),
-    v3ChannelPtr()
+    channelListNode(*this)
 {
 printf("V3Channel::V3Channel\n");
 }
@@ -218,7 +217,7 @@ ChannelProcess::shared_pointer V3Channel::createChannelProcess(
 {
     V3ChannelProcess::shared_pointer v3ChannelProcess =
         V3ChannelProcess::shared_pointer(new V3ChannelProcess(
-           v3ChannelPtr,channelProcessRequester,*(dbAddr.get())));
+           getPtrSelf(),channelProcessRequester,*(dbAddr.get())));
     ChannelProcessListNode * node = v3ChannelProcess->init();
     if(node!=0) channelProcessList.addTail(*node);
     return v3ChannelProcess;
@@ -230,7 +229,7 @@ ChannelGet::shared_pointer V3Channel::createChannelGet(
 {
     V3ChannelGet::shared_pointer v3ChannelGet =
         V3ChannelGet::shared_pointer(new V3ChannelGet(
-            v3ChannelPtr,channelGetRequester,*(dbAddr.get())));
+            getPtrSelf(),channelGetRequester,*(dbAddr.get())));
     ChannelGetListNode * node = v3ChannelGet->init(pvRequest);
     if(node!=0) channelGetList.addTail(*node);
     return v3ChannelGet;
@@ -242,7 +241,7 @@ ChannelPut::shared_pointer V3Channel::createChannelPut(
 {
     V3ChannelPut::shared_pointer v3ChannelPut =
        V3ChannelPut::shared_pointer(new V3ChannelPut(
-        v3ChannelPtr,channelPutRequester,*(dbAddr.get())));
+        getPtrSelf(),channelPutRequester,*(dbAddr.get())));
     ChannelPutListNode * node = v3ChannelPut->init(pvRequest);
     if(node!=0) channelPutList.addTail(*node);
     return v3ChannelPut;
@@ -282,7 +281,7 @@ Monitor::shared_pointer V3Channel::createMonitor(
     V3ChannelMonitor::shared_pointer v3ChannelMonitor =
         V3ChannelMonitor::shared_pointer(
             new V3ChannelMonitor(
-            v3ChannelPtr,monitorRequester,*(dbAddr.get())));
+            getPtrSelf(),monitorRequester,*(dbAddr.get())));
     ChannelMonitorListNode * node = v3ChannelMonitor->init(pvRequest);
     if(node!=0) channelMonitorList.addTail(*node);
     return v3ChannelMonitor;
@@ -295,7 +294,7 @@ ChannelArray::shared_pointer V3Channel::createChannelArray(
     V3ChannelArray::shared_pointer v3ChannelArray =
         V3ChannelArray::shared_pointer(
             new V3ChannelArray(
-            v3ChannelPtr,channelArrayRequester,*(dbAddr.get())));
+            getPtrSelf(),channelArrayRequester,*(dbAddr.get())));
     ChannelArrayListNode * node = v3ChannelArray->init(pvRequest);
     if(node!=0) channelArrayList.addTail(*node);
     return v3ChannelArray;

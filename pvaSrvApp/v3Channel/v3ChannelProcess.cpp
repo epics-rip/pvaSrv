@@ -44,8 +44,7 @@ V3ChannelProcess::V3ChannelProcess(
   processListNode(*this),
   pNotify(0),
   notifyAddr(0),
-  event(),
-  v3ChannelProcessPtr()
+  event()
 {
 printf("V3ChannelProcess::V3ChannelProcess\n");
 }
@@ -75,7 +74,7 @@ ChannelProcessListNode * V3ChannelProcess::init()
    pn->nRequest = 1;
    pn->dbrType = DBR_CHAR;
    pn->usrPvt = this;
-   channelProcessRequester->channelProcessConnect(Status::OK,v3ChannelProcessPtr);
+   channelProcessRequester->channelProcessConnect(Status::OK,getPtrSelf());
    return &processListNode;
 }
 

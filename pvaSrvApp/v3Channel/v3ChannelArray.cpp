@@ -69,8 +69,7 @@ V3ChannelArray::V3ChannelArray(
   channelArrayRequester(channelArrayRequester),
   dbAddr(dbAddr),
   arrayListNode(*this),
-  pvScalarArray(),
-  v3ChannelArrayPtr()
+  pvScalarArray()
 {
 printf("V3ChannelArray construct\n");
 }
@@ -119,7 +118,7 @@ ChannelArrayListNode * V3ChannelArray::init(PVStructure::shared_pointer const &p
         standardPVField->scalarArrayValue(0,scalarType));
     channelArrayRequester->channelArrayConnect(
         Status::OK,
-        v3ChannelArrayPtr,
+        getPtrSelf(),
         pvScalarArray);
     return &arrayListNode;
 }

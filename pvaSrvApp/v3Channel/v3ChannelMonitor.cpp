@@ -60,8 +60,7 @@ V3ChannelMonitor::V3ChannelMonitor(
   monitorQueue(std::auto_ptr<MonitorQueue>()),
   caV3Monitor(std::auto_ptr<CAV3Monitor>()),
   currentElement(),
-  nextElement(),
-  v3ChannelMonitorPtr()
+  nextElement()
 {
 printf("V3ChannelMonitor construct\n");
 }
@@ -128,14 +127,14 @@ ChannelMonitorListNode * V3ChannelMonitor::init(
     }
     monitorQueue = std::auto_ptr<MonitorQueue>(
         new MonitorQueue(array,queueSize));
-    String pvName = v3Channel.get()->getChannelName();
+    String pvName = v3Channel->getChannelName();
     caV3Monitor = std::auto_ptr<CAV3Monitor>(
         new CAV3Monitor( *this, pvName, v3Type));
     caV3Monitor.get()->connect();
     event.wait();
     monitorRequester->monitorConnect(
        Status::OK,
-       v3ChannelMonitorPtr,
+       getPtrSelf(),
        pvStructurePtrArray[0]->getStructure());
     return &monitorListNode;
 }
@@ -262,7 +261,7 @@ void V3ChannelMonitor::eventCallback(const char *status)
         nextElement->getChangedBitSet()->clear();
         nextElement->getOverrunBitSet()->clear();
     }
-    monitorRequester->monitorEvent(v3ChannelMonitorPtr);
+    monitorRequester->monitorEvent(getPtrSelf());
 
 }
 
