@@ -125,7 +125,6 @@ ChannelArrayListNode * V3ChannelArray::init(PVStructure::shared_pointer const &p
 
 void V3ChannelArray::destroy() {
     v3Channel->removeChannelArray(arrayListNode);
-    delete this;
 }
 
 void V3ChannelArray::getArray(bool lastRequest,int offset,int count)

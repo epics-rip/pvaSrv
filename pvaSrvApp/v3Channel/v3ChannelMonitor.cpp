@@ -151,14 +151,13 @@ void V3ChannelMonitor::message(String message,MessageType messageType)
 void V3ChannelMonitor::destroy() {
 printf("V3ChannelMonitor::destroy\n");
     v3Channel->removeChannelMonitor(monitorListNode);
-    delete this;
 }
 
 Status V3ChannelMonitor::start()
 {
     currentElement = monitorQueue->getFree();
     if(currentElement.get()==0) {
-printf("V3ChannelMonitor::start will throw\n");
+        printf("V3ChannelMonitor::start will throw\n");
         throw std::logic_error(String(
             "V3ChannelMonitor::start no free queue element"));
     }

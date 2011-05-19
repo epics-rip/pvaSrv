@@ -111,7 +111,6 @@ void V3ChannelGet::message(String message,MessageType messageType)
 void V3ChannelGet::destroy() {
 printf("V3ChannelGet::destroy\n");
     v3Channel->removeChannelGet(getListNode);
-    delete this;
 }
 
 void V3ChannelGet::get(bool lastRequest)

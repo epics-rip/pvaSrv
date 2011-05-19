@@ -90,7 +90,6 @@ void V3ChannelProcess::message(String message,MessageType messageType)
 void V3ChannelProcess::destroy() {
 printf("V3ChannelProcess::destroy\n");
     v3Channel->removeChannelProcess(processListNode);
-    delete this;
 }
 
 void V3ChannelProcess::process(bool lastRequest)

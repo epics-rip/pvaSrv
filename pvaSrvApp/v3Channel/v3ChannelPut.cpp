@@ -126,7 +126,6 @@ void V3ChannelPut::message(String message,MessageType messageType)
 
 void V3ChannelPut::destroy() {
     v3Channel->removeChannelPut(putListNode);
-    delete this;
 }
 
 void V3ChannelPut::put(bool lastRequest)

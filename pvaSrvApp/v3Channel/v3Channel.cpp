@@ -122,7 +122,6 @@ printf("V3Channel::destroy\n");
         channelArray.destroy();
     }
     provider->removeChannel(channelListNode);
-    delete this;
 }
 
 void V3Channel::removeChannelProcess(ChannelProcessListNode &node)
