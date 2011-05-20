@@ -40,8 +40,7 @@ ChannelProvider::shared_pointer const &V3ChannelProvider::getChannelProvider()
         isRegistered = true;
         registerChannelProvider(channelProvider);
     }
-    ChannelProvider::shared_pointer const & provider = channelProvider;
-    return provider;
+    return channelProvider;
 }
 
 V3ChannelProvider::V3ChannelProvider()
@@ -120,7 +119,7 @@ Channel::shared_pointer V3ChannelProvider::createChannel(
     }
     std::auto_ptr<DbAddr> addr(new DbAddr());
     memcpy(addr.get(),&dbAddr,sizeof(dbAddr));
-    V3Channel::shared_pointer v3Channel = V3Channel::shared_pointer(
+    V3Channel::shared_pointer v3Channel(
         new V3Channel(channelProvider,channelRequester,channelName,addr));
     ChannelListNode & node = v3Channel->init();
     channelList.addTail(node);

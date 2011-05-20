@@ -114,7 +114,7 @@ ChannelArrayListNode * V3ChannelArray::init(PVStructure::shared_pointer const &p
         return false;
     }
     StandardPVField *standardPVField = getStandardPVField();
-    pvScalarArray = PVScalarArray::shared_pointer(
+    pvScalarArray.reset(
         standardPVField->scalarArrayValue(0,scalarType));
     channelArrayRequester->channelArrayConnect(
         Status::OK,

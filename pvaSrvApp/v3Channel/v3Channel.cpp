@@ -35,7 +35,7 @@ V3Channel::V3Channel(
     requester(requester),
     name(name),
     dbAddr(dbAddr),
-    recordField(std::tr1::shared_ptr<const Field>()),
+    recordField(),
     channelProcessList(),
     channelGetList(),
     channelPutList(),
@@ -48,6 +48,7 @@ printf("V3Channel::V3Channel\n");
 
 ChannelListNode &V3Channel::init()
 {
+    // this requires valid existance of V3Channel::shared_pointer instance
     ScalarType scalarType = pvBoolean;
     DbAddr *paddr = dbAddr.get();
     switch(paddr->field_type) {
@@ -163,8 +164,7 @@ void V3Channel::message(
 
 epics::pvAccess::ChannelProvider::shared_pointer const & V3Channel::getProvider()
 {
-    ChannelProvider::shared_pointer const & xxx = provider;
-    return xxx;
+    return provider;
 }
 
 String V3Channel::getRemoteAddress()
@@ -214,8 +214,8 @@ ChannelProcess::shared_pointer V3Channel::createChannelProcess(
         ChannelProcessRequester::shared_pointer const & channelProcessRequester,
         PVStructure::shared_pointer const & pvRequest)
 {
-    V3ChannelProcess::shared_pointer v3ChannelProcess =
-        V3ChannelProcess::shared_pointer(new V3ChannelProcess(
+    V3ChannelProcess::shared_pointer v3ChannelProcess(
+        new V3ChannelProcess(
            getPtrSelf(),channelProcessRequester,*(dbAddr.get())));
     ChannelProcessListNode * node = v3ChannelProcess->init();
     if(node!=0) channelProcessList.addTail(*node);
@@ -238,8 +238,8 @@ ChannelPut::shared_pointer V3Channel::createChannelPut(
         ChannelPutRequester::shared_pointer const &channelPutRequester,
         PVStructure::shared_pointer const &pvRequest)
 {
-    V3ChannelPut::shared_pointer v3ChannelPut =
-       V3ChannelPut::shared_pointer(new V3ChannelPut(
+    V3ChannelPut::shared_pointer v3ChannelPut(
+       new V3ChannelPut(
         getPtrSelf(),channelPutRequester,*(dbAddr.get())));
     ChannelPutListNode * node = v3ChannelPut->init(pvRequest);
     if(node!=0) channelPutList.addTail(*node);
@@ -277,10 +277,9 @@ Monitor::shared_pointer V3Channel::createMonitor(
         MonitorRequester::shared_pointer const &monitorRequester,
         PVStructure::shared_pointer const &pvRequest)
 {
-    V3ChannelMonitor::shared_pointer v3ChannelMonitor =
-        V3ChannelMonitor::shared_pointer(
-            new V3ChannelMonitor(
-            getPtrSelf(),monitorRequester,*(dbAddr.get())));
+    V3ChannelMonitor::shared_pointer v3ChannelMonitor(
+        new V3ChannelMonitor(
+           getPtrSelf(),monitorRequester,*(dbAddr.get())));
     ChannelMonitorListNode * node = v3ChannelMonitor->init(pvRequest);
     if(node!=0) channelMonitorList.addTail(*node);
     return v3ChannelMonitor;
@@ -290,10 +289,8 @@ ChannelArray::shared_pointer V3Channel::createChannelArray(
         ChannelArrayRequester::shared_pointer const &channelArrayRequester,
         PVStructure::shared_pointer const &pvRequest)
 {
-    V3ChannelArray::shared_pointer v3ChannelArray =
-        V3ChannelArray::shared_pointer(
-            new V3ChannelArray(
-            getPtrSelf(),channelArrayRequester,*(dbAddr.get())));
+    V3ChannelArray::shared_pointer v3ChannelArray(
+        new V3ChannelArray(getPtrSelf(),channelArrayRequester,*(dbAddr.get())));
     ChannelArrayListNode * node = v3ChannelArray->init(pvRequest);
     if(node!=0) channelArrayList.addTail(*node);
     return v3ChannelArray;

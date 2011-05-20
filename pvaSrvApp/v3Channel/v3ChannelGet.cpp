@@ -70,7 +70,7 @@ ChannelGetListNode * V3ChannelGet::init(PVStructure::shared_pointer const &pvReq
     if(pvStructure.get()==0) return 0;
     V3Util::getPropertyData( channelGetRequester,propertyMask,dbAddr,pvStructure);
     int numFields = pvStructure->getStructure()->getNumberFields();
-    bitSet = BitSet::shared_pointer(new BitSet(numFields));
+    bitSet.reset(new BitSet(numFields));
     if((propertyMask&V3Util::processBit)!=0) {
        process = true;
        pNotify = std::auto_ptr<struct putNotify>(new (struct putNotify)());

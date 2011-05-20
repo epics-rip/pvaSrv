@@ -74,7 +74,7 @@ ChannelPutListNode * V3ChannelPut::init(PVStructure::shared_pointer const &pvReq
              String("field not allowed to be changed"),errorMessage);
         return 0;
     }
-    pvStructure =  PVStructure::shared_pointer(
+    pvStructure.reset(
         V3Util::createPVStructure(
             channelPutRequester,
             propertyMask,
@@ -106,7 +106,7 @@ ChannelPutListNode * V3ChannelPut::init(PVStructure::shared_pointer const &pvReq
        pn->usrPvt = this;
     }
     int numFields = pvStructure->getStructure()->getNumberFields();
-    bitSet = BitSet::shared_pointer(new BitSet(numFields));
+    bitSet.reset(new BitSet(numFields));
     channelPutRequester->channelPutConnect(
        Status::OK,
        getPtrSelf(),
