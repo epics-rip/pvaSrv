@@ -30,8 +30,7 @@ static String providerName("v3Channel");
 static Mutex mutex;
 static bool isRegistered = false;
 
-static V3ChannelProvider::shared_pointer channelProvider(
-    V3ChannelProvider::shared_pointer(new V3ChannelProvider()));
+static ChannelProvider::shared_pointer channelProvider(new V3ChannelProvider());
 
 ChannelProvider::shared_pointer const &V3ChannelProvider::getChannelProvider()
 {
@@ -119,8 +118,11 @@ Channel::shared_pointer V3ChannelProvider::createChannel(
     }
     std::auto_ptr<DbAddr> addr(new DbAddr());
     memcpy(addr.get(),&dbAddr,sizeof(dbAddr));
+    
     V3Channel::shared_pointer v3Channel(
-        new V3Channel(channelProvider,channelRequester,channelName,addr));
+        new V3Channel(
+            std::tr1::static_pointer_cast<V3ChannelProvider>(channelProvider),
+            channelRequester,channelName,addr));
     ChannelListNode & node = v3Channel->init();
     channelList.addTail(node);
     channelRequester->channelCreated(Status::OK,v3Channel);

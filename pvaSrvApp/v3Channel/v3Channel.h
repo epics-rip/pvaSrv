@@ -147,7 +147,7 @@ private:
     {
         return shared_from_this();
     }
-    V3ChannelProvider::shared_pointer  provider;
+    epics::pvAccess::ChannelProvider::shared_pointer  provider;
     epics::pvAccess::ChannelRequester::shared_pointer requester;
     epics::pvData::String name;
     std::auto_ptr<DbAddr> dbAddr;

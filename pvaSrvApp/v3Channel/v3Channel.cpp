@@ -122,7 +122,7 @@ printf("V3Channel::destroy\n");
         V3ChannelArray &channelArray = node->getObject();
         channelArray.destroy();
     }
-    provider->removeChannel(channelListNode);
+    std::tr1::static_pointer_cast<V3ChannelProvider>(provider)->removeChannel(channelListNode);
 }
 
 void V3Channel::removeChannelProcess(ChannelProcessListNode &node)
