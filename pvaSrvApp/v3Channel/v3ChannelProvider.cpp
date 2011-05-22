@@ -24,7 +24,6 @@ namespace epics { namespace pvIOC {
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
-static Status notFoundStatus(Status::STATUSTYPE_ERROR,String("pv not found"));
 static String providerName("v3Channel");
 
 static Mutex mutex;
@@ -81,6 +80,7 @@ ChannelFind::shared_pointer V3ChannelProvider::channelFind(
     struct dbAddr dbAddr;
     long result = dbNameToAddr(channelName.c_str(),&dbAddr);
     if(result!=0) {
+        Status notFoundStatus(Status::STATUSTYPE_ERROR,String("pv not found"));
         channelFindRequester.get()->channelFindResult(
             notFoundStatus,
             ChannelFind::shared_pointer(),
@@ -111,6 +111,7 @@ Channel::shared_pointer V3ChannelProvider::createChannel(
     struct dbAddr dbAddr;
     long result = dbNameToAddr(channelName.c_str(),&dbAddr);
     if(result!=0) {
+        Status notFoundStatus(Status::STATUSTYPE_ERROR,String("pv not found"));
         channelRequester->channelCreated(
             notFoundStatus,
             Channel::shared_pointer());
