@@ -134,8 +134,8 @@ static void testV3ChannelCallFunc(const iocshArgBuf *args)
     printf("testV3Channel pvName %s\n",pvName);
     String channelName(pvName);
     printf("channelName %s\n",channelName.c_str());
-    ChannelProvider::shared_pointer const &channelProvider
-        = V3ChannelProvider::getChannelProvider();
+    ChannelProvider::shared_pointer channelProvider =
+        getChannelAccess()->getProvider("v3wChannel");
     String providerName = channelProvider->getProviderName();
     printf("providerName %s\n",providerName.c_str());
     FindRequester::shared_pointer findRequester

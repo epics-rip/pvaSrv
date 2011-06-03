@@ -44,13 +44,12 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 
 V3ChannelMonitor::V3ChannelMonitor(
-    V3Channel::shared_pointer const &v3Channel,
+    PVServiceBase::shared_pointer const &v3Channel,
     MonitorRequester::shared_pointer const &monitorRequester,
     DbAddr &dbAddr)
 : v3Channel(v3Channel),
   monitorRequester(monitorRequester),
   dbAddr(dbAddr),
-  monitorListNode(*this),
   event(),
   propertyMask(0),
   firstTime(true),
@@ -70,7 +69,7 @@ printf("~V3ChannelMonitor\n");
 }
 
 
-ChannelMonitorListNode * V3ChannelMonitor::init(
+bool V3ChannelMonitor::init(
     PVStructure::shared_pointer const &pvRequest)
 {
     String queueSizeString(V3Util::queueSizeString);
@@ -86,7 +85,7 @@ ChannelMonitorListNode * V3ChannelMonitor::init(
         monitorRequester,
         pvRequest,
         dbAddr);
-    if(propertyMask==V3Util::noAccessBit) return 0;
+    if(propertyMask==V3Util::noAccessBit) return false;
     if(propertyMask&V3Util::isLinkBit) {
         monitorRequester->message(
              String("can not monitor a link field"),errorMessage);
@@ -136,7 +135,7 @@ ChannelMonitorListNode * V3ChannelMonitor::init(
        Status::OK,
        getPtrSelf(),
        pvStructurePtrArray[0]->getStructure());
-    return &monitorListNode;
+    return true;
 }
 
 String V3ChannelMonitor::getRequesterName() {
@@ -150,7 +149,7 @@ void V3ChannelMonitor::message(String message,MessageType messageType)
 
 void V3ChannelMonitor::destroy() {
 printf("V3ChannelMonitor::destroy\n");
-    v3Channel->removeChannelMonitor(monitorListNode);
+    v3Channel->removeChannelMonitor(*this);
 }
 
 Status V3ChannelMonitor::start()

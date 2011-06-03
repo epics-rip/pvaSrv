@@ -37,13 +37,12 @@ using namespace epics::pvAccess;
 
 
 V3ChannelPut::V3ChannelPut(
-    V3Channel::shared_pointer const &v3Channel,
+    PVServiceBase::shared_pointer const &v3Channel,
     ChannelPutRequester::shared_pointer const &channelPutRequester,
     DbAddr &dbAddr)
 : v3Channel(v3Channel),
   channelPutRequester(channelPutRequester),
   dbAddr(dbAddr),
-  putListNode(*this),
   propertyMask(0),
   process(false),
   firstTime(true),
@@ -62,13 +61,13 @@ printf("V3ChannelPut::~V3ChannelPut()\n");
 }
 
 
-ChannelPutListNode * V3ChannelPut::init(PVStructure::shared_pointer const &pvRequest)
+bool V3ChannelPut::init(PVStructure::shared_pointer const &pvRequest)
 {
     propertyMask = V3Util::getProperties(
         channelPutRequester,
         pvRequest,
         dbAddr);
-    if(propertyMask==V3Util::noAccessBit) return 0;
+    if(propertyMask==V3Util::noAccessBit) return false;
     if(propertyMask==V3Util::noModBit) {
         channelPutRequester->message(
              String("field not allowed to be changed"),errorMessage);
@@ -105,14 +104,14 @@ ChannelPutListNode * V3ChannelPut::init(PVStructure::shared_pointer const &pvReq
        pn->dbrType = DBR_CHAR;
        pn->usrPvt = this;
     }
-    int numFields = pvStructure->getStructure()->getNumberFields();
+    int numFields = pvStructure->getNumberFields();
     bitSet.reset(new BitSet(numFields));
     channelPutRequester->channelPutConnect(
        Status::OK,
        getPtrSelf(),
        pvStructure,
        bitSet);
-    return &putListNode;
+    return true;
 }
 
 String V3ChannelPut::getRequesterName() {
@@ -125,7 +124,7 @@ void V3ChannelPut::message(String message,MessageType messageType)
 }
 
 void V3ChannelPut::destroy() {
-    v3Channel->removeChannelPut(putListNode);
+    v3Channel->removeChannelPut(*this);
 }
 
 void V3ChannelPut::put(bool lastRequest)
@@ -147,13 +146,6 @@ void V3ChannelPut::put(bool lastRequest)
         pNotify.get()->pbuffer = &value;
         dbPutNotify(pNotify.get());
         event.wait();
-    }
-    dbFldDes *pfldDes = dbAddr.pfldDes;
-    struct dbCommon *precord = dbAddr.precord;
-    int isValueField = dbIsValueField(pfldDes);
-    if (isValueField) precord->udf = FALSE;
-    if (precord->mlis.count && !(isValueField && pfldDes->process_passive)) {
-        db_post_events(precord, dbAddr.pfield, DBE_VALUE | DBE_LOG);
     }
     channelPutRequester->putDone(status);
     if(lastRequest) destroy();

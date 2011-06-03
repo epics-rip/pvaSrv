@@ -35,13 +35,12 @@ static String fieldListString("fieldList");
 static String valueString("value");
 
 V3ChannelProcess::V3ChannelProcess(
-    V3Channel::shared_pointer const &v3Channel,
+    PVServiceBase::shared_pointer const &v3Channel,
     ChannelProcessRequester::shared_pointer const &channelProcessRequester,
     DbAddr &dbAddr)
 : v3Channel(v3Channel),
   channelProcessRequester(channelProcessRequester),
   dbAddr(dbAddr),
-  processListNode(*this),
   pNotify(0),
   notifyAddr(0),
   event()
@@ -55,7 +54,7 @@ printf("V3ChannelProcess::~V3ChannelProcess\n");
 }
 
 
-ChannelProcessListNode * V3ChannelProcess::init()
+bool V3ChannelProcess::init()
 {
    pNotify = std::auto_ptr<struct putNotify>(new (struct putNotify)());
    notifyAddr = std::auto_ptr<DbAddr>(new DbAddr());
@@ -75,7 +74,7 @@ ChannelProcessListNode * V3ChannelProcess::init()
    pn->dbrType = DBR_CHAR;
    pn->usrPvt = this;
    channelProcessRequester->channelProcessConnect(Status::OK,getPtrSelf());
-   return &processListNode;
+   return true;
 }
 
 String V3ChannelProcess::getRequesterName() {
@@ -89,7 +88,7 @@ void V3ChannelProcess::message(String message,MessageType messageType)
 
 void V3ChannelProcess::destroy() {
 printf("V3ChannelProcess::destroy\n");
-    v3Channel->removeChannelProcess(processListNode);
+    v3Channel->removeChannelProcess(*this);
 }
 
 void V3ChannelProcess::process(bool lastRequest)

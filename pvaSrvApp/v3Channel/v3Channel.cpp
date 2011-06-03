@@ -26,27 +26,19 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 
 V3Channel::V3Channel(
-    V3ChannelProvider::shared_pointer const & provider,
-        epics::pvAccess::ChannelRequester::shared_pointer const & requester,
-        epics::pvData::String name,
+    PVServiceBaseProvider::shared_pointer const & provider,
+        ChannelRequester::shared_pointer const & requester,
+        String name,
         std::auto_ptr<DbAddr> dbAddr
-    )
-:   provider(provider),
-    requester(requester),
-    name(name),
+)
+:  PVServiceBase(provider,requester,name),
     dbAddr(dbAddr),
-    recordField(),
-    channelProcessList(),
-    channelGetList(),
-    channelPutList(),
-    channelMonitorList(),
-    channelArrayList(),
-    channelListNode(*this)
+    recordField()
 {
 printf("V3Channel::V3Channel\n");
 }
 
-ChannelListNode &V3Channel::init()
+void V3Channel::init()
 {
     // this requires valid existance of V3Channel::shared_pointer instance
     ScalarType scalarType = pvBoolean;
@@ -81,115 +73,11 @@ ChannelListNode &V3Channel::init()
                 String("value,timeStamp,alarm,display,control"));
         }
     }
-    return channelListNode;
 }
 
 V3Channel::~V3Channel()
 {
 printf("V3Channel::~V3Channel\n");
-}
-
-void V3Channel::destroy()
-{
-printf("V3Channel::destroy\n");
-    while(true) {
-        ChannelProcessListNode *node = channelProcessList.getHead();
-        if(node==0) break;
-        V3ChannelProcess &channelProcess = node->getObject();
-        channelProcess.destroy();
-    }
-    while(true) {
-        ChannelGetListNode *node = channelGetList.getHead();
-        if(node==0) break;
-        V3ChannelGet &channelGet = node->getObject();
-        channelGet.destroy();
-    }
-    while(true) {
-        ChannelPutListNode *node = channelPutList.getHead();
-        if(node==0) break;
-        V3ChannelPut &channelPut = node->getObject();
-        channelPut.destroy();
-    }
-    while(true) {
-        ChannelMonitorListNode *node = channelMonitorList.getHead();
-        if(node==0) break;
-        V3ChannelMonitor &channelMonitor = node->getObject();
-        channelMonitor.destroy();
-    }
-    while(true) {
-        ChannelArrayListNode *node = channelArrayList.getHead();
-        if(node==0) break;
-        V3ChannelArray &channelArray = node->getObject();
-        channelArray.destroy();
-    }
-    std::tr1::static_pointer_cast<V3ChannelProvider>(provider)->removeChannel(channelListNode);
-}
-
-void V3Channel::removeChannelProcess(ChannelProcessListNode &node)
-{
-    if(node.isOnList()) channelProcessList.remove(node);
-}
-
-void V3Channel::removeChannelGet(ChannelGetListNode &node)
-{
-    if(node.isOnList()) channelGetList.remove(node);
-}
-
-void V3Channel::removeChannelPut(ChannelPutListNode &node)
-{
-    if(node.isOnList()) channelPutList.remove(node);
-}
-
-void V3Channel::removeChannelMonitor(ChannelMonitorListNode &node)
-{
-    if(node.isOnList()) channelMonitorList.remove(node);
-}
-
-void V3Channel::removeChannelArray(ChannelArrayListNode &node)
-{
-    if(node.isOnList()) channelArrayList.remove(node);
-}
-
-String V3Channel::getRequesterName()
-{
-    return requester->getRequesterName();
-}
-
-void V3Channel::message(
-        String message,
-        MessageType messageType)
-{
-    requester->message(message,messageType);
-}
-
-epics::pvAccess::ChannelProvider::shared_pointer const & V3Channel::getProvider()
-{
-    return provider;
-}
-
-String V3Channel::getRemoteAddress()
-{
-    return String("local");
-}
-
-Channel::ConnectionState V3Channel::getConnectionState()
-{
-    return Channel::CONNECTED;
-}
-
-String V3Channel::getChannelName()
-{
-    return name;
-}
-
-ChannelRequester::shared_pointer const & V3Channel::getChannelRequester()
-{
-    return requester;
-}
-
-bool V3Channel::isConnected()
-{
-    return true;
 }
 
 void V3Channel::getField(GetFieldRequester::shared_pointer const &requester,
@@ -204,96 +92,61 @@ void V3Channel::getField(GetFieldRequester::shared_pointer const &requester,
     requester->getDone(status,FieldConstPtr());
 }
 
-AccessRights V3Channel::getAccessRights(
-        PVField::shared_pointer const &pvField)
-{
-    throw std::logic_error(String("Not Implemented"));
-}
-
 ChannelProcess::shared_pointer V3Channel::createChannelProcess(
         ChannelProcessRequester::shared_pointer const & channelProcessRequester,
         PVStructure::shared_pointer const & pvRequest)
 {
-    V3ChannelProcess::shared_pointer v3ChannelProcess(
-        new V3ChannelProcess(
-           getPtrSelf(),channelProcessRequester,*(dbAddr.get())));
-    ChannelProcessListNode * node = v3ChannelProcess->init();
-    if(node!=0) channelProcessList.addTail(*node);
-    return v3ChannelProcess;
+    V3ChannelProcess * v3ChannelProcess = new V3ChannelProcess(
+           getPtrSelf(),channelProcessRequester,*(dbAddr.get()));
+    ChannelProcess::shared_pointer channelProcess(v3ChannelProcess);
+    v3ChannelProcess->init();
+    addChannelProcess(*v3ChannelProcess);
+    return channelProcess;
 }
 
 ChannelGet::shared_pointer V3Channel::createChannelGet(
         ChannelGetRequester::shared_pointer const &channelGetRequester,
         PVStructure::shared_pointer const &pvRequest)
 {
-    V3ChannelGet::shared_pointer v3ChannelGet =
-        V3ChannelGet::shared_pointer(new V3ChannelGet(
-            getPtrSelf(),channelGetRequester,*(dbAddr.get())));
-    ChannelGetListNode * node = v3ChannelGet->init(pvRequest);
-    if(node!=0) channelGetList.addTail(*node);
-    return v3ChannelGet;
+    V3ChannelGet * v3ChannelGet = new V3ChannelGet(
+            getPtrSelf(),channelGetRequester,*(dbAddr.get()));
+    ChannelGet::shared_pointer channelGet(v3ChannelGet);
+    if(v3ChannelGet->init(pvRequest)) addChannelGet(*v3ChannelGet);
+    return channelGet;
 }
 
 ChannelPut::shared_pointer V3Channel::createChannelPut(
         ChannelPutRequester::shared_pointer const &channelPutRequester,
         PVStructure::shared_pointer const &pvRequest)
 {
-    V3ChannelPut::shared_pointer v3ChannelPut(
-       new V3ChannelPut(
-        getPtrSelf(),channelPutRequester,*(dbAddr.get())));
-    ChannelPutListNode * node = v3ChannelPut->init(pvRequest);
-    if(node!=0) channelPutList.addTail(*node);
-    return v3ChannelPut;
+    V3ChannelPut * v3ChannelPut = new V3ChannelPut(
+            getPtrSelf(),channelPutRequester,*(dbAddr.get()));
+    ChannelPut::shared_pointer channelPut(v3ChannelPut);
+    if(v3ChannelPut->init(pvRequest)) addChannelPut(*v3ChannelPut);
+    return channelPut;
 }
 
-ChannelPutGet::shared_pointer V3Channel::createChannelPutGet(
-        ChannelPutGetRequester::shared_pointer const &channelPutGetRequester,
-        PVStructure::shared_pointer const &pvRequest)
-{
-    Status status(Status::STATUSTYPE_ERROR,
-        String("ChannelPutGet not supported for V3 Records"));
-    channelPutGetRequester->channelPutGetConnect(
-        status,
-        ChannelPutGet::shared_pointer(),
-        PVStructure::shared_pointer(),
-        PVStructure::shared_pointer());
-    return ChannelPutGet::shared_pointer();
-}
-
-ChannelRPC::shared_pointer V3Channel::createChannelRPC(
-        ChannelRPCRequester::shared_pointer const & channelRPCRequester,
-        PVStructure::shared_pointer const & pvRequest)
-{
-    Status status(Status::STATUSTYPE_ERROR,
-        String("ChannelRPC not supported for V3 Records"));
-    channelRPCRequester->channelRPCConnect(status,
-     ChannelRPC::shared_pointer(),
-     PVStructure::shared_pointer(),
-     BitSet::shared_pointer());
-    return ChannelRPC::shared_pointer();
-}
 
 Monitor::shared_pointer V3Channel::createMonitor(
         MonitorRequester::shared_pointer const &monitorRequester,
         PVStructure::shared_pointer const &pvRequest)
 {
-    V3ChannelMonitor::shared_pointer v3ChannelMonitor(
-        new V3ChannelMonitor(
-           getPtrSelf(),monitorRequester,*(dbAddr.get())));
-    ChannelMonitorListNode * node = v3ChannelMonitor->init(pvRequest);
-    if(node!=0) channelMonitorList.addTail(*node);
-    return v3ChannelMonitor;
+    V3ChannelMonitor *v3ChannelMonitor = new V3ChannelMonitor(
+           getPtrSelf(),monitorRequester,*(dbAddr.get()));
+    Monitor::shared_pointer channelMonitor(v3ChannelMonitor);
+    if(v3ChannelMonitor->init(pvRequest)) addChannelMonitor(*v3ChannelMonitor);
+    return channelMonitor;
 }
 
 ChannelArray::shared_pointer V3Channel::createChannelArray(
         ChannelArrayRequester::shared_pointer const &channelArrayRequester,
         PVStructure::shared_pointer const &pvRequest)
 {
-    V3ChannelArray::shared_pointer v3ChannelArray(
-        new V3ChannelArray(getPtrSelf(),channelArrayRequester,*(dbAddr.get())));
-    ChannelArrayListNode * node = v3ChannelArray->init(pvRequest);
-    if(node!=0) channelArrayList.addTail(*node);
-    return v3ChannelArray;
+    V3ChannelArray *v3ChannelArray = new V3ChannelArray(
+        getPtrSelf(),channelArrayRequester,*(dbAddr.get()));
+    ChannelArray::shared_pointer channelArray(v3ChannelArray);
+    if(v3ChannelArray->init(pvRequest)) addChannelArray(*v3ChannelArray);
+    return channelArray;
 }
 
 void V3Channel::printInfo()

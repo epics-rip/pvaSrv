@@ -56,6 +56,6 @@ cd ${TOP}/iocBoot/${IOC}
 iocInit()
 epicsThreadSleep(2.0)
 casr
-startPVAccessServer
 startV3Channel
+startExampleChannel exampleChannel
 dbpf string01 10.1

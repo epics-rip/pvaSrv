@@ -32,13 +32,12 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 
 V3ChannelGet::V3ChannelGet(
-    V3Channel::shared_pointer const &v3Channel,
+    PVServiceBase::shared_pointer const &v3Channel,
     ChannelGetRequester::shared_pointer const &channelGetRequester,
     DbAddr &dbAddr)
 : v3Channel(v3Channel),
   channelGetRequester(channelGetRequester),
   dbAddr(dbAddr),
-  getListNode(*this),
   process(false),
   firstTime(true),
   propertyMask(0),
@@ -57,19 +56,19 @@ printf("V3ChannelGet destruct\n");
 }
 
 
-ChannelGetListNode * V3ChannelGet::init(PVStructure::shared_pointer const &pvRequest)
+bool V3ChannelGet::init(PVStructure::shared_pointer const &pvRequest)
 {
     propertyMask = V3Util::getProperties(
         channelGetRequester,
         pvRequest,
         dbAddr);
-    if(propertyMask==V3Util::noAccessBit) return 0;
+    if(propertyMask==V3Util::noAccessBit) return false;
     pvStructure =  PVStructure::shared_pointer(
         V3Util::createPVStructure(
              channelGetRequester, propertyMask, dbAddr));
     if(pvStructure.get()==0) return 0;
     V3Util::getPropertyData( channelGetRequester,propertyMask,dbAddr,pvStructure);
-    int numFields = pvStructure->getStructure()->getNumberFields();
+    int numFields = pvStructure->getNumberFields();
     bitSet.reset(new BitSet(numFields));
     if((propertyMask&V3Util::processBit)!=0) {
        process = true;
@@ -96,7 +95,7 @@ ChannelGetListNode * V3ChannelGet::init(PVStructure::shared_pointer const &pvReq
        getPtrSelf(),
        pvStructure,
        bitSet);
-    return &getListNode;
+    return true;
 }
 
 String V3ChannelGet::getRequesterName() {
@@ -110,7 +109,7 @@ void V3ChannelGet::message(String message,MessageType messageType)
 
 void V3ChannelGet::destroy() {
 printf("V3ChannelGet::destroy\n");
-    v3Channel->removeChannelGet(getListNode);
+    v3Channel->removeChannelGet(*this);
 }
 
 void V3ChannelGet::get(bool lastRequest)

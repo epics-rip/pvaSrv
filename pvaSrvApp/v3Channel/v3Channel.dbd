@@ -1,0 +1,2 @@
+registrar("startV3ChannelRegister")
+registrar("stopV3ChannelRegister")

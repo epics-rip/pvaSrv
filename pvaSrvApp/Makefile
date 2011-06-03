@@ -47,7 +47,13 @@ LIBSRCS += pvCopy.cpp
 LIBSRCS += pvShare.cpp
 #LIBSRCS += pvShareStructureArray.cpp
 
+SRC_DIRS += $(IOC)/service
+INC += pvServiceBase.h
+LIBSRCS += pvServiceBaseProvider.cpp
+LIBSRCS += pvServiceBase.cpp
+
 SRC_DIRS += $(IOC)/v3Channel
+DBD += v3Channel.dbd
 INC += v3Channel.h
 INC += v3CAMonitor.h
 LIBSRCS += CAV3Context.cpp
@@ -61,11 +67,17 @@ LIBSRCS += v3ChannelGet.cpp
 LIBSRCS += v3ChannelPut.cpp
 LIBSRCS += v3ChannelArray.cpp
 LIBSRCS += v3ChannelMonitor.cpp
+LIBSRCS += v3ChannelRegister.cpp
 
-SRC_DIRS += $(IOC)/register
-DBD += pvIOC.dbd
-LIBSRCS += startPVAccessServer.cpp
-LIBSRCS += startV3Channel.cpp
+SRC_DIRS += $(IOC)/exampleService
+DBD += exampleChannelRegister.dbd
+INC += exampleChannel.h
+LIBSRCS += exampleContext.cpp
+LIBSRCS += exampleChannelRegister.cpp
+LIBSRCS += exampleChannelProvider.cpp
+LIBSRCS += exampleChannel.cpp
+LIBSRCS += exampleChannelGet.cpp
+LIBSRCS += exampleChannelPut.cpp
 
 include $(TOP)/configure/RULES
 

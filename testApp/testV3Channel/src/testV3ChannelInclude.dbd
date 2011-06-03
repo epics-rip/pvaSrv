@@ -2,5 +2,6 @@ include "base.dbd"
 include "byteRecord.dbd"
 include "shortRecord.dbd"
 include "floatRecord.dbd"
-include "pvIOC.dbd"
+include "v3Channel.dbd"
+include "exampleChannelRegister.dbd"
 registrar("testV3ChannelRegister")

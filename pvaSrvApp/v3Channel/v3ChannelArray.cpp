@@ -27,6 +27,7 @@
 #include <dbCommon.h>
 #include <recSup.h>
 #include <dbBase.h>
+#include <dbEvent.h>
 
 #include <epicsExport.h>
 
@@ -62,13 +63,12 @@ typedef long (*put_array_info) (DBADDR *,long );
 }
 
 V3ChannelArray::V3ChannelArray(
-    V3Channel::shared_pointer const &v3Channel,
+    PVServiceBase::shared_pointer const &v3Channel,
     ChannelArrayRequester::shared_pointer const &channelArrayRequester,
     DbAddr &dbAddr)
 : v3Channel(v3Channel),
   channelArrayRequester(channelArrayRequester),
   dbAddr(dbAddr),
-  arrayListNode(*this),
   pvScalarArray()
 {
 printf("V3ChannelArray construct\n");
@@ -80,7 +80,7 @@ printf("V3ChannelArray::~V3ChannelArray()\n");
 }
 
 
-ChannelArrayListNode * V3ChannelArray::init(PVStructure::shared_pointer const &pvRequest)
+bool V3ChannelArray::init(PVStructure::shared_pointer const &pvRequest)
 {
     if(!dbAddr.no_elements>1) {
         channelArrayRequester.get()->message(
@@ -120,11 +120,11 @@ ChannelArrayListNode * V3ChannelArray::init(PVStructure::shared_pointer const &p
         Status::OK,
         getPtrSelf(),
         pvScalarArray);
-    return &arrayListNode;
+    return true;
 }
 
 void V3ChannelArray::destroy() {
-    v3Channel->removeChannelArray(arrayListNode);
+    v3Channel->removeChannelArray(*this);
 }
 
 void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
@@ -307,6 +307,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
         break;
     }
     }
+    db_post_events(dbAddr.precord,dbAddr.pfield,DBE_VALUE | DBE_LOG);
     dbScanUnlock(dbAddr.precord);
     channelArrayRequester->getArrayDone(Status::OK);
     if(lastRequest) destroy();
