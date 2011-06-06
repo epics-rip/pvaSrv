@@ -98,6 +98,7 @@ bool V3ChannelMonitor::init(
                 propertyMask,
                 dbAddr);
     }
+    StructureConstPtr saveStructure = pvStructurePtrArray[0]->getStructure();
     PVStructureSharedPointerPtrArray array = 
         MonitorQueue::createStructures( pvStructurePtrArray,queueSize);
     for(int i=0; i<queueSize; i++) {
@@ -134,7 +135,7 @@ bool V3ChannelMonitor::init(
     monitorRequester->monitorConnect(
        Status::OK,
        getPtrSelf(),
-       pvStructurePtrArray[0]->getStructure());
+       saveStructure);
     return true;
 }
 
