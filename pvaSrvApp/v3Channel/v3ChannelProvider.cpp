@@ -8,16 +8,16 @@
 #include <stdexcept>
 #include <memory>
 
-#include <pvIntrospect.h>
-#include <pvData.h>
-#include <noDefaultMethods.h>
-#include <lock.h>
+#include <pv/pvIntrospect.h>
+#include <pv/pvData.h>
+#include <pv/noDefaultMethods.h>
+#include <pv/lock.h>
 #include <epicsExit.h>
 #include <dbAccess.h>
 
-#include "support.h"
-#include "pvDatabase.h"
-#include "v3Channel.h"
+#include <pv/support.h>
+#include <pv/pvDatabase.h>
+#include <pv/v3Channel.h>
 
 namespace epics { namespace pvIOC { 
 

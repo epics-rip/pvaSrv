@@ -20,7 +20,7 @@
 #include <dbDefs.h>
 #include <alarmString.h>
 
-#include "v3CAMonitor.h"
+#include <pv/v3CAMonitor.h>
 #include "CAV3Context.h"
 
 using namespace epics::pvData;

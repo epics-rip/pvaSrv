@@ -14,10 +14,10 @@
 
 #include <epicsTime.h>
 
-#include <noDefaultMethods.h>
-#include <pvIntrospect.h>
-#include <requester.h>
-#include <lock.h>
+#include <pv/noDefaultMethods.h>
+#include <pv/pvIntrospect.h>
+#include <pv/requester.h>
+#include <pv/lock.h>
 
 enum V3Type {
     v3Enum,

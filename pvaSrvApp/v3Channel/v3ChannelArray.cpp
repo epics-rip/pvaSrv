@@ -31,26 +31,26 @@
 
 #include <epicsExport.h>
 
-#include <noDefaultMethods.h>
-#include <pvIntrospect.h>
-#include <pvData.h>
-#include <pvAccess.h>
-#include "standardField.h"
-#include "standardPVField.h"
-#include "alarm.h"
-#include "control.h"
-#include "display.h"
-#include "timeStamp.h"
-#include "pvAlarm.h"
-#include "pvControl.h"
-#include "pvDisplay.h"
-#include "pvEnumerated.h"
-#include "pvTimeStamp.h"
+#include <pv/noDefaultMethods.h>
+#include <pv/pvIntrospect.h>
+#include <pv/pvData.h>
+#include <pv/pvAccess.h>
+#include <pv/standardField.h>
+#include <pv/standardPVField.h>
+#include <pv/alarm.h>
+#include <pv/control.h>
+#include <pv/display.h>
+#include <pv/timeStamp.h>
+#include <pv/pvAlarm.h>
+#include <pv/pvControl.h>
+#include <pv/pvDisplay.h>
+#include <pv/pvEnumerated.h>
+#include <pv/pvTimeStamp.h>
 
-#include "pvDatabase.h"
-#include "v3Channel.h"
+#include <pv/pvDatabase.h>
+#include <pv/v3Channel.h>
 
-#include "support.h"
+#include <pv/support.h>
 
 namespace epics { namespace pvIOC { 
 

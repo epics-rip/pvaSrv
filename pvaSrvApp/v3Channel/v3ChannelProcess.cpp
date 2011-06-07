@@ -17,11 +17,11 @@
 #include <stdexcept>
 #include <memory>
 
-#include <pvData.h>
-#include <pvAccess.h>
+#include <pv/pvData.h>
+#include <pv/pvAccess.h>
 
-#include "pvDatabase.h"
-#include "v3Channel.h"
+#include <pv/pvDatabase.h>
+#include <pv/v3Channel.h>
 
 namespace epics { namespace pvIOC { 
 

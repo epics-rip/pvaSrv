@@ -19,8 +19,8 @@
 
 #include <epicsThread.h>
 
-#include <lock.h>
-#include <requester.h>
+#include <pv/lock.h>
+#include <pv/requester.h>
 
 
 class CAV3ContextCreate;

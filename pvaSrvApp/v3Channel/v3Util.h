@@ -14,13 +14,13 @@
 #include <recSup.h>
 #include <dbBase.h>
 
-#include <status.h>
-#include <bitSet.h>
-#include <requester.h>
-#include <pvIntrospect.h>
-#include <pvData.h>
+#include <pv/status.h>
+#include <pv/bitSet.h>
+#include <pv/requester.h>
+#include <pv/pvIntrospect.h>
+#include <pv/pvData.h>
 
-#include "v3Channel.h"
+#include <pv/v3Channel.h>
 
 namespace epics { namespace pvIOC { 
 

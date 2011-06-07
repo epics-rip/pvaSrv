@@ -14,21 +14,21 @@
 #include <dbAccess.h>
 #include <dbNotify.h>
 
-#include <status.h>
-#include <monitor.h>
-#include <monitorQueue.h>
-#include <linkedList.h>
-#include <pvIntrospect.h>
-#include <pvData.h>
-#include <noDefaultMethods.h>
-#include <pvEnumerated.h>
-#include <thread.h>
-#include <event.h>
-#include <pvAccess.h>
-#include <lock.h>
+#include <pv/status.h>
+#include <pv/monitor.h>
+#include <pv/monitorQueue.h>
+#include <pv/linkedList.h>
+#include <pv/pvIntrospect.h>
+#include <pv/pvData.h>
+#include <pv/noDefaultMethods.h>
+#include <pv/pvEnumerated.h>
+#include <pv/thread.h>
+#include <pv/event.h>
+#include <pv/pvAccess.h>
+#include <pv/lock.h>
 
-#include "pvServiceBase.h"
-#include "v3CAMonitor.h"
+#include <pv/pvServiceBase.h>
+#include <pv/v3CAMonitor.h>
 
 namespace epics { namespace pvIOC { 
 

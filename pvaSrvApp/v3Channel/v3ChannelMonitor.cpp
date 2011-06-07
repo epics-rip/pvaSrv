@@ -23,18 +23,18 @@
 
 #include <epicsExport.h>
 
-#include <pvData.h>
-#include <convert.h>
-#include <monitor.h>
-#include <monitorQueue.h>
-#include <pvAccess.h>
+#include <pv/pvData.h>
+#include <pv/convert.h>
+#include <pv/monitor.h>
+#include <pv/monitorQueue.h>
+#include <pv/pvAccess.h>
 
-#include "pvDatabase.h"
-#include "v3Channel.h"
-#include "support.h"
+#include <pv/pvDatabase.h>
+#include <pv/v3Channel.h>
+#include <pv/support.h>
 
 #include "CAV3Context.h"
-#include "v3CAMonitor.h"
+#include <pv/v3CAMonitor.h>
 #include "v3Util.h"
 
 

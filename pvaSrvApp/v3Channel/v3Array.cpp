@@ -9,14 +9,14 @@
 #include <stdexcept>
 #include <memory>
 
-#include <lock.h>
+#include <pv/lock.h>
 #include <dbAccess.h>
-#include <serializeHelper.h>
-#include <convert.h>
-#include <pvIntrospect.h>
-#include <pvData.h>
-#include <pvAccess.h>
-#include "v3Channel.h"
+#include <pv/serializeHelper.h>
+#include <pv/convert.h>
+#include <pv/pvIntrospect.h>
+#include <pv/pvData.h>
+#include <pv/pvAccess.h>
+#include <pv/v3Channel.h>
 #include "v3Array.h"
 #include "v3Util.h"
 

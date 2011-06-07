@@ -13,9 +13,9 @@
 
 #include <dbAccess.h>
 
-#include <pvIntrospect.h>
-#include <pvData.h>
-#include <pvAccess.h>
+#include <pv/pvIntrospect.h>
+#include <pv/pvData.h>
+#include <pv/pvAccess.h>
 
 namespace epics { namespace pvIOC { 
 
