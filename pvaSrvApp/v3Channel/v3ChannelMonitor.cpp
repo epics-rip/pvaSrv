@@ -61,11 +61,11 @@ V3ChannelMonitor::V3ChannelMonitor(
   currentElement(),
   nextElement()
 {
-printf("V3ChannelMonitor construct\n");
+//printf("V3ChannelMonitor construct\n");
 }
 
 V3ChannelMonitor::~V3ChannelMonitor() {
-printf("~V3ChannelMonitor\n");
+//printf("~V3ChannelMonitor\n");
 }
 
 
@@ -149,7 +149,7 @@ void V3ChannelMonitor::message(String message,MessageType messageType)
 }
 
 void V3ChannelMonitor::destroy() {
-printf("V3ChannelMonitor::destroy\n");
+//printf("V3ChannelMonitor::destroy\n");
     v3Channel->removeChannelMonitor(*this);
 }
 

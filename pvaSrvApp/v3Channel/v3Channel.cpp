@@ -35,7 +35,7 @@ V3Channel::V3Channel(
     dbAddr(dbAddr),
     recordField()
 {
-printf("V3Channel::V3Channel\n");
+//printf("V3Channel::V3Channel\n");
 }
 
 void V3Channel::init()
@@ -77,7 +77,7 @@ void V3Channel::init()
 
 V3Channel::~V3Channel()
 {
-printf("V3Channel::~V3Channel\n");
+//printf("V3Channel::~V3Channel\n");
 }
 
 void V3Channel::getField(GetFieldRequester::shared_pointer const &requester,

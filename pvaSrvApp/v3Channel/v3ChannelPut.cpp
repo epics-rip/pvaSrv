@@ -52,12 +52,12 @@ V3ChannelPut::V3ChannelPut(
   notifyAddr(0),
   event()
 {
-printf("V3ChannelPut::V3ChannelPut()\n");
+//printf("V3ChannelPut::V3ChannelPut()\n");
 }
 
 V3ChannelPut::~V3ChannelPut()
 {
-printf("V3ChannelPut::~V3ChannelPut()\n");
+//printf("V3ChannelPut::~V3ChannelPut()\n");
 }
 
 

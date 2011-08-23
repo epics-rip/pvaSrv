@@ -48,9 +48,14 @@ LIBSRCS += pvShare.cpp
 #LIBSRCS += pvShareStructureArray.cpp
 
 SRC_DIRS += $(IOC)/service
+DBD += pvServiceChannelRegister.dbd
 INC += pvServiceBase.h
+INC += pvServiceProvider.h
 LIBSRCS += pvServiceBaseProvider.cpp
 LIBSRCS += pvServiceBase.cpp
+LIBSRCS += pvServiceProvider.cpp
+LIBSRCS += pvServiceChannelRegister.cpp
+
 
 SRC_DIRS += $(IOC)/v3Channel
 DBD += v3Channel.dbd
@@ -72,9 +77,8 @@ LIBSRCS += v3ChannelRegister.cpp
 SRC_DIRS += $(IOC)/exampleService
 DBD += exampleChannelRegister.dbd
 INC += exampleChannel.h
-LIBSRCS += exampleContext.cpp
 LIBSRCS += exampleChannelRegister.cpp
-LIBSRCS += exampleChannelProvider.cpp
+LIBSRCS += examplePVTop.cpp
 LIBSRCS += exampleChannel.cpp
 LIBSRCS += exampleChannelGet.cpp
 LIBSRCS += exampleChannelPut.cpp

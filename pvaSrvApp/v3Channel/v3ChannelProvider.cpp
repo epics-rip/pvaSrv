@@ -27,12 +27,12 @@ using namespace epics::pvAccess;
 V3ChannelProvider::V3ChannelProvider()
 : PVServiceBaseProvider("v3Channel")
 {
-printf("V3ChannelProvider::V3ChannelProvider\n");
+//printf("V3ChannelProvider::V3ChannelProvider\n");
 }
 
 V3ChannelProvider::~V3ChannelProvider()
 {
-printf("V3ChannelProvider::~V3ChannelProvider\n");
+//printf("V3ChannelProvider::~V3ChannelProvider\n");
 }
 
 ChannelFind::shared_pointer V3ChannelProvider::channelFind(

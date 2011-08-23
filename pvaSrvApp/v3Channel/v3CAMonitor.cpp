@@ -156,7 +156,7 @@ CAV3MonitorPvt::CAV3MonitorPvt(
 : requester(requester),pvName(pvName),v3Type(v3Type),
   data(),chid(0),myevid(0),context(CAV3ContextCreate::get(requester))
 {
-printf("CAV3MonitorPvt::CAV3MonitorPvt\n");
+//printf("CAV3MonitorPvt::CAV3MonitorPvt\n");
 }
 
 CAV3MonitorPvt::~CAV3MonitorPvt()
@@ -221,12 +221,12 @@ CAV3Monitor::CAV3Monitor(
     String pvName,V3Type v3Type)
 : pImpl(new CAV3MonitorPvt(requester,pvName,v3Type))
 {
-printf("CAV3Monitor::CAV3Monitor\n");
+//printf("CAV3Monitor::CAV3Monitor\n");
 }
 
 CAV3Monitor::~CAV3Monitor()
 {
-printf("CAV3Monitor::~CAV3Monitor\n");
+//printf("CAV3Monitor::~CAV3Monitor\n");
     delete pImpl;
 }
 

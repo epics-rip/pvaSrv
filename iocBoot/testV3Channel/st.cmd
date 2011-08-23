@@ -58,4 +58,5 @@ epicsThreadSleep(2.0)
 casr
 startV3Channel
 startExampleChannel exampleChannel
+startPVServiceChannel
 dbpf string01 10.1

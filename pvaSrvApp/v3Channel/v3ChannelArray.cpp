@@ -71,12 +71,12 @@ V3ChannelArray::V3ChannelArray(
   dbAddr(dbAddr),
   pvScalarArray()
 {
-printf("V3ChannelArray construct\n");
+//printf("V3ChannelArray construct\n");
 }
 
 V3ChannelArray::~V3ChannelArray()
 {
-printf("V3ChannelArray::~V3ChannelArray()\n");
+//printf("V3ChannelArray::~V3ChannelArray()\n");
 }
 
 

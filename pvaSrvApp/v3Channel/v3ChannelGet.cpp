@@ -47,12 +47,12 @@ V3ChannelGet::V3ChannelGet(
   notifyAddr(0),
   event()
 {
-printf("V3ChannelGet construct\n");
+//printf("V3ChannelGet construct\n");
 }
 
 V3ChannelGet::~V3ChannelGet()
 {
-printf("V3ChannelGet destruct\n");
+//printf("V3ChannelGet destruct\n");
 }
 
 
@@ -108,7 +108,7 @@ void V3ChannelGet::message(String message,MessageType messageType)
 }
 
 void V3ChannelGet::destroy() {
-printf("V3ChannelGet::destroy\n");
+//printf("V3ChannelGet::destroy\n");
     v3Channel->removeChannelGet(*this);
 }
 

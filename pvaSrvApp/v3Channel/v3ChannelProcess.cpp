@@ -45,12 +45,12 @@ V3ChannelProcess::V3ChannelProcess(
   notifyAddr(0),
   event()
 {
-printf("V3ChannelProcess::V3ChannelProcess\n");
+//printf("V3ChannelProcess::V3ChannelProcess\n");
 }
 
 V3ChannelProcess::~V3ChannelProcess()
 {
-printf("V3ChannelProcess::~V3ChannelProcess\n");
+//printf("V3ChannelProcess::~V3ChannelProcess\n");
 }
 
 
@@ -87,7 +87,7 @@ void V3ChannelProcess::message(String message,MessageType messageType)
 }
 
 void V3ChannelProcess::destroy() {
-printf("V3ChannelProcess::destroy\n");
+//printf("V3ChannelProcess::destroy\n");
     v3Channel->removeChannelProcess(*this);
 }
 
