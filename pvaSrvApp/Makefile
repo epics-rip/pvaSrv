@@ -76,7 +76,7 @@ LIBSRCS += v3ChannelRegister.cpp
 
 SRC_DIRS += $(IOC)/exampleService
 DBD += exampleChannelRegister.dbd
-INC += exampleChannel.h
+INC += exampleService.h
 LIBSRCS += exampleChannelRegister.cpp
 LIBSRCS += examplePVTop.cpp
 LIBSRCS += exampleChannel.cpp
