@@ -8,6 +8,7 @@
 #include <cstring>
 #include <stdexcept>
 #include <memory>
+#include <algorithm>
 
 #include <pv/lock.h>
 #include <dbAccess.h>
@@ -215,7 +216,10 @@ void V3ValueArray<T>::deserialize(ByteBuffer *pbuffer,
     T * data = (value==0) ? shareValue : value;
     int i=0;
     while(true) {
-        int maxIndex = std::min(length-i, pbuffer->getRemaining())+i;
+        int maxIndex = std::min(
+             length-i, 
+             static_cast<int32>(pbuffer->getRemaining())
+             )+i;
         if(data==shareValue) dbScanLock(dbAddr.precord);
         for(; i<maxIndex; i++) {
             data[i] = pbuffer->get<T>();
