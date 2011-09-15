@@ -8,7 +8,6 @@
 #include <cstring>
 #include <stdexcept>
 #include <memory>
-#include <algorithm>
 
 #include <pv/lock.h>
 #include <dbAccess.h>
@@ -216,17 +215,14 @@ void V3ValueArray<T>::deserialize(ByteBuffer *pbuffer,
     T * data = (value==0) ? shareValue : value;
     int i=0;
     while(true) {
-        int maxIndex = std::min(
-             length-i, 
-             static_cast<int32>(pbuffer->getRemaining())
-             )+i;
+        int maxIndex = std::min(length-i, static_cast<int32>(pbuffer->getRemaining()))+i;
         if(data==shareValue) dbScanLock(dbAddr.precord);
         for(; i<maxIndex; i++) {
             data[i] = pbuffer->get<T>();
         }
         if(data==shareValue) dbScanUnlock(dbAddr.precord);
         if(i>=length) break;
-        pcontrol->ensureData(1);
+        pcontrol->ensureData(sizeof(T));
     }
     this->setLength(length);
     // update v4Record
@@ -254,9 +250,9 @@ void V3ValueArray<T>::serialize(ByteBuffer *pbuffer,
     int i = offset;
     T * data = (value==0) ? shareValue : value;
     while(true) {
-        int maxIndex = std::min<int>(end-i, pbuffer->getRemaining())+i;
+        int maxIndex = std::min(end-i, static_cast<int32>(pbuffer->getRemaining()))+i;
         if(data==shareValue) dbScanLock(dbAddr.precord);
-        for(; i<maxIndex; i++) pbuffer->put(data[i]);
+        for(; i<maxIndex; i++) pbuffer->put<T>(data[i]);
         if(data==shareValue) dbScanUnlock(dbAddr.precord);
         if(i>=end) break;
         pflusher->flushSerializeBuffer();
