@@ -129,10 +129,12 @@ void V3ChannelPut::destroy() {
 
 void V3ChannelPut::put(bool lastRequest)
 {
+    Lock lock(dataMutex);
     PVField *pvField = pvStructure.get()->getPVFields()[0];
     if(propertyMask&V3Util::dbPutBit) {
         Status status = V3Util::putField(
             channelPutRequester,propertyMask,dbAddr,pvField);
+        lock.unlock();
         channelPutRequester->putDone(status);
         if(lastRequest) destroy();
         return;
@@ -141,6 +143,7 @@ void V3ChannelPut::put(bool lastRequest)
     Status status = V3Util::put(
         channelPutRequester,propertyMask,dbAddr,pvField);
     dbScanUnlock(dbAddr.precord);
+    lock.unlock();
     if(process) {
         epicsUInt8 value = 1;
         pNotify.get()->pbuffer = &value;
@@ -159,6 +162,8 @@ void V3ChannelPut::notifyCallback(struct putNotify *pn)
 
 void V3ChannelPut::get()
 {
+    {
+    Lock lock(dataMutex);
     bitSet->clear();
     dbScanLock(dbAddr.precord);
     Status status = V3Util::get(
@@ -172,7 +177,18 @@ void V3ChannelPut::get()
         bitSet->set(pvStructure->getFieldOffset());
     }
     dbScanUnlock(dbAddr.precord);
+    }
     channelPutRequester->getDone(Status::OK);
+}
+
+void V3ChannelPut::lock()
+{
+    dataMutex.lock();
+}
+
+void V3ChannelPut::unlock()
+{
+    dataMutex.unlock();
 }
 
 }}

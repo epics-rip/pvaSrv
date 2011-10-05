@@ -107,5 +107,13 @@ void V3ChannelProcess::notifyCallback(struct putNotify *pn)
     cp->event.signal();
 }
 
+void V3ChannelProcess::lock()
+{
+}
+
+void V3ChannelProcess::unlock()
+{
+}
+
 }}
 

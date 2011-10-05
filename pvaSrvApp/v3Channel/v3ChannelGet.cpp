@@ -120,6 +120,9 @@ void V3ChannelGet::get(bool lastRequest)
         dbPutNotify(pNotify.get());
         event.wait();
     }
+
+    Lock lock(dataMutex);
+
     bitSet->clear();
     dbScanLock(dbAddr.precord);
     Status status = V3Util::get(
@@ -134,6 +137,9 @@ void V3ChannelGet::get(bool lastRequest)
         bitSet->clear();
         bitSet->set(0);
     }
+    
+    lock.unlock();
+    
     channelGetRequester->getDone(status);
     if(lastRequest) destroy();
 }
@@ -142,6 +148,16 @@ void V3ChannelGet::notifyCallback(struct putNotify *pn)
 {
     V3ChannelGet * cget = static_cast<V3ChannelGet *>(pn->usrPvt);
     cget->event.signal();
+}
+
+void V3ChannelGet::lock()
+{
+    dataMutex.lock();
+}
+
+void V3ChannelGet::unlock()
+{
+    dataMutex.unlock();
 }
 
 }}

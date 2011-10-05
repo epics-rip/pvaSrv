@@ -155,6 +155,8 @@ void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
         if(lastRequest) destroy();
         return;
     }
+    {
+    Lock lock(dataMutex);
     pvScalarArray->setLength(count);
     switch(dbAddr.field_type) {
     case DBF_CHAR:
@@ -205,6 +207,7 @@ void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
         break;
     }
     }
+    }
     dbScanUnlock(dbAddr.precord);
     channelArrayRequester->getArrayDone(Status::OK);
     if(lastRequest) destroy();
@@ -237,6 +240,8 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
            }
         }
     }
+    {
+    Lock lock(dataMutex);
     switch(dbAddr.field_type) {
     case DBF_CHAR:
     case DBF_UCHAR: {
@@ -276,7 +281,6 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
         float *from = data.data;
         for(int i=0; i<count; i++)  to[offset+i] = from[i];
         break;
-        break;
     }
     case DBF_DOUBLE: {
         PVDoubleArray *pv = static_cast<PVDoubleArray *>(pvScalarArray.get());
@@ -307,6 +311,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
         break;
     }
     }
+    }
     db_post_events(dbAddr.precord,dbAddr.pfield,DBE_VALUE | DBE_LOG);
     dbScanUnlock(dbAddr.precord);
     channelArrayRequester->getArrayDone(Status::OK);
@@ -327,6 +332,16 @@ void V3ChannelArray::setLength(bool lastRequest,int length,int capacity)
     dbScanUnlock(dbAddr.precord);
     channelArrayRequester->setLengthDone(Status::OK);
     if(lastRequest) destroy();
+}
+
+void V3ChannelArray::lock()
+{
+    dataMutex.lock();
+}
+
+void V3ChannelArray::unlock()
+{
+    dataMutex.unlock();
 }
 
 }}

@@ -114,6 +114,8 @@ public:
         epics::pvData::MessageType messageType);
     virtual void destroy();
     virtual void process(bool lastRequest);
+    virtual void lock();
+    virtual void unlock();
 private:
     V3ChannelProcess::shared_pointer getPtrSelf()
     {
@@ -146,6 +148,8 @@ public:
         epics::pvData::MessageType messageType);
     virtual void destroy();
     virtual void get(bool lastRequest);
+    virtual void lock();
+    virtual void unlock();
 private:
     V3ChannelGet::shared_pointer getPtrSelf()
     {
@@ -163,6 +167,7 @@ private:
     std::auto_ptr<struct putNotify> pNotify;
     std::auto_ptr<DbAddr> notifyAddr;
     epics::pvData::Event event;
+    epics::pvData::Mutex dataMutex;
 };
 
 class V3ChannelPut :
@@ -184,6 +189,8 @@ public:
     virtual void destroy();
     virtual void put(bool lastRequest);
     virtual void get();
+    virtual void lock();
+    virtual void unlock();
 private:
     V3ChannelPut::shared_pointer getPtrSelf()
     {
@@ -201,6 +208,7 @@ private:
     std::auto_ptr<struct putNotify> pNotify;
     std::auto_ptr<DbAddr> notifyAddr;
     epics::pvData::Event event;
+    epics::pvData::Mutex dataMutex;
 };
 
 class V3ChannelMonitor
@@ -231,6 +239,8 @@ public:
     virtual void connectionCallback();
     virtual void accessRightsCallback();
     virtual void eventCallback(const char *);
+    virtual void lock();
+    virtual void unlock();
 private:
     V3ChannelMonitor::shared_pointer getPtrSelf()
     {
@@ -267,6 +277,8 @@ public:
     virtual void putArray(bool lastRequest, int offset, int count);
     virtual void getArray(bool lastRequest, int offset, int count);
     virtual void setLength(bool lastRequest, int length, int capacity);
+    virtual void lock();
+    virtual void unlock();
 private:
     V3ChannelArray::shared_pointer getPtrSelf()
     {
@@ -276,6 +288,7 @@ private:
     epics::pvAccess::ChannelArrayRequester::shared_pointer channelArrayRequester;
     DbAddr &dbAddr;
     epics::pvData::PVScalarArray::shared_pointer pvScalarArray;
+    epics::pvData::Mutex dataMutex;
 };
 
 }}
