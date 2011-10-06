@@ -264,5 +264,13 @@ void V3ChannelMonitor::eventCallback(const char *status)
 
 }
 
+void V3ChannelMonitor::lock()
+{
+}
+
+void V3ChannelMonitor::unlock()
+{
+}
+
 }}
 
