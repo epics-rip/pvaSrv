@@ -32,6 +32,7 @@ typedef long (*get_units) (DBADDR *, char *);
 typedef long (*get_precision) (DBADDR *, long  *);
 typedef long (*get_graphic_double) (DBADDR *, struct dbr_grDouble  *);
 typedef long (*get_control_double) (DBADDR *, struct dbr_ctrlDouble  *);
+typedef long (*get_alarm_double) (DBADDR *, struct dbr_alDouble  *);
 }
 
 class V3Util : private epics::pvData::NoDefaultMethods {
@@ -43,7 +44,7 @@ public:
     static int alarmBit;         // get alarm
     static int displayBit;       // get display info
     static int controlBit;       // get control info
-    // MUST ALSO IMPLEMENT alarmLimit
+    static int alarmLimitBit;    // get value alarm info
     // V3 data characteristics
     static int scalarValueBit;   // value is a scalar
     static int arrayValueBit;    // value is an array
@@ -65,10 +66,13 @@ public:
     static epics::pvData::String alarmString;
     static epics::pvData::String displayString;
     static epics::pvData::String controlString;
+    static epics::pvData::String alarmLimitString;
+    static epics::pvData::String lowAlarmLimitString;
+    static epics::pvData::String lowWarningLimitString;
+    static epics::pvData::String highWarningLimitString;
+    static epics::pvData::String highAlarmLimitString;
     static epics::pvData::String allString;
     static epics::pvData::String indexString;
-
-
 
     static int getProperties(epics::pvData::Requester::shared_pointer const &requester,
         epics::pvData::PVStructure::shared_pointer const &pvRequest,DbAddr &dbAddr);

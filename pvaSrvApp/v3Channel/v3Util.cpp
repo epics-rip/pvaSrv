@@ -17,6 +17,7 @@
 
 #include <pv/pvIntrospect.h>
 #include <pv/pvData.h>
+#include <pv/convert.h>
 #include <pv/pvEnumerated.h>
 #include <pv/pvAccess.h>
 #include <pv/standardField.h>
@@ -42,7 +43,7 @@ int V3Util::timeStampBit     = 0x0004;
 int V3Util::alarmBit         = 0x0008;
 int V3Util::displayBit       = 0x0010;
 int V3Util::controlBit       = 0x0020;
-// leave bit for alarmLimitBit 0x0040
+int V3Util::alarmLimitBit    = 0x0040;
 int V3Util::scalarValueBit   = 0x0080;
 int V3Util::arrayValueBit    = 0x0100;
 int V3Util::enumValueBit     = 0x0200;
@@ -63,9 +64,13 @@ String V3Util::timeStampString("timeStamp");
 String V3Util::alarmString("alarm");
 String V3Util::displayString("display");
 String V3Util::controlString("control");
-String V3Util::allString("value,timeStamp,alarm,display,control");
+String V3Util::alarmLimitString("valueAlarm");
+String V3Util::lowAlarmLimitString("lowAlarmLimit");
+String V3Util::lowWarningLimitString("lowWarningLimit");
+String V3Util::highWarningLimitString("highWarningLimit");
+String V3Util::highAlarmLimitString("highAlarmLimit");
+String V3Util::allString("value,timeStamp,alarm,display,control,valueAlarm");
 String V3Util::indexString("index");
-
 
 
 int V3Util::getProperties(
@@ -194,6 +199,11 @@ int V3Util::getProperties(
                 propertyMask |= controlBit;
             }
         }
+        if(fieldList.find(alarmLimitString)!=String::npos) {
+            if(dbAddr.field_type==DBF_LONG||dbAddr.field_type==DBF_DOUBLE) {
+                propertyMask |= alarmLimitBit;
+            }
+        }
     } else {
         pvField = pvRequest->getSubField(timeStampString);
         if(pvField!=0) {
@@ -231,6 +241,15 @@ int V3Util::getProperties(
                   }
              }
         }
+        pvField = pvRequest->getSubField(alarmLimitString);
+        if(pvField!=0) {
+             PVString *pvString = pvRequest->getStringField(alarmLimitString);
+             if(pvString!=0) {
+                  if(pvString->get().compare("true")==0) {
+                      propertyMask |= alarmLimitBit;
+                  }
+             }
+        }
     }
     return propertyMask;
 }
@@ -252,6 +271,10 @@ PVStructure *V3Util::createPVStructure(
     if((propertyMask&controlBit)!=0) {
         if(!properties.empty()) properties += ",";
         properties += controlString;
+    }
+    if((propertyMask&alarmLimitBit)!=0) {
+        if(!properties.empty()) properties += ",";
+        properties += alarmLimitString;
     }
     if((propertyMask&enumValueBit)!=0) {
         struct dbr_enumStrs enumStrs;
@@ -368,6 +391,7 @@ PVStructure *V3Util::createPVStructure(
          if((propertyMask&alarmBit)!=0) numberFields++;
          if((propertyMask&displayBit)!=0) numberFields++;
          if((propertyMask&controlBit)!=0) numberFields++;
+         if((propertyMask&alarmLimitBit)!=0) numberFields++;
          PVFieldPtr *pvFields = new PVFieldPtr[numberFields];
          int indField = 0;
          pvFields[indField++] = pvField;
@@ -382,6 +406,29 @@ PVStructure *V3Util::createPVStructure(
          }
          if((propertyMask&controlBit)!=0) {
             pvFields[indField++] = standardPVField->control(0);
+         }
+         if((propertyMask&alarmLimitBit)!=0) {
+            PVStructure *pvAlarmLimit = 0;
+            switch(scalarType) {
+            case pvByte:
+               pvAlarmLimit = standardPVField->byteAlarm(0);
+               break;
+            case pvShort:
+               pvAlarmLimit = standardPVField->shortAlarm(0);
+               break;
+            case pvInt:
+               pvAlarmLimit = standardPVField->intAlarm(0);
+               break;
+            case pvFloat:
+               pvAlarmLimit = standardPVField->floatAlarm(0);
+               break;
+            case pvDouble:
+               pvAlarmLimit = standardPVField->doubleAlarm(0);
+               break;
+            default:
+               throw std::logic_error(String("Should never get here"));
+            }
+            pvFields[indField++] = pvAlarmLimit;
          }
          PVStructure *pvParent = getPVDataCreate()->createPVStructure(
              0,String(),numberFields,pvFields);
@@ -434,6 +481,7 @@ void  V3Util::getPropertyData(
         Control control;
         struct rset *prset = dbGetRset(&dbAddr);
         struct dbr_ctrlDouble graphics;
+        memset(&graphics,0,sizeof(graphics));
         if(prset && prset->get_control_double) {
            get_control_double cc =
                 (get_control_double)(prset->get_control_double);
@@ -445,6 +493,38 @@ void  V3Util::getPropertyData(
         PVField *pvField = pvStructure->getSubField(controlString);
         pvControl.attach(pvField);
         pvControl.set(control);
+    }
+    if(propertyMask&alarmLimitBit) {
+        struct rset *prset = dbGetRset(&dbAddr);
+        struct dbr_alDouble ald;
+        memset(&ald,0,sizeof(ald));
+        if(prset && prset->get_alarm_double) {
+           get_alarm_double cc =
+               (get_alarm_double)(prset->get_alarm_double);
+           cc(&dbAddr,&ald);
+        }
+        PVStructure *pvAlarmLimits =
+            pvStructure->getStructureField(alarmLimitString);
+        PVField *pvf = pvAlarmLimits->getSubField(lowAlarmLimitString);
+        if(pvf!=0 && pvf->getField()->getType()==scalar) {
+            PVScalar *pvScalar = static_cast<PVScalar*>(pvf);
+            getConvert()->fromDouble(pvScalar,ald.lower_alarm_limit);
+        }
+        pvf = pvAlarmLimits->getSubField(lowWarningLimitString);
+        if(pvf!=0 && pvf->getField()->getType()==scalar) {
+            PVScalar *pvScalar = static_cast<PVScalar*>(pvf);
+            getConvert()->fromDouble(pvScalar,ald.lower_warning_limit);
+        }
+        pvf = pvAlarmLimits->getSubField(highWarningLimitString);
+        if(pvf!=0 && pvf->getField()->getType()==scalar) {
+            PVScalar *pvScalar = static_cast<PVScalar*>(pvf);
+            getConvert()->fromDouble(pvScalar,ald.upper_warning_limit);
+        }
+        pvf = pvAlarmLimits->getSubField(highAlarmLimitString);
+        if(pvf!=0 && pvf->getField()->getType()==scalar) {
+            PVScalar *pvScalar = static_cast<PVScalar*>(pvf);
+            getConvert()->fromDouble(pvScalar,ald.upper_alarm_limit);
+        }
     }
 }
 
