@@ -30,6 +30,7 @@ EPICS_BASE=/home/install/epics/base
 
 PVDATA=/home/mrk/hg/pvDataCPP
 PVACCESS=/home/mrk/hg/pvAccessCPP
+NT=/home/mrk/hg/alphaCPP/normativeTypes
 
 # Set RULES here if you want to take build rules from somewhere
 # other than EPICS_BASE:

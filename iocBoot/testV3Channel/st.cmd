@@ -57,6 +57,6 @@ iocInit()
 epicsThreadSleep(2.0)
 casr
 startV3Channel
-startExampleChannel exampleChannel
+startExampleService serviceRPC
 startPVServiceChannel
 dbpf string01 10.1

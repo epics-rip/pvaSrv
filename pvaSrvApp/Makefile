@@ -51,10 +51,13 @@ SRC_DIRS += $(IOC)/service
 DBD += pvServiceChannelRegister.dbd
 INC += pvServiceBase.h
 INC += pvServiceProvider.h
+INC += service.h
 LIBSRCS += pvServiceBaseProvider.cpp
 LIBSRCS += pvServiceBase.cpp
 LIBSRCS += pvServiceProvider.cpp
 LIBSRCS += pvServiceChannelRegister.cpp
+LIBSRCS += pvServiceChannelCTX.cpp
+LIBSRCS += serviceChannelRPC.cpp
 
 
 SRC_DIRS += $(IOC)/v3Channel
@@ -73,15 +76,6 @@ LIBSRCS += v3ChannelPut.cpp
 LIBSRCS += v3ChannelArray.cpp
 LIBSRCS += v3ChannelMonitor.cpp
 LIBSRCS += v3ChannelRegister.cpp
-
-SRC_DIRS += $(IOC)/exampleService
-DBD += exampleChannelRegister.dbd
-INC += exampleService.h
-LIBSRCS += exampleChannelRegister.cpp
-LIBSRCS += examplePVTop.cpp
-LIBSRCS += exampleChannel.cpp
-LIBSRCS += exampleChannelGet.cpp
-LIBSRCS += exampleChannelPut.cpp
 
 include $(TOP)/configure/RULES
 
