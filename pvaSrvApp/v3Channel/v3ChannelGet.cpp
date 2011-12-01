@@ -32,7 +32,7 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 
 V3ChannelGet::V3ChannelGet(
-    PVServiceBase::shared_pointer const &v3Channel,
+    ChannelBase::shared_pointer const &v3Channel,
     ChannelGetRequester::shared_pointer const &channelGetRequester,
     DbAddr &dbAddr)
 : v3Channel(v3Channel),

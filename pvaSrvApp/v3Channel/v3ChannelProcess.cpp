@@ -35,7 +35,7 @@ static String fieldListString("fieldList");
 static String valueString("value");
 
 V3ChannelProcess::V3ChannelProcess(
-    PVServiceBase::shared_pointer const &v3Channel,
+    ChannelBase::shared_pointer const &v3Channel,
     ChannelProcessRequester::shared_pointer const &channelProcessRequester,
     DbAddr &dbAddr)
 : v3Channel(v3Channel),
