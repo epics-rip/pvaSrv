@@ -37,7 +37,7 @@ using namespace epics::pvAccess;
 
 
 V3ChannelPut::V3ChannelPut(
-    PVServiceBase::shared_pointer const &v3Channel,
+    ChannelBase::shared_pointer const &v3Channel,
     ChannelPutRequester::shared_pointer const &channelPutRequester,
     DbAddr &dbAddr)
 : v3Channel(v3Channel),

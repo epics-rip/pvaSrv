@@ -49,11 +49,11 @@ INC += monitorAlgorithm.h
 
 SRC_DIRS += $(IOC)/service
 DBD += pvServiceChannelRegister.dbd
-INC += pvServiceBase.h
+INC += channelBase.h
 INC += pvServiceProvider.h
 INC += service.h
-LIBSRCS += pvServiceBaseProvider.cpp
-LIBSRCS += pvServiceBase.cpp
+LIBSRCS += channelBase.cpp
+LIBSRCS += channelBaseProvider.cpp
 LIBSRCS += pvServiceProvider.cpp
 LIBSRCS += pvServiceChannelRegister.cpp
 LIBSRCS += pvServiceChannelCTX.cpp

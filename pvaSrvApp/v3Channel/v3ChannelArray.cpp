@@ -63,7 +63,7 @@ typedef long (*put_array_info) (DBADDR *,long );
 }
 
 V3ChannelArray::V3ChannelArray(
-    PVServiceBase::shared_pointer const &v3Channel,
+    ChannelBase::shared_pointer const &v3Channel,
     ChannelArrayRequester::shared_pointer const &channelArrayRequester,
     DbAddr &dbAddr)
 : v3Channel(v3Channel),

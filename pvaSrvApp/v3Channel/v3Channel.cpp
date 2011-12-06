@@ -26,12 +26,12 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 
 V3Channel::V3Channel(
-    PVServiceBaseProvider::shared_pointer const & provider,
+    ChannelBaseProvider::shared_pointer const & provider,
         ChannelRequester::shared_pointer const & requester,
         String name,
         std::auto_ptr<DbAddr> dbAddr
 )
-:  PVServiceBase(provider,requester,name),
+:  ChannelBase(provider,requester,name),
     dbAddr(dbAddr),
     recordField()
 {
