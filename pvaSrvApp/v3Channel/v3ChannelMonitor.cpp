@@ -44,7 +44,7 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 
 V3ChannelMonitor::V3ChannelMonitor(
-    ChannelBase::shared_pointer const &v3Channel,
+    PVServiceBase::shared_pointer const &v3Channel,
     MonitorRequester::shared_pointer const &monitorRequester,
     DbAddr &dbAddr)
 : v3Channel(v3Channel),

@@ -27,7 +27,7 @@
 #include <pv/pvAccess.h>
 #include <pv/lock.h>
 
-#include <pv/channelBase.h>
+#include <pv/pvServiceBase.h>
 #include <pv/v3CAMonitor.h>
 
 namespace epics { namespace pvIOC { 
@@ -42,9 +42,7 @@ class V3ChannelArray;
 
 typedef struct dbAddr DbAddr;
 
-class V3ChannelProvider :
-    public epics::pvAccess::ChannelBaseProvider
-{
+class V3ChannelProvider : public PVServiceBaseProvider {
 public:
      POINTER_DEFINITIONS(V3ChannelProvider);
     V3ChannelProvider();
@@ -57,15 +55,16 @@ public:
         epics::pvAccess::ChannelRequester::shared_pointer  const &channelRequester,
         short priority,
         epics::pvData::String address);
+private:
 };
 
 class V3Channel :
-  public virtual epics::pvAccess::ChannelBase
+  public virtual PVServiceBase
 {
 public:
     POINTER_DEFINITIONS(V3Channel);
     V3Channel(
-        epics::pvAccess::ChannelBaseProvider::shared_pointer const & channelProvider,
+        PVServiceBaseProvider::shared_pointer const & channelProvider,
         epics::pvAccess::ChannelRequester::shared_pointer const & requester,
         epics::pvData::String name,
         std::auto_ptr<DbAddr> addr
@@ -104,7 +103,7 @@ class V3ChannelProcess :
 public:
     POINTER_DEFINITIONS(V3ChannelProcess);
     V3ChannelProcess(
-        epics::pvAccess::ChannelBase::shared_pointer const & v3Channel,
+        PVServiceBase::shared_pointer const & v3Channel,
         epics::pvAccess::ChannelProcessRequester::shared_pointer const & channelProcessRequester,
         DbAddr &dbAddr);
     virtual ~V3ChannelProcess();
@@ -123,7 +122,7 @@ private:
         return shared_from_this();
     }
     static void notifyCallback(struct putNotify *);
-    epics::pvAccess::ChannelBase::shared_pointer v3Channel;
+    PVServiceBase::shared_pointer v3Channel;
     epics::pvAccess::ChannelProcessRequester::shared_pointer channelProcessRequester;
     DbAddr &dbAddr;
     std::auto_ptr<struct putNotify> pNotify;
@@ -138,7 +137,7 @@ class V3ChannelGet :
 public:
     POINTER_DEFINITIONS(V3ChannelGet);
     V3ChannelGet(
-        epics::pvAccess::ChannelBase::shared_pointer const & v3Channel,
+        PVServiceBase::shared_pointer const & v3Channel,
         epics::pvAccess::ChannelGetRequester::shared_pointer const &channelGetRequester,
         DbAddr &dbAddr);
     virtual ~V3ChannelGet();
@@ -157,7 +156,7 @@ private:
         return shared_from_this();
     }
     static void notifyCallback(struct putNotify *);
-    epics::pvAccess::ChannelBase::shared_pointer v3Channel;
+    PVServiceBase::shared_pointer v3Channel;
     epics::pvAccess::ChannelGetRequester::shared_pointer channelGetRequester;
     DbAddr &dbAddr;
     bool process;
@@ -178,7 +177,7 @@ class V3ChannelPut :
 public:
     POINTER_DEFINITIONS(V3ChannelPut);
     V3ChannelPut(
-        epics::pvAccess::ChannelBase::shared_pointer const & v3Channel,
+        PVServiceBase::shared_pointer const & v3Channel,
         epics::pvAccess::ChannelPutRequester::shared_pointer const &channelPutRequester,
         DbAddr &dbAddr);
     virtual ~V3ChannelPut();
@@ -198,7 +197,7 @@ private:
         return shared_from_this();
     }
     static void notifyCallback(struct putNotify *);
-    epics::pvAccess::ChannelBase::shared_pointer v3Channel;
+    PVServiceBase::shared_pointer v3Channel;
     epics::pvAccess::ChannelPutRequester::shared_pointer channelPutRequester;
     DbAddr &dbAddr;
     int propertyMask;
@@ -220,7 +219,7 @@ class V3ChannelMonitor
 public:
     POINTER_DEFINITIONS(V3ChannelMonitor);
     V3ChannelMonitor(
-        epics::pvAccess::ChannelBase::shared_pointer const & v3Channel,
+        PVServiceBase::shared_pointer const & v3Channel,
         epics::pvData::MonitorRequester::shared_pointer const & monitorRequester,
         DbAddr &dbAddr
     );
@@ -247,7 +246,7 @@ private:
     {
         return shared_from_this();
     }
-    epics::pvAccess::ChannelBase::shared_pointer v3Channel;
+    PVServiceBase::shared_pointer v3Channel;
     epics::pvData::MonitorRequester::shared_pointer  monitorRequester;
     DbAddr &dbAddr;
     epics::pvData::Event event;
@@ -269,7 +268,7 @@ class V3ChannelArray :
 public:
     POINTER_DEFINITIONS(V3ChannelArray);
     V3ChannelArray(
-        epics::pvAccess::ChannelBase::shared_pointer const & v3Channel,
+        PVServiceBase::shared_pointer const & v3Channel,
         epics::pvAccess::ChannelArrayRequester::shared_pointer const &channelArrayRequester,
         DbAddr &dbAddr);
     virtual ~V3ChannelArray();
@@ -285,7 +284,7 @@ private:
     {
         return shared_from_this();
     }
-    epics::pvAccess::ChannelBase::shared_pointer v3Channel;
+    PVServiceBase::shared_pointer v3Channel;
     epics::pvAccess::ChannelArrayRequester::shared_pointer channelArrayRequester;
     DbAddr &dbAddr;
     epics::pvData::PVScalarArray::shared_pointer pvScalarArray;

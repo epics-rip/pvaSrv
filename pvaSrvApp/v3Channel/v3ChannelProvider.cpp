@@ -25,7 +25,7 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 
 V3ChannelProvider::V3ChannelProvider()
-: ChannelBaseProvider("v3Channel")
+: PVServiceBaseProvider("v3Channel")
 {
 //printf("V3ChannelProvider::V3ChannelProvider\n");
 }
@@ -60,9 +60,9 @@ Channel::shared_pointer V3ChannelProvider::createChannel(
     std::auto_ptr<DbAddr> addr(new DbAddr());
     memcpy(addr.get(),&dbAddr,sizeof(dbAddr));
     V3Channel *v3Channel = new V3Channel(
-            getPtrSelf(),
+            getChannelProvider(),
             channelRequester,channelName,addr);
-    ChannelBase::shared_pointer channel(v3Channel);
+    PVServiceBase::shared_pointer channel(v3Channel);
     v3Channel->init();
     channelCreated(channel);
     return channel;
