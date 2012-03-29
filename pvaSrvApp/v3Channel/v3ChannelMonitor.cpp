@@ -133,7 +133,7 @@ bool V3ChannelMonitor::init(
     caV3Monitor.get()->connect();
     event.wait();
     monitorRequester->monitorConnect(
-       Status::OK,
+       Status::Ok,
        getPtrSelf(),
        saveStructure);
     return true;
@@ -169,13 +169,13 @@ Status V3ChannelMonitor::start()
         bitSet->clear();
     }
     caV3Monitor.get()->start();
-    return Status::OK;
+    return Status::Ok;
 }
 
 Status V3ChannelMonitor::stop()
 {
     caV3Monitor.get()->stop();
-    return Status::OK;
+    return Status::Ok;
 }
 
 MonitorElement::shared_pointer const & V3ChannelMonitor::poll()

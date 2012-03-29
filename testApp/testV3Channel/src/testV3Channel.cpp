@@ -82,10 +82,10 @@ public:
     {
         channelPtr = channel;
         String message = status.getMessage();
-        bool isOK = status.isOK();
+        bool isOk = status.isOk();
         printf("channelCreated status %s statusOK %s\n",
         message.c_str(),
-        (isOK ? "true" : "false"));
+        (isOk ? "true" : "false"));
     }
     virtual void channelStateChange(
         Channel::shared_pointer const & c,
@@ -104,12 +104,12 @@ public:
         pvStructurePtr = pvStructure;
         bitSetPtr = bitSet;
         printf("channelGetConnect statusOK %s\n",
-            (status.isOK() ? "true" : "false"));
+            (status.isOk() ? "true" : "false"));
     }
     virtual void getDone(const Status &status)
     {
         printf("getDone statusOK %s\n",
-            (status.isOK() ? "true" : "false"));
+            (status.isOk() ? "true" : "false"));
         String buffer("");
         pvStructurePtr->toString(&buffer);
         printf("%s\n",buffer.c_str());

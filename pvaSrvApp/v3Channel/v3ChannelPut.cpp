@@ -107,7 +107,7 @@ bool V3ChannelPut::init(PVStructure::shared_pointer const &pvRequest)
     int numFields = pvStructure->getNumberFields();
     bitSet.reset(new BitSet(numFields));
     channelPutRequester->channelPutConnect(
-       Status::OK,
+       Status::Ok,
        getPtrSelf(),
        pvStructure,
        bitSet);
@@ -178,7 +178,7 @@ void V3ChannelPut::get()
     }
     dbScanUnlock(dbAddr.precord);
     }
-    channelPutRequester->getDone(Status::OK);
+    channelPutRequester->getDone(Status::Ok);
 }
 
 void V3ChannelPut::lock()

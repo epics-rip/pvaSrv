@@ -73,7 +73,7 @@ bool V3ChannelProcess::init()
    pn->nRequest = 1;
    pn->dbrType = DBR_CHAR;
    pn->usrPvt = this;
-   channelProcessRequester->channelProcessConnect(Status::OK,getPtrSelf());
+   channelProcessRequester->channelProcessConnect(Status::Ok,getPtrSelf());
    return true;
 }
 
@@ -97,7 +97,7 @@ void V3ChannelProcess::process(bool lastRequest)
     pNotify.get()->pbuffer = &value;
     dbPutNotify(pNotify.get());
     event.wait();
-    channelProcessRequester->processDone(Status::OK);
+    channelProcessRequester->processDone(Status::Ok);
     
 }
 
