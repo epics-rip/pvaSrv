@@ -26,7 +26,6 @@
 #include <pv/pvData.h>
 #include <pv/pvAccess.h>
 
-#include <pv/pvDatabase.h>
 #include <pv/v3Channel.h>
 #include "v3Util.h"
 
@@ -46,8 +45,6 @@ V3ChannelPut::V3ChannelPut(
   propertyMask(0),
   process(false),
   firstTime(true),
-  pvStructure(),
-  bitSet(),
   pNotify(0),
   notifyAddr(0),
   event()
@@ -73,7 +70,7 @@ bool V3ChannelPut::init(PVStructure::shared_pointer const &pvRequest)
              String("field not allowed to be changed"),errorMessage);
         return 0;
     }
-    pvStructure.reset(
+    pvStructure = PVStructure::shared_pointer(
         V3Util::createPVStructure(
             channelPutRequester,
             propertyMask,
@@ -124,13 +121,13 @@ void V3ChannelPut::message(String message,MessageType messageType)
 }
 
 void V3ChannelPut::destroy() {
-    v3Channel->removeChannelPut(*this);
+    v3Channel->removeChannelPut(V3ChannelPut::shared_pointer(this));
 }
 
 void V3ChannelPut::put(bool lastRequest)
 {
     Lock lock(dataMutex);
-    PVField *pvField = pvStructure.get()->getPVFields()[0];
+    PVFieldPtr pvField = pvStructure.get()->getPVFields()[0];
     if(propertyMask&V3Util::dbPutBit) {
         Status status = V3Util::putField(
             channelPutRequester,propertyMask,dbAddr,pvField);

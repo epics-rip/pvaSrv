@@ -34,7 +34,7 @@ CAV3Data::~CAV3Data() { }
 
 class CAV3MonitorPvt {
 public:
-    CAV3MonitorPvt(CAV3MonitorRequester &requester,
+    CAV3MonitorPvt(CAV3MonitorRequesterPtr const &requester,
         String pvName,V3Type v3Type);
     ~CAV3MonitorPvt();
     CAV3Data & getData();
@@ -42,13 +42,13 @@ public:
     void start();
     void stop();
 
-    CAV3MonitorRequester &requester;
+    CAV3MonitorRequesterPtr requester;
     String pvName;
     V3Type v3Type;
     CAV3Data data;
     chanId chid;
     evid myevid;
-    CAV3Context &context;
+    CAV3ContextPtr context;
 };
 
 extern "C" {
@@ -56,20 +56,20 @@ extern "C" {
 static void connectionCallback(struct connection_handler_args args)
 {
     CAV3MonitorPvt *pvt = static_cast<CAV3MonitorPvt *>(ca_puser(args.chid));   
-    pvt->requester.connectionCallback();
+    pvt->requester->connectionCallback();
 }
 
 static void accessRightsCallback(struct access_rights_handler_args args)
 {
     CAV3MonitorPvt *pvt = static_cast<CAV3MonitorPvt *>(ca_puser(args.chid));   
-    pvt->requester.accessRightsCallback();
+    pvt->requester->accessRightsCallback();
 }
 
 static void eventCallback(struct event_handler_args eha)
 {
     CAV3MonitorPvt *pvt = static_cast<CAV3MonitorPvt *>(ca_puser(eha.chid));   
     if(eha.status!=ECA_NORMAL) {
-        pvt->requester.eventCallback(ca_message(eha.status));
+        pvt->requester->eventCallback(ca_message(eha.status));
         return;
     }
     switch(pvt->v3Type) {
@@ -144,14 +144,14 @@ static void eventCallback(struct event_handler_args eha)
             break;
         }
     }
-   pvt->requester.eventCallback(0);
+   pvt->requester->eventCallback(0);
 }
 
 } //extern "C"
 
 
 CAV3MonitorPvt::CAV3MonitorPvt(
-    CAV3MonitorRequester &requester,
+    CAV3MonitorRequesterPtr const &requester,
     String pvName,V3Type v3Type)
 : requester(requester),pvName(pvName),v3Type(v3Type),
   data(),chid(0),myevid(0),context(CAV3ContextCreate::get(requester))
@@ -162,28 +162,28 @@ CAV3MonitorPvt::CAV3MonitorPvt(
 CAV3MonitorPvt::~CAV3MonitorPvt()
 {
     if(chid!=0) {
-        context.checkContext();
+        context->checkContext();
         ca_clear_channel(chid);
         chid = 0;
     }
-    context.release();
+    context->release();
 }
 
 void CAV3MonitorPvt::connect()
 {
     int status = 0;
-    context.checkContext();
+    context->checkContext();
     status = ca_create_channel(
         pvName.c_str(),connectionCallback,this,20,&chid);
     if(status!=ECA_NORMAL) {
-        requester.message(String(
+        requester->message(String(
             "ca_create_channel failed"),errorMessage);
         if(chid!=0) ca_clear_channel(chid);
         return;
     }
     status = ca_replace_access_rights_event(chid,accessRightsCallback);
     if(status!=ECA_NORMAL) {
-        requester.message(String(
+        requester->message(String(
             "ca_replace_access_rights_event failed"),warningMessage);
     }
 }
@@ -200,24 +200,24 @@ void CAV3MonitorPvt::start()
         case v3Double: type = DBR_TIME_DOUBLE; break;
         case v3String: type = DBR_TIME_STRING; break;
     }
-    context.checkContext();
+    context->checkContext();
     int status = ca_create_subscription(
         type, 1, chid, DBE_VALUE|DBE_ALARM,
         eventCallback, this, &myevid);
     if(status!=ECA_NORMAL) {
-        requester.message(String(
+        requester->message(String(
             "ca_create_subscription failed"),warningMessage);
     }
 }
 
 void CAV3MonitorPvt::stop()
 {
-    context.checkContext();
+    context->checkContext();
     ca_clear_subscription(myevid);
 }
 
 CAV3Monitor::CAV3Monitor(
-    CAV3MonitorRequester &requester,
+    CAV3MonitorRequesterPtr const &requester,
     String pvName,V3Type v3Type)
 : pImpl(new CAV3MonitorPvt(requester,pvName,v3Type))
 {

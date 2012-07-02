@@ -40,7 +40,7 @@ static void threadExitFunc(void *arg)
 
 } //extern "C"
 
-CAV3Context::CAV3Context(Requester &requester)
+CAV3Context::CAV3Context(RequesterPtr const & requester)
 : 
   requester(requester),
   threadId(epicsThreadGetIdSelf()),
@@ -51,8 +51,7 @@ CAV3Context::CAV3Context(Requester &requester)
         "CAV3Context::CAV3Context calling ca_context_create");
     int status = ca_add_exception_event(exceptionCallback,this);
     if(status!=ECA_NORMAL) {
-        requester.message(String(
-            "ca_add_exception_event failed"),warningMessage);
+        requester->message("ca_add_exception_event failed",warningMessage);
     }
     context = ca_current_context();
     epicsAtThreadExit(threadExitFunc,this);
@@ -102,28 +101,28 @@ void CAV3Context::release()
 void CAV3Context::exception(String message)
 {
     Lock xx(mutex);
-    requester.message(message,errorMessage);
+    requester->message(message,errorMessage);
 }
 
-typedef std::map<epicsThreadId,CAV3Context *>::iterator contextMapIter;
+typedef std::map<epicsThreadId,CAV3ContextPtr>::iterator contextMapIter;
 
-std::map<epicsThreadId,CAV3Context*>CAV3ContextCreate::contextMap;
+std::map<epicsThreadId,CAV3ContextPtr>CAV3ContextCreate::contextMap;
 Mutex CAV3ContextCreate::mutex;
 
-CAV3Context & CAV3ContextCreate::get(Requester &requester)
+CAV3ContextPtr CAV3ContextCreate::get(RequesterPtr const &requester)
 {
     Lock xx(mutex);
     epicsThreadId id = epicsThreadGetIdSelf();
     contextMapIter iter = contextMap.find(id);
     if(iter!=contextMap.end()) {
-        CAV3Context * context = iter->second;
+        CAV3ContextPtr context = iter->second;
         context->referenceCount++;
-        return *context;
+        return context;
     }
-    CAV3Context * context = new CAV3Context(requester);
+    CAV3ContextPtr context(new CAV3Context(requester));
     contextMap[id] = context;
     context->referenceCount++;
-    return *context;
+    return context;
 }
 
 void CAV3ContextCreate::erase(epicsThreadId threadId)

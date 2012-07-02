@@ -20,7 +20,6 @@
 #include <pv/pvData.h>
 #include <pv/pvAccess.h>
 
-#include <pv/pvDatabase.h>
 #include <pv/v3Channel.h>
 
 namespace epics { namespace pvIOC { 
@@ -88,7 +87,7 @@ void V3ChannelProcess::message(String message,MessageType messageType)
 
 void V3ChannelProcess::destroy() {
 //printf("V3ChannelProcess::destroy\n");
-    v3Channel->removeChannelProcess(*this);
+    v3Channel->removeChannelProcess(V3ChannelProcess::shared_pointer(this));
 }
 
 void V3ChannelProcess::process(bool lastRequest)

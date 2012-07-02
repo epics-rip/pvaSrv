@@ -23,10 +23,13 @@
 #include <pv/requester.h>
 
 
+class CAV3Context;
+typedef std::tr1::shared_ptr<CAV3Context> CAV3ContextPtr;
 class CAV3ContextCreate;
 
 class CAV3Context {
 public:
+    POINTER_DEFINITIONS(CAV3Context);
     ~CAV3Context();
     void release();
     void stop();
@@ -36,8 +39,8 @@ private:
     std::list<epicsThreadId> auxThreadList ;
     epics::pvData::Mutex mutex;
     CAV3Context(
-       epics::pvData::Requester &requester);
-    epics::pvData::Requester &requester;
+       epics::pvData::RequesterPtr const & requester);
+    epics::pvData::RequesterPtr requester;
     epicsThreadId threadId;
     struct ca_client_context *context;
     int referenceCount;
@@ -46,10 +49,10 @@ private:
 
 class CAV3ContextCreate {
 public:
-    static CAV3Context &get(epics::pvData::Requester &requester);
+    static CAV3ContextPtr get(epics::pvData::RequesterPtr const & requester);
 private:
     static void erase(epicsThreadId id);
-    static std::map<epicsThreadId,CAV3Context*> contextMap;
+    static std::map<epicsThreadId,CAV3ContextPtr> contextMap;
     static epics::pvData::Mutex mutex;
     friend class CAV3Context;
 };

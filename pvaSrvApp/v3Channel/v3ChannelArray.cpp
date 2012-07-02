@@ -47,15 +47,14 @@
 #include <pv/pvEnumerated.h>
 #include <pv/pvTimeStamp.h>
 
-#include <pv/pvDatabase.h>
 #include <pv/v3Channel.h>
 
-#include <pv/support.h>
 
 namespace epics { namespace pvIOC { 
 
 using namespace epics::pvData;
 using namespace epics::pvAccess;
+using std::tr1::static_pointer_cast;
 
 extern "C" {
 typedef long (*get_array_info) (DBADDR *,long *,long *);
@@ -68,8 +67,7 @@ V3ChannelArray::V3ChannelArray(
     DbAddr &dbAddr)
 : v3Channel(v3Channel),
   channelArrayRequester(channelArrayRequester),
-  dbAddr(dbAddr),
-  pvScalarArray()
+  dbAddr(dbAddr)
 {
 //printf("V3ChannelArray construct\n");
 }
@@ -83,8 +81,7 @@ V3ChannelArray::~V3ChannelArray()
 bool V3ChannelArray::init(PVStructure::shared_pointer const &pvRequest)
 {
     if(!dbAddr.no_elements>1) {
-        channelArrayRequester.get()->message(
-           String("field in V3 record is not an array"),errorMessage);
+        channelArrayRequester.get()->message("field in V3 record is not an array",errorMessage);
         return false;
     }
     ScalarType scalarType(pvBoolean);
@@ -109,13 +106,10 @@ bool V3ChannelArray::init(PVStructure::shared_pointer const &pvRequest)
       break;
     }
     if(scalarType==pvBoolean) {
-        channelArrayRequester->message(
-           String("unsupported field in V3 record"),errorMessage);
+        channelArrayRequester.get()->message("unsupported field in V3 record",errorMessage);
         return false;
     }
-    StandardPVField *standardPVField = getStandardPVField();
-    pvScalarArray.reset(
-        standardPVField->scalarArrayValue(0,scalarType));
+    pvScalarArray = getPVDataCreate()->createPVScalarArray(scalarType);
     channelArrayRequester->channelArrayConnect(
         Status::Ok,
         getPtrSelf(),
@@ -124,7 +118,7 @@ bool V3ChannelArray::init(PVStructure::shared_pointer const &pvRequest)
 }
 
 void V3ChannelArray::destroy() {
-    v3Channel->removeChannelArray(*this);
+    v3Channel->removeChannelArray(V3ChannelArray::shared_pointer(this));
 }
 
 void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
@@ -161,41 +155,41 @@ void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
     switch(dbAddr.field_type) {
     case DBF_CHAR:
     case DBF_UCHAR: {
-        PVByteArray *pv = static_cast<PVByteArray *>(pvScalarArray.get());
+        PVByteArrayPtr pv = static_pointer_cast<PVByteArray>(pvScalarArray);
         int8 *from = static_cast<int8 *>(dbAddr.pfield);
         pv->put(0,count,from,offset);
         break;
     }
     case DBF_SHORT:
     case DBF_USHORT: {
-        PVShortArray *pv = static_cast<PVShortArray *>(pvScalarArray.get());
+        PVShortArrayPtr pv = static_pointer_cast<PVShortArray>(pvScalarArray);
         int16 *from = static_cast<int16 *>(dbAddr.pfield);
         pv->put(0,count,from,offset);
         break;
     }
     case DBF_LONG:
     case DBF_ULONG: {
-        PVIntArray *pv = static_cast<PVIntArray *>(pvScalarArray.get());
+        PVIntArrayPtr pv = static_pointer_cast<PVIntArray>(pvScalarArray);
         int32 *from = static_cast<int32 *>(dbAddr.pfield);
         pv->put(0,count,from,offset);
         break;
     }
     case DBF_FLOAT: {
-        PVFloatArray *pv = static_cast<PVFloatArray *>(pvScalarArray.get());
+        PVFloatArrayPtr pv = static_pointer_cast<PVFloatArray>(pvScalarArray);
         float *from = static_cast<float *>(dbAddr.pfield);
         pv->put(0,count,from,offset);
         break;
     }
     case DBF_DOUBLE: {
-        PVDoubleArray *pv = static_cast<PVDoubleArray *>(pvScalarArray.get());
+        PVDoubleArrayPtr pv = static_pointer_cast<PVDoubleArray>(pvScalarArray);
         double *from = static_cast<double *>(dbAddr.pfield);
         pv->put(0,count,from,offset);
         break;
     }
     case DBF_STRING: {
-        PVStringArray *pv = static_cast<PVStringArray *>(pvScalarArray.get());
+        PVStringArrayPtr pv = static_pointer_cast<PVStringArray>(pvScalarArray);
         StringArrayData data;
-        pv->get(0,length,&data);
+        pv->get(0,length,data);
         int index = 0;
         char *pchar = static_cast<char *>(dbAddr.pfield);
         pchar += dbAddr.field_size*offset;
@@ -245,63 +239,84 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
     switch(dbAddr.field_type) {
     case DBF_CHAR:
     case DBF_UCHAR: {
-        PVByteArray *pv = static_cast<PVByteArray *>(pvScalarArray.get());
+        PVByteArrayPtr pv = static_pointer_cast<PVByteArray>(pvScalarArray);
         ByteArrayData data;
-        pv->get(0,count,&data);
+        pv->get(0,count,data);
         int8 *to = static_cast<int8 *>(dbAddr.pfield);
-        int8 *from = data.data;
-        for(int i=0; i<count; i++)  to[offset+i] = from[i];
+        ByteArray_iterator iter = data.data.begin();
+        int ind = 0;
+        for(iter=data.data.begin();iter!=data.data.end();++iter) {
+            to[offset+ind] = *iter;
+            ind++;
+        }
         break;
     }
     case DBF_SHORT:
     case DBF_USHORT: {
-        PVShortArray *pv = static_cast<PVShortArray *>(pvScalarArray.get());
+        PVShortArrayPtr pv = static_pointer_cast<PVShortArray>(pvScalarArray);
         ShortArrayData data;
-        pv->get(0,count,&data);
+        pv->get(0,count,data);
         int16 *to = static_cast<int16 *>(dbAddr.pfield);
-        int16 *from = data.data;
-        for(int i=0; i<count; i++)  to[offset+i] = from[i];
+        ShortArray_iterator iter = data.data.begin();
+        int ind = 0;
+        for(iter=data.data.begin();iter!=data.data.end();++iter) {
+            to[offset+ind] = *iter;
+            ind++;
+        }
         break;
     }
     case DBF_LONG:
     case DBF_ULONG: {
-        PVIntArray *pv = static_cast<PVIntArray *>(pvScalarArray.get());
+        PVIntArrayPtr pv = static_pointer_cast<PVIntArray>(pvScalarArray);
         IntArrayData data;
-        pv->get(0,count,&data);
+        pv->get(0,count,data);
         int32 *to = static_cast<int32 *>(dbAddr.pfield);
-        int32 *from = data.data;
-        for(int i=0; i<count; i++)  to[offset+i] = from[i];
+        IntArray_iterator iter = data.data.begin();
+        int ind = 0;
+        for(iter=data.data.begin();iter!=data.data.end();++iter) {
+            to[offset+ind] = *iter;
+            ind++;
+        }
         break;
     }
     case DBF_FLOAT: {
-        PVFloatArray *pv = static_cast<PVFloatArray *>(pvScalarArray.get());
+        PVFloatArrayPtr pv = static_pointer_cast<PVFloatArray>(pvScalarArray);
         FloatArrayData data;
-        pv->get(0,count,&data);
+        pv->get(0,count,data);
         float *to = static_cast<float *>(dbAddr.pfield);
-        float *from = data.data;
-        for(int i=0; i<count; i++)  to[offset+i] = from[i];
+        FloatArray_iterator iter = data.data.begin();
+        int ind = 0;
+        for(iter=data.data.begin();iter!=data.data.end();++iter) {
+            to[offset+ind] = *iter;
+            ind++;
+        }
         break;
     }
     case DBF_DOUBLE: {
-        PVDoubleArray *pv = static_cast<PVDoubleArray *>(pvScalarArray.get());
+        PVDoubleArrayPtr pv = static_pointer_cast<PVDoubleArray>(pvScalarArray);
         DoubleArrayData data;
-        pv->get(0,count,&data);
+        pv->get(0,count,data);
         double *to = static_cast<double *>(dbAddr.pfield);
-        double *from = data.data;
-        for(int i=0; i<count; i++)  to[offset+i] = from[i];
+        DoubleArray_iterator iter = data.data.begin();
+        int ind = 0;
+        for(iter=data.data.begin();iter!=data.data.end();++iter) {
+            to[offset+ind] = *iter;
+            ind++;
+        }
         break;
     }
     case DBF_STRING: {
-        PVStringArray *pv = static_cast<PVStringArray *>(pvScalarArray.get());
+        PVStringArrayPtr pv = static_pointer_cast<PVStringArray>(pvScalarArray);
         StringArrayData data;
-        pv->get(0,length,&data);
+        pv->get(0,length,data);
         int index = 0;
         char *to = static_cast<char *>(dbAddr.pfield);
         int len = dbAddr.field_size;
-        to += len*offset;
-        while(index<count) {
-            const char * from = data.data[index].c_str();
-            if(from!=0) {
+        StringArray_iterator iter = data.data.begin();
+        for(iter=data.data.begin();iter!=data.data.end();++iter) {
+            String val = *iter;
+            const char * from = val.c_str();
+            if(from!=NULL) {
                 strncpy(to,from,len-1);
             }
             *(to + len -1) = 0;

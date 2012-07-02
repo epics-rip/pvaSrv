@@ -48,6 +48,7 @@ struct CAV3Data {
 
 class CAV3MonitorRequester : public virtual epics::pvData::Requester {
 public:
+    POINTER_DEFINITIONS(CAV3MonitorRequester);
     virtual ~CAV3MonitorRequester(){}
     virtual void exceptionCallback(long status,long op) = 0;
     virtual void connectionCallback() = 0;
@@ -55,10 +56,12 @@ public:
     virtual void eventCallback(const char *status) = 0;
 };
 
+typedef std::tr1::shared_ptr<CAV3MonitorRequester> CAV3MonitorRequesterPtr;
+
 class CAV3Monitor : private epics::pvData::NoDefaultMethods {
 public:
     CAV3Monitor(
-        CAV3MonitorRequester &requester,
+        CAV3MonitorRequesterPtr const &requester,
         epics::pvData::String pvName,
         V3Type v3Type);
     ~CAV3Monitor();

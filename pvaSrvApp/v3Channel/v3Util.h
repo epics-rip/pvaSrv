@@ -37,6 +37,7 @@ typedef long (*get_alarm_double) (DBADDR *, struct dbr_alDouble  *);
 
 class V3Util : private epics::pvData::NoDefaultMethods {
 public:
+
     // client request bits
     static int processBit;       // is processing requested
     static int shareArrayBit;    // share V3array instead of copy
@@ -44,7 +45,7 @@ public:
     static int alarmBit;         // get alarm
     static int displayBit;       // get display info
     static int controlBit;       // get control info
-    static int alarmLimitBit;    // get value alarm info
+    static int valueAlarmBit;    // get value alarm info
     // V3 data characteristics
     static int scalarValueBit;   // value is a scalar
     static int arrayValueBit;    // value is an array
@@ -54,49 +55,31 @@ public:
     static int dbPutBit;         // Must call dbPutField
     static int isLinkBit;        // field is a DBF_XXLINK field
 
-    static epics::pvData::String recordString;
-    static epics::pvData::String processString;
-    static epics::pvData::String queueSizeString;
-    static epics::pvData::String recordShareString;
-    static epics::pvData::String fieldString;
-    static epics::pvData::String fieldListString;
-    static epics::pvData::String valueString;
-    static epics::pvData::String valueShareArrayString;
-    static epics::pvData::String timeStampString;
-    static epics::pvData::String alarmString;
-    static epics::pvData::String displayString;
-    static epics::pvData::String controlString;
-    static epics::pvData::String alarmLimitString;
-    static epics::pvData::String lowAlarmLimitString;
-    static epics::pvData::String lowWarningLimitString;
-    static epics::pvData::String highWarningLimitString;
-    static epics::pvData::String highAlarmLimitString;
-    static epics::pvData::String allString;
-    static epics::pvData::String indexString;
-
-    static int getProperties(epics::pvData::Requester::shared_pointer const &requester,
-        epics::pvData::PVStructure::shared_pointer const &pvRequest,DbAddr &dbAddr);
-    static epics::pvData::PVStructure * createPVStructure(
+    static int getProperties(
+        epics::pvData::Requester::shared_pointer const &requester,
+        epics::pvData::PVStructure::shared_pointer const &pvRequest,
+        DbAddr &dbAddr);
+    static epics::pvData::PVStructurePtr createPVStructure(
         epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr);
     static void getPropertyData(
         epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr,
-        epics::pvData::PVStructure::shared_pointer const &pvStructure);
+        epics::pvData::PVStructurePtr const &pvStructure);
     static epics::pvData::Status get(
         epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr,
-        epics::pvData::PVStructure::shared_pointer const &pvStructure,
+        epics::pvData::PVStructurePtr const &pvStructure,
         epics::pvData::BitSet::shared_pointer const &bitSet,
         CAV3Data *caV3Data);
     static epics::pvData::Status put(
         epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr,
-        epics::pvData::PVField *pvField);
+        epics::pvData::PVFieldPtr const &pvField);
     static epics::pvData::Status putField(
         epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr,
-        epics::pvData::PVField *pvField);
+        epics::pvData::PVFieldPtr const &pvField);
     static epics::pvData::ScalarType getScalarType(
         epics::pvData::Requester::shared_pointer const &requester,
         DbAddr &dbAddr);

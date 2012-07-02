@@ -21,7 +21,6 @@
 #include <pv/pvData.h>
 #include <pv/pvAccess.h>
 
-#include <pv/pvDatabase.h>
 #include <pv/v3Channel.h>
 #include "v3Util.h"
 
@@ -41,8 +40,6 @@ V3ChannelGet::V3ChannelGet(
   process(false),
   firstTime(true),
   propertyMask(0),
-  pvStructure(),
-  bitSet(),
   pNotify(0),
   notifyAddr(0),
   event()
@@ -109,7 +106,7 @@ void V3ChannelGet::message(String message,MessageType messageType)
 
 void V3ChannelGet::destroy() {
 //printf("V3ChannelGet::destroy\n");
-    v3Channel->removeChannelGet(*this);
+    v3Channel->removeChannelGet(V3ChannelGet::shared_pointer(this));
 }
 
 void V3ChannelGet::get(bool lastRequest)

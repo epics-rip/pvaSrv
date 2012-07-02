@@ -27,20 +27,27 @@ using namespace epics::pvData;
 template<typename T>
 class V3ValueArray : public epics::pvData::PVValueArray<T> {
 public:
-    typedef T  value_type;
     typedef T* pointer;
     typedef const T* const_pointer;
-    typedef PVArrayData<T> ArrayDataType;
+    typedef std::vector<T> vector;
+    typedef const std::vector<T> const_vector;
+    typedef std::tr1::shared_ptr<vector> shared_vector;
 
     V3ValueArray(
-        PVStructure *parent,
-        ScalarArrayConstPtr scalar,
+        PVStructurePtr const & parent,
+        ScalarArrayConstPtr const & scalar,
         DbAddr &dbAddr,bool shareData);
     virtual ~V3ValueArray();
-    virtual void setCapacity(int capacity);
-    virtual int get(int offset, int length, ArrayDataType *data);
-    virtual int put(int offset,int length, pointer from, int fromOffset);
-    virtual void shareData(pointer value,int capacity,int length);
+    virtual void setCapacity(size_t capacity);
+    virtual size_t get(size_t offset, size_t length, PVArrayData<T> &data);
+    virtual size_t put(size_t offset,size_t length, const_pointer from, size_t fromOffset);
+    virtual void shareData(
+         std::tr1::shared_ptr<std::vector<T> > const & value,
+         size_t capacity,size_t length);
+    virtual pointer get() ;
+    virtual pointer get() const ;
+    virtual vector const & getVector() { return *value.get(); }
+    virtual shared_vector const & getSharedVector(){return value;};
     // from Serializable
     virtual void serialize(
         ByteBuffer *pbuffer,
@@ -51,15 +58,15 @@ public:
     virtual void serialize(
          ByteBuffer *pbuffer,
          SerializableControl *pflusher,
-         int offset, int count) const;
+         size_t offset, size_t count) const;
     virtual bool operator==(PVField& pv) ;
     virtual bool operator!=(PVField& pv) ;
 private:
-    int getV3Length() const;
-    void setV3Length(int int32) const;
+    long getV3Length() const;
+    void setV3Length(long length) const;
     DbAddr &dbAddr;
-    T *value;
-    T *shareValue;
+    bool shareV3Data;
+    shared_vector value;
 };
 
 
@@ -69,31 +76,31 @@ typedef V3ValueArray<int32> V3IntArray;
 typedef V3ValueArray<float> V3FloatArray;
 typedef V3ValueArray<double> V3DoubleArray;
 typedef V3ValueArray<String> V3StringArray;
-;
 
 template<typename T>
 V3ValueArray<T>::V3ValueArray(
-    PVStructure *parent,ScalarArrayConstPtr scalarArray,
+    PVStructurePtr const & parent,ScalarArrayConstPtr const &scalarArray,
     DbAddr &dbAddr,bool shareData)
-: PVValueArray<T>(parent,scalarArray),
+: PVValueArray<T>(scalarArray),
   dbAddr(dbAddr),
-  value(0),
-  shareValue(0)
+  shareV3Data(false),
+  value(std::tr1::shared_ptr<std::vector<T> >(new std::vector<T>()))
 {
-    if(shareData) {
-        shareValue = static_cast<T *>(dbAddr.pfield);
-    } else {
-        value = new T[dbAddr.no_elements];
-        for(int i=0;i<dbAddr.no_elements;i++) value[i] = T();
+    size_t capacity = dbAddr.no_elements;
+    value->reserve(capacity);
+    if(shareV3Data) {
+        parent->message("shareV3Data not implemented",warningMessage);
     }
-    int capacity = dbAddr.no_elements;
-    int length = getV3Length();
+    size_t length = getV3Length();
+    T* v3data = static_cast<T *>(dbAddr.pfield);
+    T * data = get();
+    for(size_t i=0; i<capacity; i++) data[i] = v3data[i];
     PVArray::setCapacityLength(capacity,length);
     PVArray::setCapacityMutable(false);
 }
 
 template<typename T>
-int V3ValueArray<T>::getV3Length() const
+long V3ValueArray<T>::getV3Length() const
 {
     long rec_length = 0;
     long rec_offset = 0;
@@ -104,12 +111,12 @@ int V3ValueArray<T>::getV3Length() const
     if(rec_offset!=0) {
          throw std::logic_error(String("Can't handle offset != 0"));
     }
-    int length = rec_length;
+    long length = rec_length;
     return length;
 }
 
 template<typename T>
-void V3ValueArray<T>::setV3Length(int32 len) const
+void V3ValueArray<T>::setV3Length(long len) const
 {
     long length = len;
     struct rset *prset = dbGetRset(&dbAddr);
@@ -123,67 +130,64 @@ void V3ValueArray<T>::setV3Length(int32 len) const
 template<typename T>
 V3ValueArray<T>::~V3ValueArray()
 {
-    if(value!=0) delete[] value;
 }
 
 template<typename T>
-void V3ValueArray<T>::setCapacity(int capacity)
+void V3ValueArray<T>::setCapacity(size_t capacity)
 { }
 
 template<typename T>
-int V3ValueArray<T>::get(int offset, int len, PVArrayData<T> *data)
+size_t V3ValueArray<T>::get(size_t offset, size_t len, PVArrayData<T> &data)
 {
     dbScanLock(dbAddr.precord);
     // updateFromV3Record();
-    int length = getV3Length();
+    size_t length = getV3Length();
     if(length!=this->getLength()) {
-        V3ValueArray<T> *xxx = const_cast<V3ValueArray<T> *>(this);
-        xxx->setLength(length);
+        this->setLength(length);
     }
-    if(value!=0) {
+    T * pvalue = get();
+    if(!shareV3Data) {
         T * array = static_cast<T *>(dbAddr.pfield);
-        for(int i=0; i<length; i++) value[i] = array[i];
+        for(size_t i=0; i<length; i++) pvalue[i] = array[i];
     }
     dbScanUnlock(dbAddr.precord);
-    int n = len;
+    size_t n = len;
     if(offset+len > length) {
         n = length-offset;
     }
     if(n<1) n = 0;
-    data->offset = offset;
-    data->data = value;
-    if(value==0) data->data = shareValue;
+    data.data = *value.get();
+    data.offset = offset;
     return n;
 }
-
 template<typename T>
-int V3ValueArray<T>::put(int offset,int len,
-    pointer from,int fromOffset)
+size_t V3ValueArray<T>::put(size_t offset,size_t len,
+    const_pointer from,size_t fromOffset)
 {
     if(PVField::isImmutable()) {
         PVField::message("field is immutable",errorMessage);
         return 0;
     }
-    int length = this->getLength();
-    int capacity = this->getCapacity();
+    size_t length = this->getLength();
+    size_t capacity = this->getCapacity();
     if(offset+len > capacity) len = capacity - offset;
     if(len<1) return 0;
-    T * data = (value==0) ? shareValue : value;
+    T * pvalue = get();
     dbScanLock(dbAddr.precord);
     if(len+offset>length) {
         length = len+offset;
         this->setLength(length);
     }
-    if(from!=data) {
-        for(int i=0;i<len;i++) {
-           data[i+offset] = from[i+fromOffset];
+    if(from!=pvalue) {
+        for(size_t i=0;i<len;i++) {
+           pvalue[i+offset] = from[i+fromOffset];
         }
     }
     // update v4Record
     setV3Length(length);
-    if(value!=0) {
+    if(!shareV3Data) {
         T * array = static_cast<T *>(dbAddr.pfield);
-        for(int i=0; i<length; i++) array[i] = value[i];
+        for(size_t i=0; i<length; i++) array[i] = pvalue[i];
     }
     dbScanUnlock(dbAddr.precord);
     this->postPut();
@@ -191,7 +195,9 @@ int V3ValueArray<T>::put(int offset,int len,
 }
 
 template<typename T>
-void V3ValueArray<T>::shareData(pointer shareValue,int capacity,int length)
+void V3ValueArray<T>::shareData(
+    std::tr1::shared_ptr<std::vector<T> > const & value,
+    size_t capacity,size_t length)
 {
     throw std::logic_error(String("Not Implemented"));
 }
@@ -207,20 +213,20 @@ template<typename T>
 void V3ValueArray<T>::deserialize(ByteBuffer *pbuffer,
         DeserializableControl *pcontrol)
 {
-    int length = SerializeHelper::readSize(pbuffer, pcontrol);
+    size_t length = SerializeHelper::readSize(pbuffer, pcontrol);
     if(length<=0) return;
     if(length>this->getCapacity()) {
         throw std::logic_error(String("Capacity immutable"));
     }
-    T * data = (value==0) ? shareValue : value;
-    int i=0;
+    T * pvalue = get();
+    size_t i=0;
     while(true) {
-        int maxIndex = std::min(length-i, static_cast<int32>(pbuffer->getRemaining()))+i;
-        if(data==shareValue) dbScanLock(dbAddr.precord);
+        size_t maxIndex = std::min(length-i, (pbuffer->getRemaining()/sizeof(T)))+i;
+        if(shareV3Data) dbScanLock(dbAddr.precord);
         for(; i<maxIndex; i++) {
-            data[i] = pbuffer->get<T>();
+            pvalue[i] = pbuffer->get<T>();
         }
-        if(data==shareValue) dbScanUnlock(dbAddr.precord);
+        if(shareV3Data) dbScanUnlock(dbAddr.precord);
         if(i>=length) break;
         pcontrol->ensureData(sizeof(T));
     }
@@ -228,32 +234,28 @@ void V3ValueArray<T>::deserialize(ByteBuffer *pbuffer,
     // update v4Record
     dbScanLock(dbAddr.precord);
     setV3Length(length);
-    if(value!=0) {
-        T * array = static_cast<T *>(dbAddr.pfield);
-        for(int i=0; i<length; i++) array[i] = value[i];
-    }
+    T * array = static_cast<T *>(dbAddr.pfield);
+    for(size_t i=0; i<length; i++) array[i] = pvalue[i];
     dbScanUnlock(dbAddr.precord);
 }
 
 template<typename T>
 void V3ValueArray<T>::serialize(ByteBuffer *pbuffer,
-        SerializableControl *pflusher, int offset, int count) const
+        SerializableControl *pflusher, size_t offset, size_t count) const
 {
-    int length = this->getLength();
+    size_t length = this->getLength();
     if(offset<0) offset = 0;
     if(offset>length) offset = length;
     if(count<0) count = length-offset;
-    int maxcount = length-offset;
+    size_t maxcount = length-offset;
     if(count>maxcount) count = maxcount;
     SerializeHelper::writeSize(count, pbuffer, pflusher);
-    int end = offset+count;
-    int i = offset;
-    T * data = (value==0) ? shareValue : value;
+    size_t end = offset+count;
+    size_t i = offset;
+    T * pvalue = get();
     while(true) {
-        int maxIndex = std::min(end-i, static_cast<int32>(pbuffer->getRemaining()))+i;
-        if(data==shareValue) dbScanLock(dbAddr.precord);
-        for(; i<maxIndex; i++) pbuffer->put<T>(data[i]);
-        if(data==shareValue) dbScanUnlock(dbAddr.precord);
+        size_t maxIndex = std::min(end-i, (pbuffer->getRemaining()/sizeof(T)))+i;
+        for(; i<maxIndex; i++) pbuffer->put<T>(pvalue[i]);
         if(i>=end) break;
         pflusher->flushSerializeBuffer();
     }
@@ -272,43 +274,45 @@ bool V3ValueArray<T>::operator!=(PVField& pv)
 }
 
 template<>
-int V3ValueArray<String>::get(int offset, int len, PVArrayData<String> *data)
+size_t V3ValueArray<String>::get(size_t offset, size_t len, PVArrayData<String> &data)
 {
     dbScanLock(dbAddr.precord);
     //updateFromV3Record
-    int length = getV3Length();
+    size_t length = getV3Length();
         if(length!=this->getLength()) {
-        V3ValueArray<String> *xxx = const_cast<V3ValueArray<String> *>(this);
-        xxx->setLength(length);
+        setLength(length);
     }
     char *pchar = static_cast<char *>(dbAddr.pfield);
-    for(int i=0; i<length; i++) {
-        if(strcmp(pchar,value[i].c_str())!=0) {
-           value[i] = String(pchar);
+    String *pvalue = get();
+    for(size_t i=0; i<length; i++) {
+        if(strcmp(pchar,pvalue[i].c_str())!=0) {
+           pvalue[i] = String(pchar);
         }
         pchar += dbAddr.field_size;
     }
     dbScanUnlock(dbAddr.precord);
-    int n = len;
+    size_t n = len;
     if(offset+len > length) {
         n = length-offset;
     }
     if(n<=0) return 0;
-    data->data = value;
-    data->offset = offset;
+    data.data = *value.get();
+    data.offset = offset;
     return n;
 }
 
 template<>
-int V3ValueArray<String>::put(int offset,int len,
-    pointer from,int fromOffset)
+size_t V3ValueArray<String>::put(size_t offset,size_t len,
+    const_pointer from,size_t fromOffset)
 {
     if(PVField::isImmutable()) {
         PVField::message("field is immutable",errorMessage);
         return 0;
     }
-    int length = this->getLength();
-    int capacity = this->getCapacity();
+    String * pvalue = get();
+    if(from==pvalue) return len;
+    size_t length = this->getLength();
+    size_t capacity = this->getCapacity();
     if(offset+len > capacity) len = capacity - offset;
     if(len<1) return 0;
     if(len+offset>length) {
@@ -316,20 +320,18 @@ int V3ValueArray<String>::put(int offset,int len,
         this->setLength(length);
     }
     String::size_type field_size =
-        static_cast<String::size_type>(dbAddr.field_size);
-    if(from!=value) {
-        for(int i=offset; i<len;i++) {
-            String val = from[i];
-            if(val.length()>=field_size) val = val.substr(0,field_size-1);
-            value[i] = val;
-        }
+    static_cast<String::size_type>(dbAddr.field_size);
+    for(size_t i=offset; i<len;i++) {
+        String val = from[i];
+        if(val.length()>=field_size) val = val.substr(0,field_size-1);
+        pvalue[i] = val;
     }
     //update V3 record
     dbScanLock(dbAddr.precord);
     setV3Length(length);
     char *pchar = static_cast<char *>(dbAddr.pfield);
-    for(int i=0; i<length; i++) {
-        strcpy(pchar,value[i].c_str());
+    for(size_t i=0; i<length; i++) {
+        strcpy(pchar,pvalue[i].c_str());
         pchar += dbAddr.field_size;
     }
     dbScanUnlock(dbAddr.precord);
@@ -337,37 +339,55 @@ int V3ValueArray<String>::put(int offset,int len,
     return len;
 }
 
+template<typename T>
+T *V3ValueArray<T>::get()
+{
+     std::vector<T> *vec = value.get();
+     T *praw = &((*vec)[0]);
+     return praw;
+}
+
+template<typename T>
+T *V3ValueArray<T>::get() const
+{
+     std::vector<T> *vec = value.get();
+     T *praw = &((*vec)[0]);
+     return praw;
+}
+
 template<>
 void V3ValueArray<String>::serialize(ByteBuffer *pbuffer,
-        SerializableControl *pflusher, int offset, int count) const
+        SerializableControl *pflusher, size_t offset, size_t count) const
 {
-    int length = this->getLength();
+    size_t length = this->getLength();
     if(offset<0) offset = 0;
     if(offset>length) offset = length;
     if(count<0) count = length-offset;
-    int maxcount = length-offset;
+    size_t maxcount = length-offset;
     if(count>maxcount) count = maxcount;
     SerializeHelper::writeSize(count, pbuffer, pflusher);
-    int end = offset+count;
-    for(int i = offset; i<end; i++) {
-        SerializeHelper::serializeString(value[i], pbuffer, pflusher);
+    size_t end = offset+count;
+    String * pvalue = get();
+    for(size_t i = offset; i<end; i++) {
+        SerializeHelper::serializeString(pvalue[i], pbuffer, pflusher);
     }
 }
 
 template<>
 void V3ValueArray<String>::deserialize(ByteBuffer *pbuffer,
         DeserializableControl *pcontrol) {
-    int length = SerializeHelper::readSize(pbuffer, pcontrol);
+    size_t length = SerializeHelper::readSize(pbuffer, pcontrol);
     if(length<=0) return;
     if(length>getCapacity()) {
         throw std::logic_error(String("Capacity immutable"));
     }
     String::size_type field_size =
         static_cast<String::size_type>(dbAddr.field_size);
-    for(int i = 0; i<length; i++) {
-        value[i] = SerializeHelper::deserializeString(pbuffer, pcontrol);
-        if(value[i].length()>=field_size) {
-            value[i] = value[i].substr(0,field_size-1);
+    String *pvalue = get();
+    for(size_t i = 0; i<length; i++) {
+        pvalue[i] = SerializeHelper::deserializeString(pbuffer, pcontrol);
+        if(pvalue[i].length()>=field_size) {
+            pvalue[i] = pvalue[i].substr(0,field_size-1);
         }
     }
     this->setLength(length);
@@ -375,75 +395,76 @@ void V3ValueArray<String>::deserialize(ByteBuffer *pbuffer,
     dbScanLock(dbAddr.precord);
     setV3Length(length);
     char *pchar = static_cast<char *>(dbAddr.pfield);
-    for(int i=0; i<length; i++) {
-        strcpy(pchar,value[i].c_str());
+    for(size_t i=0; i<length; i++) {
+        strcpy(pchar,pvalue[i].c_str());
         pchar += dbAddr.field_size;
     }
     dbScanUnlock(dbAddr.precord);
 }
 
-PVByteArray *V3ValueArrayCreate::createByteArray(
-    PVStructure *parent,
-    ScalarArrayConstPtr scalar,
+PVByteArrayPtr V3ValueArrayCreate::createByteArray(
+    PVStructurePtr const & parent,
+    ScalarArrayConstPtr const & scalar,
     DbAddr &dbAddr,
     bool shareData)
 {
-    return new V3ByteArray(parent,scalar,dbAddr,shareData);
+    return PVByteArrayPtr(new V3ByteArray(parent,scalar,dbAddr,shareData));
 }
 
-PVShortArray *V3ValueArrayCreate::createShortArray(
-    PVStructure *parent,
-    ScalarArrayConstPtr scalar,
+
+PVShortArrayPtr V3ValueArrayCreate::createShortArray(
+    PVStructurePtr const & parent,
+    ScalarArrayConstPtr const & scalar,
     DbAddr &dbAddr,
     bool shareData)
 {
-    return new V3ShortArray(parent,scalar,dbAddr,shareData);
+    return PVShortArrayPtr(new V3ShortArray(parent,scalar,dbAddr,shareData));
 }
 
-PVIntArray *V3ValueArrayCreate::createIntArray(
-    PVStructure *parent,
-    ScalarArrayConstPtr scalar,
+PVIntArrayPtr V3ValueArrayCreate::createIntArray(
+    PVStructurePtr const & parent,
+    ScalarArrayConstPtr const & scalar,
     DbAddr &dbAddr,
     bool shareData)
 {
-    return new V3IntArray(parent,scalar,dbAddr,shareData);
+    return PVIntArrayPtr(new V3IntArray(parent,scalar,dbAddr,shareData));
 }
 
-PVFloatArray *V3ValueArrayCreate::createFloatArray(
-    PVStructure *parent,
-    ScalarArrayConstPtr scalar,
+PVFloatArrayPtr V3ValueArrayCreate::createFloatArray(
+    PVStructurePtr const & parent,
+    ScalarArrayConstPtr const & scalar,
     DbAddr &dbAddr,
     bool shareData)
 {
-    return new V3FloatArray(parent,scalar,dbAddr,shareData);
+    return PVFloatArrayPtr(new V3FloatArray(parent,scalar,dbAddr,shareData));
 }
 
-PVDoubleArray *V3ValueArrayCreate::createDoubleArray(
-    PVStructure *parent,
-    ScalarArrayConstPtr scalar,
+PVDoubleArrayPtr V3ValueArrayCreate::createDoubleArray(
+    PVStructurePtr const & parent,
+    ScalarArrayConstPtr const & scalar,
     DbAddr &dbAddr,
     bool shareData)
 {
-    return new V3DoubleArray(parent,scalar,dbAddr,shareData);
+    return PVDoubleArrayPtr(new V3DoubleArray(parent,scalar,dbAddr,shareData));
 }
 
-PVStringArray *V3ValueArrayCreate::createStringArray(
-    PVStructure *parent,
-    ScalarArrayConstPtr scalar,
+PVStringArrayPtr V3ValueArrayCreate::createStringArray(
+    PVStructurePtr const & parent,
+    ScalarArrayConstPtr const & scalar,
     DbAddr &dbAddr)
 {
-    return new V3StringArray(parent,scalar,dbAddr,false);
+    return PVStringArrayPtr(new V3StringArray(parent,scalar,dbAddr,false));
 }
 
-static V3ValueArrayCreate* v3ValueArrayCreate = 0;
+static V3ValueArrayCreatePtr v3ValueArrayCreate;
  
-V3ValueArrayCreate *getV3ValueArrayCreate()
+V3ValueArrayCreatePtr getV3ValueArrayCreate()
 {
 static Mutex mutex;
      Lock xx(mutex);
 
-     if(v3ValueArrayCreate==0){
-          v3ValueArrayCreate = new V3ValueArrayCreate();
+     if(v3ValueArrayCreate.get()==0){
+          v3ValueArrayCreate = V3ValueArrayCreatePtr(new V3ValueArrayCreate());
      }
      return v3ValueArrayCreate;
 

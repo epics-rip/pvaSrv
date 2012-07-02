@@ -36,14 +36,17 @@
 namespace epics { namespace pvIOC { 
 
 using namespace epics::pvData;
+using std::tr1::static_pointer_cast;
 
+// client request bits
 int V3Util::processBit       = 0x0001;
 int V3Util::shareArrayBit    = 0x0002;
 int V3Util::timeStampBit     = 0x0004;
 int V3Util::alarmBit         = 0x0008;
 int V3Util::displayBit       = 0x0010;
 int V3Util::controlBit       = 0x0020;
-int V3Util::alarmLimitBit    = 0x0040;
+int V3Util::valueAlarmBit    = 0x0040;
+// V3 data characteristics
 int V3Util::scalarValueBit   = 0x0080;
 int V3Util::arrayValueBit    = 0x0100;
 int V3Util::enumValueBit     = 0x0200;
@@ -52,52 +55,54 @@ int V3Util::noModBit         = 0x0800;
 int V3Util::dbPutBit         = 0x1000;
 int V3Util::isLinkBit        = 0x2000;
 
-String V3Util::recordString("record");
-String V3Util::processString("record.process");
-String V3Util::queueSizeString("record.queueSize");
-String V3Util::recordShareString("record.shareData");
-String V3Util::fieldString("field");
-String V3Util::fieldListString("fieldList");
-String V3Util::valueString("value");
-String V3Util::valueShareArrayString("value.leaf.shareData");
-String V3Util::timeStampString("timeStamp");
-String V3Util::alarmString("alarm");
-String V3Util::displayString("display");
-String V3Util::controlString("control");
-String V3Util::alarmLimitString("valueAlarm");
-String V3Util::lowAlarmLimitString("lowAlarmLimit");
-String V3Util::lowWarningLimitString("lowWarningLimit");
-String V3Util::highWarningLimitString("highWarningLimit");
-String V3Util::highAlarmLimitString("highAlarmLimit");
-String V3Util::allString("value,timeStamp,alarm,display,control,valueAlarm");
-String V3Util::indexString("index");
+static String recordString("record");
+static String processString("record._options.process");
+static String queueSizeString("record._options.queueSize");
+static String recordShareString("record._options.shareData");
+static String fieldString("field");
+static String valueString("value");
+static String valueShareArrayString("value._options.shareData");
+static String timeStampString("timeStamp");
+static String alarmString("alarm");
+static String displayString("display");
+static String controlString("control");
+static String valueAlarmString("valueAlarm");
+static String lowAlarmLimitString("lowAlarmLimit");
+static String lowWarningLimitString("lowWarningLimit");
+static String highWarningLimitString("highWarningLimit");
+static String highAlarmLimitString("highAlarmLimit");
+static String allString("value,timeStamp,alarm,display,control,valueAlarm");
+static String indexString("index");
+
+static PVStructurePtr  nullPVStructure;
 
 
 int V3Util::getProperties(
-    Requester::shared_pointer const &requester,PVStructure::shared_pointer const &request,DbAddr &dbAddr)
+    Requester::shared_pointer const &requester,PVStructure::shared_pointer const &pvRequest,DbAddr &dbAddr)
 {
     int propertyMask = 0;
-    PVField *pvField = request->getSubField(processString);
-    if(pvField!=0) {
-        PVString *pvString = request->getStringField(processString);
-        if(pvString!=0) {
+    PVFieldPtr pvField = pvRequest->getSubField(processString);
+    if(pvField.get()!=NULL) {
+        PVStringPtr pvString = pvRequest->getStringField(processString);
+        if(pvString.get()!=NULL) {
             String value = pvString->get();
             if(value.compare("true")==0) propertyMask |= processBit;
         }
     }
-    PVStructure *pvRequest = request.get();
-    PVField *pvTemp = request->getSubField(fieldString);
-    if(pvTemp!=0) pvRequest = static_cast<PVStructure * >(pvTemp);
-    PVString *pvShareString = 0;
-    pvField = request->getSubField(recordShareString);
-    if(pvField!=0) {
-         pvShareString = request->getStringField(recordShareString);
+    PVStructurePtr fieldPV;
+    PVFieldPtr pvTemp = pvRequest->getSubField(fieldString);
+    if(pvTemp.get()!=NULL) fieldPV = static_pointer_cast<PVStructure>(pvTemp);
+    PVStringPtr pvShareString;
+    pvField = pvRequest->getSubField(recordShareString);
+    if(pvField.get()!=NULL) {
+         pvShareString = pvRequest->getStringField(recordShareString);
     } else {
-         pvField = pvRequest->getSubField(valueShareArrayString);
-         if(pvField!=0) pvShareString =
-             pvRequest->getStringField(valueShareArrayString);
+         pvField = fieldPV->getSubField(valueShareArrayString);
+         if(pvField.get()!=NULL) {
+             pvShareString = fieldPV->getStringField(valueShareArrayString);
+         }
     }
-    if(pvShareString!=0) {
+    if(pvShareString.get()!=NULL) {
         String value = pvShareString->get();
         if(value.compare("true")==0) propertyMask |= shareArrayBit;
     }
@@ -106,14 +111,41 @@ int V3Util::getProperties(
     if(pvRequest->getStructure()->getNumberFields()==0) {
         getValue = true;
         fieldList = allString;
-    } else if(pvRequest->getSubField(fieldListString)!=0) {
-        PVString *pvStr = pvRequest->getStringField(fieldListString);
-        if(pvStr!=0) fieldList = pvStr->get();
+    } else {
+        pvField = pvRequest->getSubField(valueString);
+        if(pvField.get()!=NULL) {
+            if(fieldList.size()>0) fieldList += ',';
+            fieldList += valueString;
+            getValue = true;
+        }
+        pvField = pvRequest->getSubField(alarmString);
+        if(pvField.get()!=NULL) {
+            if(fieldList.size()>0) fieldList += ',';
+            fieldList += alarmString;
+        }
+        pvField = pvRequest->getSubField(timeStampString);
+        if(pvField.get()!=NULL) {
+            if(fieldList.size()>0) fieldList += ',';
+            fieldList += timeStampString;
+        }
+        pvField = pvRequest->getSubField(displayString);
+        if(pvField.get()!=NULL) {
+            if(fieldList.size()>0) fieldList += ',';
+            fieldList += displayString;
+        }
+        pvField = pvRequest->getSubField(controlString);
+        if(pvField.get()!=NULL) {
+            if(fieldList.size()>0) fieldList += ',';
+            fieldList += controlString;
+        }
+        pvField = pvRequest->getSubField(valueAlarmString);
+        if(pvField.get()!=NULL) {
+            if(fieldList.size()>0) fieldList += ',';
+            fieldList += valueAlarmString;
+        }
     }
     if(fieldList.length()>0) {
         if(fieldList.find(valueString)!=String::npos) getValue = true;
-    } else {
-        if(pvRequest->getSubField(valueString)!=0) getValue = true;
     }
     if(getValue) {
         Type type = (dbAddr.special==SPC_DBADDR) ? scalarArray : scalar;
@@ -199,54 +231,54 @@ int V3Util::getProperties(
                 propertyMask |= controlBit;
             }
         }
-        if(fieldList.find(alarmLimitString)!=String::npos) {
+        if(fieldList.find(valueAlarmString)!=String::npos) {
             if(dbAddr.field_type==DBF_LONG||dbAddr.field_type==DBF_DOUBLE) {
-                propertyMask |= alarmLimitBit;
+                propertyMask |= valueAlarmBit;
             }
         }
     } else {
         pvField = pvRequest->getSubField(timeStampString);
-        if(pvField!=0) {
-             PVString *pvString = pvRequest->getStringField(timeStampString);
-             if(pvString!=0) {
+        if(pvField.get()!=NULL) {
+             PVStringPtr pvString = pvRequest->getStringField(timeStampString);
+             if(pvString.get()!=NULL) {
                   if(pvString->get().compare("true")==0) {
                       propertyMask |= timeStampBit;
                   }
              }
         }
         pvField = pvRequest->getSubField(alarmString);
-        if(pvField!=0) {
-             PVString *pvString = pvRequest->getStringField(alarmString);
-             if(pvString!=0) {
+        if(pvField.get()!=NULL) {
+             PVStringPtr pvString = pvRequest->getStringField(alarmString);
+             if(pvString.get()!=NULL) {
                   if(pvString->get().compare("true")==0) {
                       propertyMask |= alarmBit;
                   }
              }
         }
         pvField = pvRequest->getSubField(displayString);
-        if(pvField!=0) {
-             PVString *pvString = pvRequest->getStringField(displayString);
-             if(pvString!=0) {
+        if(pvField.get()!=NULL) {
+             PVStringPtr pvString = pvRequest->getStringField(displayString);
+             if(pvString.get()!=NULL) {
                   if(pvString->get().compare("true")==0) {
                       propertyMask |= displayBit;
                   }
              }
         }
         pvField = pvRequest->getSubField(controlString);
-        if(pvField!=0) {
-             PVString *pvString = pvRequest->getStringField(controlString);
-             if(pvString!=0) {
+        if(pvField.get()!=NULL) {
+             PVStringPtr pvString = pvRequest->getStringField(controlString);
+             if(pvString.get()!=NULL) {
                   if(pvString->get().compare("true")==0) {
                       propertyMask |= controlBit;
                   }
              }
         }
-        pvField = pvRequest->getSubField(alarmLimitString);
-        if(pvField!=0) {
-             PVString *pvString = pvRequest->getStringField(alarmLimitString);
-             if(pvString!=0) {
+        pvField = pvRequest->getSubField(valueAlarmString);
+        if(pvField.get()!=NULL) {
+             PVStringPtr pvString = pvRequest->getStringField(valueAlarmString);
+             if(pvString.get()!=NULL) {
                   if(pvString->get().compare("true")==0) {
-                      propertyMask |= alarmLimitBit;
+                      propertyMask |= valueAlarmBit;
                   }
              }
         }
@@ -254,10 +286,13 @@ int V3Util::getProperties(
     return propertyMask;
 }
 
-PVStructure *V3Util::createPVStructure(
+PVStructurePtr V3Util::createPVStructure(
     Requester::shared_pointer const &requester,int propertyMask,DbAddr &dbAddr)
 {
-    StandardPVField *standardPVField = getStandardPVField();
+    StandardPVFieldPtr standardPVField = getStandardPVField();
+    StandardFieldPtr standardField = getStandardField();
+    PVDataCreatePtr pvDataCreate = getPVDataCreate();
+    FieldCreatePtr fieldCreate = getFieldCreate();
     String properties;
     if((propertyMask&timeStampBit)!=0) properties+= timeStampString;
     if((propertyMask&alarmBit)!=0) {
@@ -272,9 +307,9 @@ PVStructure *V3Util::createPVStructure(
         if(!properties.empty()) properties += ",";
         properties += controlString;
     }
-    if((propertyMask&alarmLimitBit)!=0) {
+    if((propertyMask&valueAlarmBit)!=0) {
         if(!properties.empty()) properties += ",";
-        properties += alarmLimitString;
+        properties += valueAlarmString;
     }
     if((propertyMask&enumValueBit)!=0) {
         struct dbr_enumStrs enumStrs;
@@ -283,43 +318,46 @@ PVStructure *V3Util::createPVStructure(
             get_enum_strs get_strs;
             get_strs = (get_enum_strs)(prset->get_enum_strs);
             get_strs(&dbAddr,&enumStrs);
-            int32 length = enumStrs.no_str;
-            String choices[length];
-            for(int i=0; i<length; i++) {
-                 choices[i] = String(enumStrs.strs[i]);
+            size_t length = enumStrs.no_str;
+            StringArray choices;
+            choices.reserve(length);
+            for(size_t i=0; i<length; i++) {
+                 choices.push_back(enumStrs.strs[i]);
             }
-            PVStructure *pvStructure = standardPVField->enumeratedValue(
-                     0,choices,length,properties);
+            PVStructurePtr pvStructure = standardPVField->enumerated(
+                 choices,properties);
             return pvStructure;
         } else if(dbAddr.field_type==DBF_DEVICE) {
             dbFldDes *pdbFldDes = dbAddr.pfldDes;
             dbDeviceMenu *pdbDeviceMenu
                 = static_cast<dbDeviceMenu *>(pdbFldDes->ftPvt);
-            int length = pdbDeviceMenu->nChoice;
+            size_t length = pdbDeviceMenu->nChoice;
             char **papChoice = pdbDeviceMenu->papChoice;
-            String choices[length];
-            for(int i=0; i<length; i++) {
-                 choices[i] = String(papChoice[i]);
+            StringArray choices;
+            choices.reserve(length);
+            for(size_t i=0; i<length; i++) {
+                 choices.push_back(papChoice[i]);
             }
-            PVStructure *pvStructure = standardPVField->enumeratedValue(
-                     0,choices,length,properties);
+            PVStructurePtr pvStructure = standardPVField->enumerated(
+                choices,properties);
             return pvStructure;
         } else if(dbAddr.field_type==DBF_MENU) {
             dbFldDes *pdbFldDes = dbAddr.pfldDes;
             dbMenu *pdbMenu = static_cast<dbMenu *>(pdbFldDes->ftPvt);
-            int length = pdbMenu->nChoice;
+            size_t length = pdbMenu->nChoice;
             char **papChoice = pdbMenu->papChoiceValue;
-            String choices[length];
-            for(int i=0; i<length; i++) {
-                 choices[i] = String(papChoice[i]);
+            StringArray choices;
+            choices.reserve(length);
+            for(size_t i=0; i<length; i++) {
+                 choices.push_back(papChoice[i]);
             }
-            PVStructure *pvStructure = standardPVField->enumeratedValue(
-                     0,choices,length,properties);
+            PVStructurePtr pvStructure = standardPVField->enumerated(
+                choices,properties);
             return pvStructure;
         } else {
             requester->message(
                String("bad enum field in V3 record"),errorMessage);
-            return 0;
+            return nullPVStructure;
         }
     }
     ScalarType scalarType(pvBoolean);
@@ -344,104 +382,111 @@ PVStructure *V3Util::createPVStructure(
              if(propertyMask&isLinkBit) {
                   scalarType = pvString; break;
              } else {
-                throw std::logic_error(String("Should never get here"));
+                throw std::logic_error("Should never get here");
              }
     }
     if((propertyMask&scalarValueBit)!=0) {
-        PVStructure *pvStructure =
-            standardPVField->scalarValue(0,scalarType,properties);
-        return pvStructure;
+        return standardPVField->scalar(scalarType,properties);
     }
-    if((propertyMask&arrayValueBit)!=0) {
-         bool share = (propertyMask&shareArrayBit) ? true : false;
-         PVFieldPtr pvField = 0;
-         ScalarArrayConstPtr scalarArray = getStandardField()->scalarArray(
-              valueString,scalarType);
-         V3ValueArrayCreate *v3ValueArrayCreate = getV3ValueArrayCreate();
-         switch(scalarType) {
-         case pvByte:
-            pvField = v3ValueArrayCreate->createByteArray(
-                0,scalarArray,dbAddr,share);
-            break;
-         case pvShort:
-            pvField = v3ValueArrayCreate->createShortArray(
-                0,scalarArray,dbAddr,share);
-            break;
-         case pvInt:
-            pvField = v3ValueArrayCreate->createIntArray(
-                0,scalarArray,dbAddr,share);
-            break;
-         case pvFloat:
-            pvField = v3ValueArrayCreate->createFloatArray(
-                0,scalarArray,dbAddr,share);
-            break;
-         case pvDouble:
-            pvField = v3ValueArrayCreate->createDoubleArray(
-                0,scalarArray,dbAddr,share);
-            break;
-         case pvString:
-            pvField = v3ValueArrayCreate->createStringArray(
-                0,scalarArray,dbAddr);
-            break;
-         default:
-            throw std::logic_error(String("Should never get here"));
-         }
-         int numberFields = 1;
-         if((propertyMask&timeStampBit)!=0) numberFields++;
-         if((propertyMask&alarmBit)!=0) numberFields++;
-         if((propertyMask&displayBit)!=0) numberFields++;
-         if((propertyMask&controlBit)!=0) numberFields++;
-         if((propertyMask&alarmLimitBit)!=0) numberFields++;
-         PVFieldPtr *pvFields = new PVFieldPtr[numberFields];
-         int indField = 0;
-         pvFields[indField++] = pvField;
-         if((propertyMask&timeStampBit)!=0) {
-            pvFields[indField++] = standardPVField->timeStamp(0);
-         }
-         if((propertyMask&alarmBit)!=0) {
-            pvFields[indField++] = standardPVField->alarm(0);
-         }
-         if((propertyMask&displayBit)!=0) {
-            pvFields[indField++] = standardPVField->display(0);
-         }
-         if((propertyMask&controlBit)!=0) {
-            pvFields[indField++] = standardPVField->control(0);
-         }
-         if((propertyMask&alarmLimitBit)!=0) {
-            PVStructure *pvAlarmLimit = 0;
-            switch(scalarType) {
-            case pvByte:
-               pvAlarmLimit = standardPVField->byteAlarm(0);
-               break;
-            case pvShort:
-               pvAlarmLimit = standardPVField->shortAlarm(0);
-               break;
-            case pvInt:
-               pvAlarmLimit = standardPVField->intAlarm(0);
-               break;
-            case pvFloat:
-               pvAlarmLimit = standardPVField->floatAlarm(0);
-               break;
-            case pvDouble:
-               pvAlarmLimit = standardPVField->doubleAlarm(0);
-               break;
-            default:
-               throw std::logic_error(String("Should never get here"));
-            }
-            pvFields[indField++] = pvAlarmLimit;
-         }
-         PVStructure *pvParent = getPVDataCreate()->createPVStructure(
-             0,String(),numberFields,pvFields);
-         return pvParent;
+    if((propertyMask&arrayValueBit)==0) {
+        requester->message("did not ask for value",errorMessage);
+        return nullPVStructure;
     }
-    requester->message(String("did not ask for value"),errorMessage);
-    return 0;
+    // the value is an array. Must use implementation that "wraps" V3 array 
+    bool share = (propertyMask&shareArrayBit) ? true : false;
+    PVFieldPtr pvField;
+    ScalarArrayConstPtr scalarArray = getFieldCreate()->createScalarArray(
+         scalarType);
+    V3ValueArrayCreatePtr v3ValueArrayCreate = getV3ValueArrayCreate();
+    switch(scalarType) {
+    case pvByte:
+       pvField = v3ValueArrayCreate->createByteArray(
+           nullPVStructure,scalarArray,dbAddr,share);
+       break;
+    case pvShort:
+       pvField = v3ValueArrayCreate->createShortArray(
+           nullPVStructure,scalarArray,dbAddr,share);
+       break;
+    case pvInt:
+       pvField = v3ValueArrayCreate->createIntArray(
+           nullPVStructure,scalarArray,dbAddr,share);
+       break;
+    case pvFloat:
+       pvField = v3ValueArrayCreate->createFloatArray(
+           nullPVStructure,scalarArray,dbAddr,share);
+       break;
+    case pvDouble:
+       pvField = v3ValueArrayCreate->createDoubleArray(
+           nullPVStructure,scalarArray,dbAddr,share);
+       break;
+    case pvString:
+       pvField = v3ValueArrayCreate->createStringArray(
+           nullPVStructure,scalarArray,dbAddr);
+       break;
+    default:
+       throw std::logic_error(String("Should never get here"));
+    }
+    int numberFields = 1;
+    if((propertyMask&timeStampBit)!=0) numberFields++;
+    if((propertyMask&alarmBit)!=0) numberFields++;
+    if((propertyMask&displayBit)!=0) numberFields++;
+    if((propertyMask&controlBit)!=0) numberFields++;
+    if((propertyMask&valueAlarmBit)!=0) numberFields++;
+    StringArray fieldNames;
+    FieldConstPtrArray fields;
+    fieldNames.reserve(numberFields);
+    fields.reserve(numberFields);
+    fieldNames.push_back(pvField->getFieldName());
+    fields.push_back(pvField->getField());
+    if((propertyMask&timeStampBit)!=0) {
+        fieldNames.push_back("timeStamp");
+        fields.push_back(standardField->timeStamp());
+    }
+    if((propertyMask&alarmBit)!=0) {
+        fieldNames.push_back("alarm");
+        fields.push_back(standardField->alarm());
+    }
+    if((propertyMask&displayBit)!=0) {
+        fieldNames.push_back("display");
+        fields.push_back(standardField->display());
+    }
+    if((propertyMask&controlBit)!=0) {
+        fieldNames.push_back("control");
+        fields.push_back(standardField->control());
+    }
+    if((propertyMask&valueAlarmBit)!=0) {
+       fieldNames.push_back("valueAlarm");
+       switch(scalarType) {
+       case pvByte:
+          fields.push_back(standardField->byteAlarm());
+          break;
+       case pvShort:
+          fields.push_back(standardField->shortAlarm());
+          break;
+       case pvInt:
+          fields.push_back(standardField->intAlarm());
+          break;
+       case pvFloat:
+          fields.push_back(standardField->floatAlarm());
+          break;
+       case pvDouble:
+          fields.push_back(standardField->doubleAlarm());
+          break;
+       default:
+          throw std::logic_error(String("Should never get here"));
+       }
+    }
+    StructureConstPtr structure = fieldCreate->createStructure(fieldNames,fields);
+    PVStructurePtr pvParent = getPVDataCreate()->createPVStructure(structure);
+    PVFieldPtrArray pvFields = pvParent->getPVFields();
+    pvFields[0]->replacePVField(pvField);
+    return pvParent;
 }
 
 void  V3Util::getPropertyData(
         Requester::shared_pointer const &requester,
         int propertyMask,DbAddr &dbAddr,
-        PVStructure::shared_pointer const &pvStructure)
+        PVStructurePtr const &pvStructure)
 {
     if(propertyMask&displayBit) {
         Display display;
@@ -473,7 +518,7 @@ void  V3Util::getPropertyData(
            display.setLow(graphics.lower_disp_limit);
         }
         PVDisplay pvDisplay;
-        PVField *pvField = pvStructure->getSubField(displayString);
+        PVFieldPtr pvField = pvStructure->getSubField(displayString);
         pvDisplay.attach(pvField);
         pvDisplay.set(display);
     }
@@ -490,11 +535,11 @@ void  V3Util::getPropertyData(
            control.setLow(graphics.lower_ctrl_limit);
         }
         PVControl pvControl;
-        PVField *pvField = pvStructure->getSubField(controlString);
+        PVFieldPtr pvField = pvStructure->getSubField(controlString);
         pvControl.attach(pvField);
         pvControl.set(control);
     }
-    if(propertyMask&alarmLimitBit) {
+    if(propertyMask&valueAlarmBit) {
         struct rset *prset = dbGetRset(&dbAddr);
         struct dbr_alDouble ald;
         memset(&ald,0,sizeof(ald));
@@ -503,26 +548,26 @@ void  V3Util::getPropertyData(
                (get_alarm_double)(prset->get_alarm_double);
            cc(&dbAddr,&ald);
         }
-        PVStructure *pvAlarmLimits =
-            pvStructure->getStructureField(alarmLimitString);
-        PVField *pvf = pvAlarmLimits->getSubField(lowAlarmLimitString);
-        if(pvf!=0 && pvf->getField()->getType()==scalar) {
-            PVScalar *pvScalar = static_cast<PVScalar*>(pvf);
+        PVStructurePtr pvAlarmLimits =
+            pvStructure->getStructureField(valueAlarmString);
+        PVFieldPtr pvf = pvAlarmLimits->getSubField(lowAlarmLimitString);
+        if(pvf.get()!=NULL && pvf->getField()->getType()==scalar) {
+            PVScalarPtr pvScalar = static_pointer_cast<PVScalar>(pvf);
             getConvert()->fromDouble(pvScalar,ald.lower_alarm_limit);
         }
         pvf = pvAlarmLimits->getSubField(lowWarningLimitString);
-        if(pvf!=0 && pvf->getField()->getType()==scalar) {
-            PVScalar *pvScalar = static_cast<PVScalar*>(pvf);
+        if(pvf.get()!=NULL && pvf->getField()->getType()==scalar) {
+            PVScalarPtr pvScalar = static_pointer_cast<PVScalar>(pvf);
             getConvert()->fromDouble(pvScalar,ald.lower_warning_limit);
         }
         pvf = pvAlarmLimits->getSubField(highWarningLimitString);
-        if(pvf!=0 && pvf->getField()->getType()==scalar) {
-            PVScalar *pvScalar = static_cast<PVScalar*>(pvf);
+        if(pvf.get()!=NULL && pvf->getField()->getType()==scalar) {
+            PVScalarPtr pvScalar = static_pointer_cast<PVScalar>(pvf);
             getConvert()->fromDouble(pvScalar,ald.upper_warning_limit);
         }
         pvf = pvAlarmLimits->getSubField(highAlarmLimitString);
-        if(pvf!=0 && pvf->getField()->getType()==scalar) {
-            PVScalar *pvScalar = static_cast<PVScalar*>(pvf);
+        if(pvf.get()!=NULL && pvf->getField()->getType()==scalar) {
+            PVScalarPtr pvScalar = static_pointer_cast<PVScalar>(pvf);
             getConvert()->fromDouble(pvScalar,ald.upper_alarm_limit);
         }
     }
@@ -531,14 +576,14 @@ void  V3Util::getPropertyData(
 Status  V3Util::get(
         Requester::shared_pointer const &requester,
         int propertyMask,DbAddr &dbAddr,
-        PVStructure::shared_pointer const &pvStructure,
+        PVStructurePtr const &pvStructure,
         BitSet::shared_pointer const &bitSet,
         CAV3Data *caV3Data)
 {
     PVFieldPtrArray pvFields = pvStructure->getPVFields();
     PVFieldPtr pvField = pvFields[0];
-    if((propertyMask&V3Util::scalarValueBit)!=0) {
-        PVScalar* pvScalar = static_cast<PVScalar *>(pvField);
+    if((propertyMask&scalarValueBit)!=0) {
+        PVScalarPtr pvScalar = static_pointer_cast<PVScalar>(pvField);
         ScalarType scalarType = pvScalar->getScalar()->getScalarType();
         bool wasChanged = false;
         switch(scalarType) {
@@ -549,7 +594,7 @@ Status  V3Util::get(
             } else {
                 val = *static_cast<int8 *>(dbAddr.pfield);
             }
-            PVByte *pv = static_cast<PVByte *>(pvField);
+            PVBytePtr pv = static_pointer_cast<PVByte>(pvField);
             if(pv->get()!=val) {
                 pv->put(val);
                 wasChanged = true;
@@ -563,7 +608,7 @@ Status  V3Util::get(
             } else {
                 val = *static_cast<int16 *>(dbAddr.pfield);
             }
-            PVShort *pv = static_cast<PVShort *>(pvField);
+            PVShortPtr pv = static_pointer_cast<PVShort>(pvField);
             if(pv->get()!=val) {
                 pv->put(val);
                 wasChanged = true;
@@ -577,7 +622,7 @@ Status  V3Util::get(
             } else {
                 val = *static_cast<int32 *>(dbAddr.pfield);
             }
-            PVInt *pv = static_cast<PVInt *>(pvField);
+            PVIntPtr pv = static_pointer_cast<PVInt>(pvField);
             if(pv->get()!=val) {
                 pv->put(val);
                 wasChanged = true;
@@ -591,7 +636,7 @@ Status  V3Util::get(
             } else {
                 val = *static_cast<float *>(dbAddr.pfield);
             }
-            PVFloat *pv = static_cast<PVFloat *>(pvField);
+            PVFloatPtr pv = static_pointer_cast<PVFloat>(pvField);
             if(pv->get()!=val) {
                 pv->put(val);
                 wasChanged = true;
@@ -605,7 +650,7 @@ Status  V3Util::get(
             } else {
                 val = *static_cast<double *>(dbAddr.pfield);
             }
-            PVDouble *pv = static_cast<PVDouble *>(pvField);
+            PVDoublePtr pv = static_pointer_cast<PVDouble>(pvField);
             if(pv->get()!=val) {
                 pv->put(val);
                 wasChanged = true;
@@ -627,7 +672,7 @@ Status  V3Util::get(
                 val = static_cast<char *>(dbAddr.pfield);
             }
             String sval(val);
-            PVString *pvString = static_cast<PVString *>(pvField);
+            PVStringPtr pvString = static_pointer_cast<PVString>(pvField);
             if((pvString->get().compare(sval))!=0) {
                 pvString->put(sval);
                 wasChanged = true;
@@ -639,49 +684,49 @@ Status  V3Util::get(
         }
         if(wasChanged) bitSet->set(pvField->getFieldOffset());
     } else if((propertyMask&arrayValueBit)!=0) {
-        PVScalarArray* pvArray = static_cast<PVScalarArray *>(pvField);
+        PVScalarArrayPtr pvArray = static_pointer_cast<PVScalarArray>(pvField);
         ScalarType scalarType = pvArray->getScalarArray()->getElementType();
         switch(scalarType) {
         case pvByte: {
-            PVByteArray *pva = static_cast<PVByteArray *>(pvArray);
+            PVByteArrayPtr pva = static_pointer_cast<PVByteArray>(pvArray);
             ByteArrayData data;
             int length = pva->getLength();
-            pva->get(0,length,&data);
+            pva->get(0,length,data);
             break;
         }
         case pvShort: {
-            PVShortArray *pva = static_cast<PVShortArray *>(pvArray);
+            PVShortArrayPtr pva = static_pointer_cast<PVShortArray>(pvArray);
             ShortArrayData data;
             int length = pva->getLength();
-            pva->get(0,length,&data);
+            pva->get(0,length,data);
             break;
         }
         case pvInt: {
-            PVIntArray *pva = static_cast<PVIntArray *>(pvArray);
+            PVIntArrayPtr pva = static_pointer_cast<PVIntArray>(pvArray);
             IntArrayData data;
             int length = pva->getLength();
-            pva->get(0,length,&data);
+            pva->get(0,length,data);
             break;
         }
         case pvFloat: {
-            PVFloatArray *pva = static_cast<PVFloatArray *>(pvArray);
+            PVFloatArrayPtr pva = static_pointer_cast<PVFloatArray>(pvArray);
             FloatArrayData data;
             int length = pva->getLength();
-            pva->get(0,length,&data);
+            pva->get(0,length,data);
             break;
         }
         case pvDouble: {
-            PVDoubleArray *pva = static_cast<PVDoubleArray *>(pvArray);
+            PVDoubleArrayPtr pva = static_pointer_cast<PVDoubleArray>(pvArray);
             DoubleArrayData data;
             int length = pva->getLength();
-            pva->get(0,length,&data);
+            pva->get(0,length,data);
             break;
         }
         case pvString: {
-            PVStringArray *pva = static_cast<PVStringArray *>(pvArray);
+            PVStringArrayPtr pva = static_pointer_cast<PVStringArray>(pvArray);
             StringArrayData data;
             int length = pva->getLength();
-            pva->get(0,length,&data);
+            pva->get(0,length,data);
             break;
         }
         default:
@@ -689,7 +734,7 @@ Status  V3Util::get(
         }
         bitSet->set(pvField->getFieldOffset());
     } else if((propertyMask&enumValueBit)!=0) {
-        PVStructure *pvEnum = static_cast<PVStructure *>(pvField);
+        PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
         int32 val = 0;
         if(caV3Data) {
             val = caV3Data->intValue;
@@ -700,7 +745,7 @@ Status  V3Util::get(
                 val = *static_cast<int32 *>(dbAddr.pfield);
             }
         }
-        PVInt *pvIndex = pvEnum->getIntField(indexString);
+        PVIntPtr pvIndex = pvEnum->getIntField(indexString);
         if(pvIndex->get()!=val) {
             pvIndex->put(val);
             bitSet->set(pvIndex->getFieldOffset());
@@ -709,7 +754,7 @@ Status  V3Util::get(
     if((propertyMask&timeStampBit)!=0) {
         TimeStamp timeStamp;
         PVTimeStamp pvTimeStamp;
-        PVField *pvField = pvStructure->getSubField(timeStampString);
+        PVFieldPtr pvField = pvStructure->getSubField(timeStampString);
         if(!pvTimeStamp.attach(pvField)) {
             throw std::logic_error(String("V3ChannelGet::get logic error"));
         }
@@ -737,7 +782,7 @@ Status  V3Util::get(
      if((propertyMask&alarmBit)!=0) {
         Alarm alarm;
         PVAlarm pvAlarm;
-        PVField *pvField = pvStructure->getSubField(alarmString);
+        PVFieldPtr pvField = pvStructure->getSubField(alarmString);
         if(!pvAlarm.attach(pvField)) {
             throw std::logic_error(String("V3ChannelGet::get logic error"));
         }
@@ -769,45 +814,45 @@ Status  V3Util::get(
 Status  V3Util::put(
         Requester::shared_pointer const &requester,
         int propertyMask,DbAddr &dbAddr,
-        PVField *pvField)
+        PVFieldPtr const &pvField)
 {
     if((propertyMask&scalarValueBit)!=0) {
-        PVScalar *pvScalar = static_cast<PVScalar *>(pvField);
+        PVScalarPtr pvScalar = static_pointer_cast<PVScalar>(pvField);
         ScalarType scalarType = pvScalar->getScalar()->getScalarType();
         switch(scalarType) {
         case pvByte: {
             int8 * val = static_cast<int8 *>(dbAddr.pfield);
-            PVByte *pv = static_cast<PVByte *>(pvField);
+            PVBytePtr pv = static_pointer_cast<PVByte>(pvField);
             *val = pv->get();
             break;
         }
         case pvShort: {
             int16 * val = static_cast<int16 *>(dbAddr.pfield);
-            PVShort *pv = static_cast<PVShort *>(pvField);
+            PVShortPtr pv = static_pointer_cast<PVShort>(pvField);
             *val = pv->get();
             break;
         }
         case pvInt: {
             int32 * val = static_cast<int32 *>(dbAddr.pfield);
-            PVInt *pv = static_cast<PVInt *>(pvField);
+            PVIntPtr pv = static_pointer_cast<PVInt>(pvField);
             *val = pv->get();
             break;
         }
         case pvFloat: {
             float * val = static_cast<float *>(dbAddr.pfield);
-            PVFloat *pv = static_cast<PVFloat *>(pvField);
+            PVFloatPtr pv = static_pointer_cast<PVFloat>(pvField);
             *val = pv->get();
             break;
         }
         case pvDouble: {
             double * val = static_cast<double *>(dbAddr.pfield);
-            PVDouble *pv = static_cast<PVDouble *>(pvField);
+            PVDoublePtr pv = static_pointer_cast<PVDouble>(pvField);
             *val = pv->get();
             break;
         }
         case pvString: {
             char * to = static_cast<char *>(dbAddr.pfield);
-            PVString *pvString = static_cast<PVString *>(pvField);
+            PVStringPtr pvString = static_pointer_cast<PVString>(pvField);
             int len = dbAddr.field_size;
             strncpy(to,pvString->get().c_str(),len -1);
             *(to + len -1) = 0;
@@ -820,8 +865,8 @@ Status  V3Util::put(
     } else if((propertyMask&arrayValueBit)!=0) {
         // client or deserialize already handled this.
     } else if((propertyMask&enumValueBit)!=0) {
-        PVStructure *pvEnum = static_cast<PVStructure *>(pvField);
-        PVInt *pvIndex = pvEnum->getIntField(indexString);
+        PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
+        PVIntPtr pvIndex = pvEnum->getIntField(indexString);
         if(dbAddr.field_type==DBF_MENU) {
             requester->message(
                 String("Not allowed to change a menu field"),errorMessage);
@@ -854,7 +899,7 @@ Status  V3Util::put(
 Status  V3Util::putField(
         Requester::shared_pointer const &requester,
         int propertyMask,DbAddr &dbAddr,
-        PVField *pvField)
+        PVFieldPtr const &pvField)
 {
     const void *pbuffer = 0;
     short dbrType = 0;
@@ -865,41 +910,41 @@ Status  V3Util::putField(
     double dvalue;
     String string;
     if((propertyMask&scalarValueBit)!=0) {
-        PVScalar *pvScalar = static_cast<PVScalar *>(pvField);
+        PVScalarPtr pvScalar = static_pointer_cast<PVScalar>(pvField);
         ScalarType scalarType = pvScalar->getScalar()->getScalarType();
         switch(scalarType) {
         case pvByte: {
-            PVByte *pv = static_cast<PVByte *>(pvField);
+            PVBytePtr pv = static_pointer_cast<PVByte>(pvField);
             bvalue = pv->get(); pbuffer = &bvalue;
             dbrType = DBF_CHAR;
             break;
         }
         case pvShort: {
-            PVShort *pv = static_cast<PVShort *>(pvField);
+            PVShortPtr pv = static_pointer_cast<PVShort>(pvField);
             svalue = pv->get(); pbuffer = &svalue;
             dbrType = DBF_SHORT;
             break;
         }
         case pvInt: {
-            PVInt *pv = static_cast<PVInt *>(pvField);
+            PVIntPtr pv = static_pointer_cast<PVInt>(pvField);
             ivalue = pv->get(); pbuffer = &ivalue;
             dbrType = DBF_LONG;
             break;
         }
         case pvFloat: {
-            PVFloat *pv = static_cast<PVFloat *>(pvField);
+            PVFloatPtr pv = static_pointer_cast<PVFloat>(pvField);
             fvalue = pv->get(); pbuffer = &fvalue;
             dbrType = DBF_FLOAT;
             break;
         }
         case pvDouble: {
-            PVDouble *pv = static_cast<PVDouble *>(pvField);
+            PVDoublePtr pv = static_pointer_cast<PVDouble>(pvField);
             dvalue = pv->get(); pbuffer = &dvalue;
             dbrType = DBF_DOUBLE;
             break;
         }
         case pvString: {
-            PVString *pvString = static_cast<PVString *>(pvField);
+            PVStringPtr pvString = static_pointer_cast<PVString>(pvField);
             string = pvString->get();
             pbuffer = string.c_str();
             dbrType = DBF_STRING;
@@ -911,8 +956,8 @@ Status  V3Util::putField(
             return Status::Ok;
         }
     } else if((propertyMask&enumValueBit)!=0) {
-        PVStructure *pvEnum = static_cast<PVStructure *>(pvField);
-        PVInt *pvIndex = pvEnum->getIntField(indexString);
+        PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
+        PVIntPtr pvIndex = pvEnum->getIntField(indexString);
         svalue = pvIndex->get(); pbuffer = &svalue;
         dbrType = DBF_ENUM;
     } else {

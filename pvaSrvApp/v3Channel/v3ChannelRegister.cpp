@@ -23,7 +23,6 @@
 #include <pv/pvAccess.h>
 #include <pv/serverContext.h>
 
-#include <pv/pvDatabase.h>
 #include <pv/v3Channel.h>
 
 using namespace epics::pvData;

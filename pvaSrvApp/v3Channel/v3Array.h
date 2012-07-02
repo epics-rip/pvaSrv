@@ -21,34 +21,37 @@ namespace epics { namespace pvIOC {
 
 class V3ValueArrayCreate {
 public:
-    epics::pvData::PVByteArray *createByteArray(
-        epics::pvData::PVStructure *parent,
-        epics::pvData::ScalarArrayConstPtr scalar,
+    POINTER_DEFINITIONS(V3ValueArrayCreate);
+    epics::pvData::PVByteArrayPtr createByteArray(
+        epics::pvData::PVStructurePtr const & parent,
+        epics::pvData::ScalarArrayConstPtr const & scalar,
         DbAddr &dbAddr,bool shareData);
-    epics::pvData::PVShortArray *createShortArray(
-        epics::pvData::PVStructure *parent,
-        epics::pvData::ScalarArrayConstPtr scalar,
+    epics::pvData::PVShortArrayPtr createShortArray(
+        epics::pvData::PVStructurePtr const & parent,
+        epics::pvData::ScalarArrayConstPtr const & scalar,
         DbAddr &dbAddr,bool shareData);
-    epics::pvData::PVIntArray *createIntArray(
-        epics::pvData::PVStructure *parent,
-        epics::pvData::ScalarArrayConstPtr scalar,
+    epics::pvData::PVIntArrayPtr createIntArray(
+        epics::pvData::PVStructurePtr const & parent,
+        epics::pvData::ScalarArrayConstPtr const & scalar,
         DbAddr &dbAddr,bool shareData);
-    epics::pvData::PVFloatArray *createFloatArray(
-        epics::pvData::PVStructure *parent,
-        epics::pvData::ScalarArrayConstPtr scalar,
+    epics::pvData::PVFloatArrayPtr createFloatArray(
+        epics::pvData::PVStructurePtr const & parent,
+        epics::pvData::ScalarArrayConstPtr const & scalar,
         DbAddr &dbAddr,bool shareData);
-    epics::pvData::PVDoubleArray *createDoubleArray(
-        epics::pvData::PVStructure *parent,
-        epics::pvData::ScalarArrayConstPtr scalar,
+    epics::pvData::PVDoubleArrayPtr createDoubleArray(
+        epics::pvData::PVStructurePtr const & parent,
+        epics::pvData::ScalarArrayConstPtr const & scalar,
         DbAddr &dbAddr,bool shareData);
     // Note that V3StringArray can not share
-    epics::pvData::PVStringArray *createStringArray(
-        epics::pvData::PVStructure *parent,
-        epics::pvData::ScalarArrayConstPtr scalar,
+    epics::pvData::PVStringArrayPtr createStringArray(
+        epics::pvData::PVStructurePtr const & parent,
+        epics::pvData::ScalarArrayConstPtr const & scalar,
         DbAddr &dbAddr);
 };
 
-extern V3ValueArrayCreate *getV3ValueArrayCreate();
+typedef std::tr1::shared_ptr<V3ValueArrayCreate> V3ValueArrayCreatePtr;
+
+extern V3ValueArrayCreatePtr getV3ValueArrayCreate();
 
 }}
 

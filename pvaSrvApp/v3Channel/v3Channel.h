@@ -159,12 +159,12 @@ private:
     static void notifyCallback(struct putNotify *);
     epics::pvAccess::ChannelBase::shared_pointer v3Channel;
     epics::pvAccess::ChannelGetRequester::shared_pointer channelGetRequester;
+    epics::pvData::PVStructure::shared_pointer pvStructure;
+    epics::pvData::BitSet::shared_pointer bitSet;
     DbAddr &dbAddr;
     bool process;
     bool firstTime;
     int propertyMask;
-    epics::pvData::PVStructure::shared_pointer pvStructure;
-    epics::pvData::BitSet::shared_pointer bitSet;
     std::auto_ptr<struct putNotify> pNotify;
     std::auto_ptr<DbAddr> notifyAddr;
     epics::pvData::Event event;
@@ -200,12 +200,12 @@ private:
     static void notifyCallback(struct putNotify *);
     epics::pvAccess::ChannelBase::shared_pointer v3Channel;
     epics::pvAccess::ChannelPutRequester::shared_pointer channelPutRequester;
+    epics::pvData::PVStructure::shared_pointer pvStructure;
+    epics::pvData::BitSet::shared_pointer bitSet;
     DbAddr &dbAddr;
     int propertyMask;
     bool process;
     bool firstTime;
-    epics::pvData::PVStructure::shared_pointer pvStructure;
-    epics::pvData::BitSet::shared_pointer bitSet;
     std::auto_ptr<struct putNotify> pNotify;
     std::auto_ptr<DbAddr> notifyAddr;
     epics::pvData::Event event;
@@ -233,9 +233,9 @@ public:
     virtual void destroy();
     virtual epics::pvData::Status start();
     virtual epics::pvData::Status stop();
-    virtual epics::pvData::MonitorElement::shared_pointer const & poll();
+    virtual epics::pvData::MonitorElementPtr poll();
     virtual void release(
-        epics::pvData::MonitorElement::shared_pointer const & monitorElement);
+        epics::pvData::MonitorElementPtr & monitorElement);
     virtual void exceptionCallback(long status,long op);
     virtual void connectionCallback();
     virtual void accessRightsCallback();
@@ -256,7 +256,7 @@ private:
     bool gotEvent;
     V3Type v3Type;
     int queueSize;
-    std::auto_ptr<epics::pvData::MonitorQueue> monitorQueue;
+    epics::pvData::MonitorQueuePtr monitorQueue;
     std::auto_ptr<CAV3Monitor> caV3Monitor;
     epics::pvData::MonitorElement::shared_pointer currentElement;
     epics::pvData::MonitorElement::shared_pointer nextElement;
@@ -287,8 +287,8 @@ private:
     }
     epics::pvAccess::ChannelBase::shared_pointer v3Channel;
     epics::pvAccess::ChannelArrayRequester::shared_pointer channelArrayRequester;
-    DbAddr &dbAddr;
     epics::pvData::PVScalarArray::shared_pointer pvScalarArray;
+    DbAddr &dbAddr;
     epics::pvData::Mutex dataMutex;
 };
 
