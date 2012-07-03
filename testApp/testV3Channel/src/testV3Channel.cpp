@@ -22,7 +22,6 @@
 #include <pv/pvData.h>
 #include <pv/pvAccess.h>
 
-#include <pv/pvDatabase.h>
 #include <pv/v3Channel.h>
 
 using namespace epics::pvData;
@@ -72,7 +71,7 @@ public:
     }
     virtual void message(String message,MessageType messageType)
     {
-        String typeName = messageTypeName[messageType];
+        String typeName = getMessageTypeName(messageType);
         printf("ChannelRequester message %s messageType %s\n",
             message.c_str(),typeName.c_str());
     }
@@ -153,7 +152,7 @@ printf("findRequester %p %p\n",&findRequester,findRequester.get());
          String(""));
     CreateRequest::shared_pointer createRequest = getCreateRequest();
     PVStructure::shared_pointer pvRequest = createRequest->createRequest(
-        String("record[process=true]field(value,timeStamp,alarm)"));
+        "record[process=true]field(value,timeStamp,alarm)",myRequester);
     ChannelGet::shared_pointer channelGet = channel->createChannelGet(
         myRequester,pvRequest);
     channelGet->get(false);

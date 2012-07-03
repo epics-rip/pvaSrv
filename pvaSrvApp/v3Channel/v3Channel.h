@@ -16,7 +16,6 @@
 
 #include <pv/status.h>
 #include <pv/monitor.h>
-#include <pv/monitorQueue.h>
 #include <pv/linkedList.h>
 #include <pv/pvIntrospect.h>
 #include <pv/pvData.h>
@@ -247,6 +246,7 @@ private:
     {
         return shared_from_this();
     }
+    epics::pvData::MonitorElementPtr &getFree();
     epics::pvAccess::ChannelBase::shared_pointer v3Channel;
     epics::pvData::MonitorRequester::shared_pointer  monitorRequester;
     DbAddr &dbAddr;
@@ -256,10 +256,18 @@ private:
     bool gotEvent;
     V3Type v3Type;
     int queueSize;
-    epics::pvData::MonitorQueuePtr monitorQueue;
     std::auto_ptr<CAV3Monitor> caV3Monitor;
-    epics::pvData::MonitorElement::shared_pointer currentElement;
-    epics::pvData::MonitorElement::shared_pointer nextElement;
+    int numberFree;
+    int numberUsed;
+    int nextGetFree;
+    int nextSetUsed;
+    int nextGetUsed;
+    int nextReleaseUsed;
+    epics::pvData::MonitorElementPtrArray elements;
+    epics::pvData::MonitorElementPtr currentElement;
+    epics::pvData::MonitorElementPtr nextElement;
+    epics::pvData::MonitorElementPtr nullElement;
+    epics::pvData::MonitorElementPtrArray elementArray;
 };
 
 class V3ChannelArray :

@@ -68,13 +68,13 @@ SRC_DIRS += $(IOC)/service
 DBD += pvServiceChannelRegister.dbd
 INC += channelBase.h
 INC += pvServiceProvider.h
-#INC += service.h
-#LIBSRCS += channelBase.cpp
-#LIBSRCS += channelBaseProvider.cpp
-#LIBSRCS += pvServiceProvider.cpp
-#LIBSRCS += pvServiceChannelRegister.cpp
-#LIBSRCS += pvServiceChannelCTX.cpp
-#LIBSRCS += serviceChannelRPC.cpp
+INC += service.h
+LIBSRCS += channelBase.cpp
+LIBSRCS += channelBaseProvider.cpp
+LIBSRCS += pvServiceProvider.cpp
+LIBSRCS += pvServiceChannelRegister.cpp
+LIBSRCS += pvServiceChannelCTX.cpp
+LIBSRCS += serviceChannelRPC.cpp
 
 
 include $(TOP)/configure/RULES

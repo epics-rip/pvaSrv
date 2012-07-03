@@ -26,7 +26,6 @@
 #include <pv/pvData.h>
 #include <pv/convert.h>
 #include <pv/monitor.h>
-#include <pv/monitorQueue.h>
 #include <pv/pvAccess.h>
 
 #include <pv/v3Channel.h>
@@ -55,7 +54,13 @@ V3ChannelMonitor::V3ChannelMonitor(
   gotEvent(false),
   v3Type(v3Byte),
   queueSize(2),
-  caV3Monitor(std::auto_ptr<CAV3Monitor>())
+  caV3Monitor(std::auto_ptr<CAV3Monitor>()),
+  numberFree(queueSize),
+  numberUsed(0),
+  nextGetFree(0),
+  nextSetUsed(0),
+  nextGetUsed(0),
+  nextReleaseUsed(0)
 {
 //printf("V3ChannelMonitor construct\n");
 }
@@ -86,7 +91,6 @@ bool V3ChannelMonitor::init(
         monitorRequester->message("can not monitor a link field",errorMessage);
         return 0;
     }
-    MonitorElementPtrArray elements;
     elements.reserve(queueSize);
     for(int i=0; i<queueSize; i++) {
         PVStructurePtr pvStructure(V3Util::createPVStructure(
@@ -96,10 +100,8 @@ bool V3ChannelMonitor::init(
         MonitorElementPtr element(new MonitorElement(pvStructure));
         elements.push_back(element);
     }
-    monitorQueue = MonitorQueuePtr(new MonitorQueue(elements));
-    MonitorElementPtr element = monitorQueue->getFree();
+    MonitorElementPtr element = elements[0];
     StructureConstPtr saveStructure = element->pvStructurePtr->getStructure();
-    monitorQueue->clear();
     if((propertyMask&V3Util::enumValueBit)!=0) {
         v3Type = v3Enum;
     } else {
@@ -146,7 +148,7 @@ void V3ChannelMonitor::destroy() {
 
 Status V3ChannelMonitor::start()
 {
-    currentElement = monitorQueue->getFree();
+    currentElement =getFree();
     if(currentElement.get()==0) {
         printf("V3ChannelMonitor::start will throw\n");
         throw std::logic_error(String(
@@ -154,7 +156,7 @@ Status V3ChannelMonitor::start()
     }
     BitSet::shared_pointer bitSet = currentElement->changedBitSet;
     bitSet->clear();
-    nextElement = monitorQueue->getFree();
+    nextElement =getFree();
     if(nextElement.get()!=0) {
         BitSet::shared_pointer bitSet = nextElement->changedBitSet;
         bitSet->clear();
@@ -171,12 +173,22 @@ Status V3ChannelMonitor::stop()
 
 MonitorElementPtr  V3ChannelMonitor::poll()
 {
-    return monitorQueue->getUsed();
+    if(numberUsed==0) return nullElement;
+    int ind = nextGetUsed;
+    nextGetUsed++;
+    if(nextGetUsed>=queueSize) nextGetUsed = 0;
+    return elements[ind];
 }
 
-void V3ChannelMonitor::release(MonitorElementPtr & monitorElement)
+void V3ChannelMonitor::release(MonitorElementPtr & element)
 {
-    monitorQueue->releaseUsed(monitorElement);
+   if(element!=elements[nextReleaseUsed++]) {
+        throw std::logic_error(
+           "not queueElement returned by last call to getUsed");
+    }
+    if(nextReleaseUsed>=queueSize) nextReleaseUsed = 0;
+    numberUsed--;
+    numberFree++;
 }
 
 void V3ChannelMonitor::exceptionCallback(long status,long op)
@@ -219,7 +231,7 @@ void V3ChannelMonitor::eventCallback(const char *status)
         index = overrunBitSet->nextSetBit(index+1);
     }
     if(bitSet->nextSetBit(0)>=0) {
-        if(nextElement.get()==0) nextElement = monitorQueue->getFree();
+        if(nextElement.get()==0) nextElement =getFree();
         if(nextElement.get()!=0) {
             PVStructure::shared_pointer pvNext = nextElement->pvStructurePtr;
             BitSet::shared_pointer bitSetNext = nextElement->changedBitSet;
@@ -242,9 +254,11 @@ void V3ChannelMonitor::eventCallback(const char *status)
     }
     if(bitSet->nextSetBit(0)<0) return;
     if(nextElement.get()==0) return;
-    monitorQueue->setUsed(currentElement);
+    numberUsed++;
+    nextSetUsed++;
+    if(nextSetUsed>=queueSize) nextSetUsed = 0;
     currentElement = nextElement;
-    nextElement = monitorQueue->getFree();
+    nextElement =getFree();
     if(nextElement!=0) {
         nextElement->changedBitSet->clear();
         nextElement->overrunBitSet->clear();
@@ -259,6 +273,17 @@ void V3ChannelMonitor::lock()
 
 void V3ChannelMonitor::unlock()
 {
+}
+
+MonitorElementPtr &V3ChannelMonitor::getFree()
+{
+    if(numberFree==0) return nullElement;
+    numberFree--;
+    int ind = nextGetFree;
+    nextGetFree++;
+    if(nextGetFree>=queueSize) nextGetFree = 0;
+    return elements[ind];
+
 }
 
 }}
