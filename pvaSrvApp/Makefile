@@ -69,12 +69,14 @@ DBD += pvServiceChannelRegister.dbd
 INC += channelBase.h
 INC += pvServiceProvider.h
 INC += service.h
+INC += ezchannelRPC.h
 LIBSRCS += channelBase.cpp
 LIBSRCS += channelBaseProvider.cpp
 LIBSRCS += pvServiceProvider.cpp
 LIBSRCS += pvServiceChannelRegister.cpp
 LIBSRCS += pvServiceChannelCTX.cpp
 LIBSRCS += serviceChannelRPC.cpp
+LIBSRCS += ezchannelRPC.cpp
 
 
 include $(TOP)/configure/RULES
