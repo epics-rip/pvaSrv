@@ -78,8 +78,9 @@ static PVStructurePtr  nullPVStructure;
 
 
 int V3Util::getProperties(
-    Requester::shared_pointer const &requester,PVStructure::shared_pointer const &pvRequest,DbAddr &dbAddr)
+    Requester::shared_pointer const &requester,PVStructure::shared_pointer const &pvr,DbAddr &dbAddr)
 {
+    PVStructure *pvRequest = pvr.get();
     int propertyMask = 0;
     PVFieldPtr pvField = pvRequest->getSubField(processString);
     if(pvField.get()!=NULL) {
@@ -107,6 +108,7 @@ int V3Util::getProperties(
         if(value.compare("true")==0) propertyMask |= shareArrayBit;
     }
     bool getValue;
+    if(fieldPV.get()!=NULL) pvRequest = fieldPV.get();
     String fieldList;
     if(pvRequest->getStructure()->getNumberFields()==0) {
         getValue = true;

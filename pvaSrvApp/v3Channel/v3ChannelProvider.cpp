@@ -49,6 +49,7 @@ Channel::shared_pointer V3ChannelProvider::createChannel(
     short priority,
     String address)
 {
+printf("V3ChannelProvider::createChannel\n");
     struct dbAddr dbAddr;
     long result = dbNameToAddr(channelName.c_str(),&dbAddr);
     if(result!=0) {

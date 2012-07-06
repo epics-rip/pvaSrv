@@ -64,6 +64,10 @@ bool V3ChannelPut::init(PVStructure::shared_pointer const &pvRequest)
         channelPutRequester,
         pvRequest,
         dbAddr);
+String buffer;
+pvRequest->toString(&buffer);
+printf("V3ChannelPut::init pvRequest\n%s\n",buffer.c_str());
+printf("propertyMask %x\n",propertyMask);
     if(propertyMask==V3Util::noAccessBit) return false;
     if(propertyMask==V3Util::noModBit) {
         channelPutRequester->message(
@@ -76,6 +80,9 @@ bool V3ChannelPut::init(PVStructure::shared_pointer const &pvRequest)
             propertyMask,
             dbAddr));
     if(pvStructure.get()==0) return 0;
+buffer.clear();
+pvStructure->toString(&buffer);
+printf("pvStructure\n%s\n",buffer.c_str());
     if((propertyMask&V3Util::dbPutBit)!=0) {
         if((propertyMask&V3Util::processBit)!=0) {
             channelPutRequester->message(
@@ -121,11 +128,13 @@ void V3ChannelPut::message(String message,MessageType messageType)
 }
 
 void V3ChannelPut::destroy() {
+printf("V3ChannelPut::destroy\n");
     v3Channel->removeChannelPut(V3ChannelPut::shared_pointer(this));
 }
 
 void V3ChannelPut::put(bool lastRequest)
 {
+printf("V3ChannelPut::put lastRequest %s\n",(lastRequest ?"true" : "false"));
     Lock lock(dataMutex);
     PVFieldPtr pvField = pvStructure.get()->getPVFields()[0];
     if(propertyMask&V3Util::dbPutBit) {
@@ -147,6 +156,7 @@ void V3ChannelPut::put(bool lastRequest)
         dbPutNotify(pNotify.get());
         event.wait();
     }
+printf("V3ChannelPut::put calling putDone\n");
     channelPutRequester->putDone(status);
     if(lastRequest) destroy();
 }

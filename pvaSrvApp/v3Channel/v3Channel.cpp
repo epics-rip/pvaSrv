@@ -105,6 +105,7 @@ ChannelGet::shared_pointer V3Channel::createChannelGet(
         ChannelGetRequester::shared_pointer const &channelGetRequester,
         PVStructure::shared_pointer const &pvRequest)
 {
+printf("V3Channel::createChannelGet\n");
     V3ChannelGet::shared_pointer v3ChannelGet(
         new V3ChannelGet(getPtrSelf(),channelGetRequester,*(dbAddr.get())));
     if(v3ChannelGet->init(pvRequest)) addChannelGet(v3ChannelGet);
