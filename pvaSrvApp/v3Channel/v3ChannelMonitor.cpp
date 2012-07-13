@@ -121,8 +121,8 @@ bool V3ChannelMonitor::init(
     }
     String pvName = v3Channel->getChannelName();
     caV3Monitor = std::auto_ptr<CAV3Monitor>(
-        new CAV3Monitor(V3ChannelMonitor::shared_pointer(this), pvName, v3Type));
-    caV3Monitor.get()->connect();
+        new CAV3Monitor(getPtrSelf(), pvName, v3Type));
+    caV3Monitor->connect();
     event.wait();
     Monitor::shared_pointer thisPointer = dynamic_pointer_cast<Monitor>(getPtrSelf());
     monitorRequester->monitorConnect(
@@ -143,7 +143,7 @@ void V3ChannelMonitor::message(String message,MessageType messageType)
 
 void V3ChannelMonitor::destroy() {
 //printf("V3ChannelMonitor::destroy\n");
-    v3Channel->removeChannelMonitor(V3ChannelMonitor::shared_pointer(this));
+    v3Channel->removeChannelMonitor(getPtrSelf());
 }
 
 Status V3ChannelMonitor::start()

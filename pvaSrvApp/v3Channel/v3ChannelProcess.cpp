@@ -87,7 +87,7 @@ void V3ChannelProcess::message(String message,MessageType messageType)
 
 void V3ChannelProcess::destroy() {
 //printf("V3ChannelProcess::destroy\n");
-    v3Channel->removeChannelProcess(V3ChannelProcess::shared_pointer(this));
+    v3Channel->removeChannelProcess(getPtrSelf());
 }
 
 void V3ChannelProcess::process(bool lastRequest)

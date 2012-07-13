@@ -118,7 +118,7 @@ bool V3ChannelArray::init(PVStructure::shared_pointer const &pvRequest)
 }
 
 void V3ChannelArray::destroy() {
-    v3Channel->removeChannelArray(V3ChannelArray::shared_pointer(this));
+    v3Channel->removeChannelArray(getPtrSelf());
 }
 
 void V3ChannelArray::getArray(bool lastRequest,int offset,int count)

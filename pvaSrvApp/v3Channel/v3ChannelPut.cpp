@@ -129,7 +129,7 @@ void V3ChannelPut::message(String message,MessageType messageType)
 
 void V3ChannelPut::destroy() {
 printf("V3ChannelPut::destroy\n");
-    v3Channel->removeChannelPut(V3ChannelPut::shared_pointer(this));
+    v3Channel->removeChannelPut(getPtrSelf());
 }
 
 void V3ChannelPut::put(bool lastRequest)

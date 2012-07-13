@@ -106,7 +106,7 @@ void V3ChannelGet::message(String message,MessageType messageType)
 
 void V3ChannelGet::destroy() {
 printf("V3ChannelGet::destroy\n");
-    v3Channel->removeChannelGet(V3ChannelGet::shared_pointer(this));
+    v3Channel->removeChannelGet(getPtrSelf());
 }
 
 void V3ChannelGet::get(bool lastRequest)
