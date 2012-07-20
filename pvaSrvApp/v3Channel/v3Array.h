@@ -26,11 +26,23 @@ public:
         epics::pvData::PVStructurePtr const & parent,
         epics::pvData::ScalarArrayConstPtr const & scalar,
         DbAddr &dbAddr,bool shareData);
+    epics::pvData::PVUByteArrayPtr createUByteArray(
+        epics::pvData::PVStructurePtr const & parent,
+        epics::pvData::ScalarArrayConstPtr const & scalar,
+        DbAddr &dbAddr,bool shareData);
     epics::pvData::PVShortArrayPtr createShortArray(
         epics::pvData::PVStructurePtr const & parent,
         epics::pvData::ScalarArrayConstPtr const & scalar,
         DbAddr &dbAddr,bool shareData);
+    epics::pvData::PVUShortArrayPtr createUShortArray(
+        epics::pvData::PVStructurePtr const & parent,
+        epics::pvData::ScalarArrayConstPtr const & scalar,
+        DbAddr &dbAddr,bool shareData);
     epics::pvData::PVIntArrayPtr createIntArray(
+        epics::pvData::PVStructurePtr const & parent,
+        epics::pvData::ScalarArrayConstPtr const & scalar,
+        DbAddr &dbAddr,bool shareData);
+    epics::pvData::PVUIntArrayPtr createUIntArray(
         epics::pvData::PVStructurePtr const & parent,
         epics::pvData::ScalarArrayConstPtr const & scalar,
         DbAddr &dbAddr,bool shareData);

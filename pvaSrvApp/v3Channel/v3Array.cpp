@@ -71,8 +71,11 @@ private:
 
 
 typedef V3ValueArray<int8> V3ByteArray;
+typedef V3ValueArray<uint8> V3UByteArray;
 typedef V3ValueArray<int16> V3ShortArray;
+typedef V3ValueArray<uint16> V3UShortArray;
 typedef V3ValueArray<int32> V3IntArray;
+typedef V3ValueArray<uint32> V3UIntArray;
 typedef V3ValueArray<float> V3FloatArray;
 typedef V3ValueArray<double> V3DoubleArray;
 typedef V3ValueArray<String> V3StringArray;

@@ -22,8 +22,11 @@
 enum V3Type {
     v3Enum,
     v3Byte,
+    v3UByte,
     v3Short,
+    v3UShort,
     v3Int,
+    v3UInt,
     v3Float,
     v3Double,
     v3String
@@ -34,11 +37,14 @@ struct CAV3Data {
     ~CAV3Data();
     /* The following have new values after each data event*/
     union { //only used for scalar values
-        epics::pvData::int8  byteValue;
-        epics::pvData::int16 shortValue;
-        epics::pvData::int32 intValue;
-        float                floatValue;
-        double               doubleValue;
+        epics::pvData::int8   byteValue;
+        epics::pvData::uint8  ubyteValue;
+        epics::pvData::uint16 ushortValue;
+        epics::pvData::int16  shortValue;
+        epics::pvData::int32  intValue;
+        epics::pvData::uint32 uintValue;
+        float                 floatValue;
+        double                doubleValue;
     };
     epicsTimeStamp  timeStamp;
     int             sevr;

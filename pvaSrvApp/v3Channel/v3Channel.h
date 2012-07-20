@@ -16,7 +16,6 @@
 
 #include <pv/status.h>
 #include <pv/monitor.h>
-#include <pv/linkedList.h>
 #include <pv/pvIntrospect.h>
 #include <pv/pvData.h>
 #include <pv/noDefaultMethods.h>

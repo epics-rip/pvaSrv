@@ -110,8 +110,11 @@ bool V3ChannelMonitor::init(
             dbAddr);
         switch(scalarType) {
         case pvByte: v3Type = v3Byte; break;
+        case pvUByte: v3Type = v3UByte; break;
         case pvShort: v3Type = v3Short; break;
+        case pvUShort: v3Type = v3UShort; break;
         case pvInt: v3Type = v3Int; break;
+        case pvUInt: v3Type = v3UInt; break;
         case pvFloat: v3Type = v3Float; break;
         case pvDouble: v3Type = v3Double; break;
         case pvString: v3Type = v3String; break;

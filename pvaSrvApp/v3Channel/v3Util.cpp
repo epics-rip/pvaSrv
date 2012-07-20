@@ -157,14 +157,17 @@ int V3Util::getProperties(
         case DBF_STRING:
             scalarType = pvString; break;
         case DBF_CHAR:
-        case DBF_UCHAR:
             scalarType = pvByte; break;
+        case DBF_UCHAR:
+            scalarType = pvUByte; break;
         case DBF_SHORT:
-        case DBF_USHORT:
             scalarType = pvShort; break;
+        case DBF_USHORT:
+            scalarType = pvUShort; break;
         case DBF_LONG:
-        case DBF_ULONG:
             scalarType = pvInt; break;
+        case DBF_ULONG:
+            scalarType = pvUInt; break;
         case DBF_FLOAT:
             scalarType = pvFloat; break;
         case DBF_DOUBLE:
@@ -366,14 +369,17 @@ PVStructurePtr V3Util::createPVStructure(
     // Note that pvBoolean is not a supported type
     switch(dbAddr.field_type) {
         case DBF_CHAR:
-        case DBF_UCHAR:
             scalarType = pvByte; break;
+        case DBF_UCHAR:
+            scalarType = pvUByte; break;
         case DBF_SHORT:
-        case DBF_USHORT:
             scalarType = pvShort; break;
+        case DBF_USHORT:
+            scalarType = pvUShort; break;
         case DBF_LONG:
-        case DBF_ULONG:
             scalarType = pvInt; break;
+        case DBF_ULONG:
+            scalarType = pvUInt; break;
         case DBF_FLOAT:
             scalarType = pvFloat; break;
         case DBF_DOUBLE:
@@ -405,12 +411,24 @@ PVStructurePtr V3Util::createPVStructure(
        pvField = v3ValueArrayCreate->createByteArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
+    case pvUByte:
+       pvField = v3ValueArrayCreate->createUByteArray(
+           nullPVStructure,scalarArray,dbAddr,share);
+       break;
     case pvShort:
        pvField = v3ValueArrayCreate->createShortArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
+    case pvUShort:
+       pvField = v3ValueArrayCreate->createUShortArray(
+           nullPVStructure,scalarArray,dbAddr,share);
+       break;
     case pvInt:
        pvField = v3ValueArrayCreate->createIntArray(
+           nullPVStructure,scalarArray,dbAddr,share);
+       break;
+    case pvUInt:
+       pvField = v3ValueArrayCreate->createUIntArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
     case pvFloat:
@@ -462,11 +480,20 @@ PVStructurePtr V3Util::createPVStructure(
        case pvByte:
           fields.push_back(standardField->byteAlarm());
           break;
+       case pvUByte:
+          fields.push_back(standardField->ubyteAlarm());
+          break;
        case pvShort:
           fields.push_back(standardField->shortAlarm());
           break;
+       case pvUShort:
+          fields.push_back(standardField->ushortAlarm());
+          break;
        case pvInt:
           fields.push_back(standardField->intAlarm());
+          break;
+       case pvUInt:
+          fields.push_back(standardField->uintAlarm());
           break;
        case pvFloat:
           fields.push_back(standardField->floatAlarm());
@@ -603,6 +630,20 @@ Status  V3Util::get(
             }
             break;
         }
+        case pvUByte: {
+            uint8 val = 0;
+            if(caV3Data) {
+                val = caV3Data->ubyteValue;
+            } else {
+                val = *static_cast<uint8 *>(dbAddr.pfield);
+            }
+            PVUBytePtr pv = static_pointer_cast<PVUByte>(pvField);
+            if(pv->get()!=val) {
+                pv->put(val);
+                wasChanged = true;
+            }
+            break;
+        }
         case pvShort: {
             int16 val = 0;
             if(caV3Data) {
@@ -617,6 +658,20 @@ Status  V3Util::get(
             }
             break;
         }
+        case pvUShort: {
+            uint16 val = 0;
+            if(caV3Data) {
+                val = caV3Data->ushortValue;
+            } else {
+                val = *static_cast<uint16 *>(dbAddr.pfield);
+            }
+            PVUShortPtr pv = static_pointer_cast<PVUShort>(pvField);
+            if(pv->get()!=val) {
+                pv->put(val);
+                wasChanged = true;
+            }
+            break;
+        }
         case pvInt: {
             int32 val = 0;
             if(caV3Data) {
@@ -625,6 +680,20 @@ Status  V3Util::get(
                 val = *static_cast<int32 *>(dbAddr.pfield);
             }
             PVIntPtr pv = static_pointer_cast<PVInt>(pvField);
+            if(pv->get()!=val) {
+                pv->put(val);
+                wasChanged = true;
+            }
+            break;
+        }
+        case pvUInt: {
+            uint32 val = 0;
+            if(caV3Data) {
+                val = caV3Data->uintValue;
+            } else {
+                val = *static_cast<uint32 *>(dbAddr.pfield);
+            }
+            PVUIntPtr pv = static_pointer_cast<PVUInt>(pvField);
             if(pv->get()!=val) {
                 pv->put(val);
                 wasChanged = true;
@@ -696,6 +765,13 @@ Status  V3Util::get(
             pva->get(0,length,data);
             break;
         }
+        case pvUByte: {
+            PVUByteArrayPtr pva = static_pointer_cast<PVUByteArray>(pvArray);
+            UByteArrayData data;
+            int length = pva->getLength();
+            pva->get(0,length,data);
+            break;
+        }
         case pvShort: {
             PVShortArrayPtr pva = static_pointer_cast<PVShortArray>(pvArray);
             ShortArrayData data;
@@ -703,9 +779,23 @@ Status  V3Util::get(
             pva->get(0,length,data);
             break;
         }
+        case pvUShort: {
+            PVUShortArrayPtr pva = static_pointer_cast<PVUShortArray>(pvArray);
+            UShortArrayData data;
+            int length = pva->getLength();
+            pva->get(0,length,data);
+            break;
+        }
         case pvInt: {
             PVIntArrayPtr pva = static_pointer_cast<PVIntArray>(pvArray);
             IntArrayData data;
+            int length = pva->getLength();
+            pva->get(0,length,data);
+            break;
+        }
+        case pvUInt: {
+            PVUIntArrayPtr pva = static_pointer_cast<PVUIntArray>(pvArray);
+            UIntArrayData data;
             int length = pva->getLength();
             pva->get(0,length,data);
             break;
@@ -828,15 +918,33 @@ Status  V3Util::put(
             *val = pv->get();
             break;
         }
+        case pvUByte: {
+            uint8 * val = static_cast<uint8 *>(dbAddr.pfield);
+            PVUBytePtr pv = static_pointer_cast<PVUByte>(pvField);
+            *val = pv->get();
+            break;
+        }
         case pvShort: {
             int16 * val = static_cast<int16 *>(dbAddr.pfield);
             PVShortPtr pv = static_pointer_cast<PVShort>(pvField);
             *val = pv->get();
             break;
         }
+        case pvUShort: {
+            uint16 * val = static_cast<uint16 *>(dbAddr.pfield);
+            PVUShortPtr pv = static_pointer_cast<PVUShort>(pvField);
+            *val = pv->get();
+            break;
+        }
         case pvInt: {
             int32 * val = static_cast<int32 *>(dbAddr.pfield);
             PVIntPtr pv = static_pointer_cast<PVInt>(pvField);
+            *val = pv->get();
+            break;
+        }
+        case pvUInt: {
+            uint32 * val = static_cast<uint32 *>(dbAddr.pfield);
+            PVUIntPtr pv = static_pointer_cast<PVUInt>(pvField);
             *val = pv->get();
             break;
         }
@@ -906,8 +1014,11 @@ Status  V3Util::putField(
     const void *pbuffer = 0;
     short dbrType = 0;
     int8 bvalue;
+    uint8 ubvalue;
     int16 svalue;
+    uint16 usvalue;
     int32 ivalue;
+    uint32 uivalue;
     float fvalue;
     double dvalue;
     String string;
@@ -921,16 +1032,34 @@ Status  V3Util::putField(
             dbrType = DBF_CHAR;
             break;
         }
+        case pvUByte: {
+            PVUBytePtr pv = static_pointer_cast<PVUByte>(pvField);
+            ubvalue = pv->get(); pbuffer = &ubvalue;
+            dbrType = DBF_UCHAR;
+            break;
+        }
         case pvShort: {
             PVShortPtr pv = static_pointer_cast<PVShort>(pvField);
             svalue = pv->get(); pbuffer = &svalue;
             dbrType = DBF_SHORT;
             break;
         }
+        case pvUShort: {
+            PVUShortPtr pv = static_pointer_cast<PVUShort>(pvField);
+            usvalue = pv->get(); pbuffer = &usvalue;
+            dbrType = DBF_USHORT;
+            break;
+        }
         case pvInt: {
             PVIntPtr pv = static_pointer_cast<PVInt>(pvField);
             ivalue = pv->get(); pbuffer = &ivalue;
             dbrType = DBF_LONG;
+            break;
+        }
+        case pvUInt: {
+            PVUIntPtr pv = static_pointer_cast<PVUInt>(pvField);
+            uivalue = pv->get(); pbuffer = &uivalue;
+            dbrType = DBF_ULONG;
             break;
         }
         case pvFloat: {
@@ -981,14 +1110,17 @@ ScalarType V3Util::getScalarType(Requester::shared_pointer const &requester, DbA
 {
     switch(dbAddr.field_type) {
         case DBF_CHAR:
-        case DBF_UCHAR:
             return pvByte;
+        case DBF_UCHAR:
+            return pvUByte;
         case DBF_SHORT:
-        case DBF_USHORT:
             return pvShort;
+        case DBF_USHORT:
+            return pvUShort;
         case DBF_LONG:
-        case DBF_ULONG:
             return pvInt;
+        case DBF_ULONG:
+            return pvUInt;
         case DBF_FLOAT:
             return pvFloat;
         case DBF_DOUBLE:

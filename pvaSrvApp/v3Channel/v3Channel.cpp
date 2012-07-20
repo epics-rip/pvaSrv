@@ -42,15 +42,18 @@ void V3Channel::init()
     ScalarType scalarType = pvBoolean;
     DbAddr *paddr = dbAddr.get();
     switch(paddr->field_type) {
-    case DBF_CHAR:
-        case DBF_UCHAR:
+        case DBF_CHAR:
             scalarType = pvByte; break;
+        case DBF_UCHAR:
+            scalarType = pvUByte; break;
         case DBF_SHORT:
-        case DBF_USHORT:
             scalarType = pvShort; break;
+        case DBF_USHORT:
+            scalarType = pvUShort; break;
         case DBF_LONG:
-        case DBF_ULONG:
             scalarType = pvInt; break;
+        case DBF_ULONG:
+            scalarType = pvUInt; break;
         case DBF_FLOAT:
             scalarType = pvFloat; break;
         case DBF_DOUBLE:

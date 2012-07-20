@@ -93,6 +93,16 @@ static void eventCallback(struct event_handler_args eha)
             pvt->data.timeStamp = from->stamp;
             break;
         }
+        case v3UByte: {
+            const struct dbr_time_char *from =
+                static_cast<const struct dbr_time_char*>(eha.dbr);
+            pvt->data.sevr = from->severity;
+            pvt->data.stat = from->status;
+            pvt->data.status = epicsAlarmConditionStrings[from->status];
+            pvt->data.ubyteValue = static_cast<uint8>(from->value);
+            pvt->data.timeStamp = from->stamp;
+            break;
+        }
         case v3Short: {
             const struct dbr_time_short *from =
                 static_cast<const struct dbr_time_short*>(eha.dbr);
@@ -103,6 +113,16 @@ static void eventCallback(struct event_handler_args eha)
             pvt->data.timeStamp = from->stamp;
             break;
         }
+        case v3UShort: {
+            const struct dbr_time_short *from =
+                static_cast<const struct dbr_time_short*>(eha.dbr);
+            pvt->data.sevr = from->severity;
+            pvt->data.stat = from->status;
+            pvt->data.status = epicsAlarmConditionStrings[from->status];
+            pvt->data.ushortValue = static_cast<uint16>(from->value);
+            pvt->data.timeStamp = from->stamp;
+            break;
+        }
         case v3Int: {
             const struct dbr_time_long *from =
                 static_cast<const struct dbr_time_long*>(eha.dbr);
@@ -110,6 +130,16 @@ static void eventCallback(struct event_handler_args eha)
             pvt->data.stat = from->status;
             pvt->data.status = epicsAlarmConditionStrings[from->status];
             pvt->data.intValue = from->value;
+            pvt->data.timeStamp = from->stamp;
+            break;
+        }
+        case v3UInt: {
+            const struct dbr_time_long *from =
+                static_cast<const struct dbr_time_long*>(eha.dbr);
+            pvt->data.sevr = from->severity;
+            pvt->data.stat = from->status;
+            pvt->data.status = epicsAlarmConditionStrings[from->status];
+            pvt->data.uintValue = static_cast<uint32>(from->value);
             pvt->data.timeStamp = from->stamp;
             break;
         }
@@ -194,8 +224,11 @@ void CAV3MonitorPvt::start()
     switch(v3Type) {
         case v3Enum: type = DBR_TIME_ENUM; break;
         case v3Byte: type = DBR_TIME_CHAR; break;
+        case v3UByte: type = DBR_TIME_CHAR; break;
         case v3Short: type = DBR_TIME_SHORT; break;
+        case v3UShort: type = DBR_TIME_SHORT; break;
         case v3Int: type = DBR_TIME_LONG; break;
+        case v3UInt: type = DBR_TIME_LONG; break;
         case v3Float: type = DBR_TIME_FLOAT; break;
         case v3Double: type = DBR_TIME_DOUBLE; break;
         case v3String: type = DBR_TIME_STRING; break;
