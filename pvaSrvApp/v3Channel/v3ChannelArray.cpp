@@ -156,33 +156,36 @@ void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
     Lock lock(dataMutex);
     pvScalarArray->setLength(count);
     switch(dbAddr.field_type) {
-    case DBF_CHAR:
+    case DBF_CHAR: {
         PVByteArrayPtr pv = static_pointer_cast<PVByteArray>(pvScalarArray);
         int8 *from = static_cast<int8 *>(dbAddr.pfield);
         pv->put(0,count,from,offset);
         break;
+   }
     case DBF_UCHAR: {
         PVUByteArrayPtr pv = static_pointer_cast<PVUByteArray>(pvScalarArray);
         uint8 *from = static_cast<uint8 *>(dbAddr.pfield);
         pv->put(0,count,from,offset);
         break;
     }
-    case DBF_SHORT:
+    case DBF_SHORT: {
         PVShortArrayPtr pv = static_pointer_cast<PVShortArray>(pvScalarArray);
         int16 *from = static_cast<int16 *>(dbAddr.pfield);
         pv->put(0,count,from,offset);
         break;
+    }
     case DBF_USHORT: {
         PVUShortArrayPtr pv = static_pointer_cast<PVUShortArray>(pvScalarArray);
         uint16 *from = static_cast<uint16 *>(dbAddr.pfield);
         pv->put(0,count,from,offset);
         break;
     }
-    case DBF_LONG:
+    case DBF_LONG: {
         PVIntArrayPtr pv = static_pointer_cast<PVIntArray>(pvScalarArray);
         int32 *from = static_cast<int32 *>(dbAddr.pfield);
         pv->put(0,count,from,offset);
         break;
+    }
     case DBF_ULONG: {
         PVUIntArrayPtr pv = static_pointer_cast<PVUIntArray>(pvScalarArray);
         uint32 *from = static_cast<uint32 *>(dbAddr.pfield);
@@ -252,7 +255,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
     {
     Lock lock(dataMutex);
     switch(dbAddr.field_type) {
-    case DBF_CHAR:
+    case DBF_CHAR: {
         PVByteArrayPtr pv = static_pointer_cast<PVByteArray>(pvScalarArray);
         ByteArrayData data;
         pv->get(0,count,data);
@@ -264,6 +267,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
             ind++;
         }
         break;
+    }
     case DBF_UCHAR: {
         PVUByteArrayPtr pv = static_pointer_cast<PVUByteArray>(pvScalarArray);
         UByteArrayData data;
@@ -277,7 +281,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
         }
         break;
     }
-    case DBF_SHORT:
+    case DBF_SHORT: {
         PVShortArrayPtr pv = static_pointer_cast<PVShortArray>(pvScalarArray);
         ShortArrayData data;
         pv->get(0,count,data);
@@ -289,6 +293,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
             ind++;
         }
         break;
+    }
     case DBF_USHORT: {
         PVUShortArrayPtr pv = static_pointer_cast<PVUShortArray>(pvScalarArray);
         UShortArrayData data;
@@ -302,7 +307,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
         }
         break;
     }
-    case DBF_LONG:
+    case DBF_LONG: {
         PVIntArrayPtr pv = static_pointer_cast<PVIntArray>(pvScalarArray);
         IntArrayData data;
         pv->get(0,count,data);
@@ -314,6 +319,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
             ind++;
         }
         break;
+    }
     case DBF_ULONG: {
         PVUIntArrayPtr pv = static_pointer_cast<PVUIntArray>(pvScalarArray);
         UIntArrayData data;

@@ -414,6 +414,15 @@ PVByteArrayPtr V3ValueArrayCreate::createByteArray(
     return PVByteArrayPtr(new V3ByteArray(parent,scalar,dbAddr,shareData));
 }
 
+PVUByteArrayPtr V3ValueArrayCreate::createUByteArray(
+    PVStructurePtr const & parent,
+    ScalarArrayConstPtr const & scalar,
+    DbAddr &dbAddr,
+    bool shareData)
+{
+    return PVUByteArrayPtr(new V3UByteArray(parent,scalar,dbAddr,shareData));
+}
+
 
 PVShortArrayPtr V3ValueArrayCreate::createShortArray(
     PVStructurePtr const & parent,
@@ -424,6 +433,15 @@ PVShortArrayPtr V3ValueArrayCreate::createShortArray(
     return PVShortArrayPtr(new V3ShortArray(parent,scalar,dbAddr,shareData));
 }
 
+PVUShortArrayPtr V3ValueArrayCreate::createUShortArray(
+    PVStructurePtr const & parent,
+    ScalarArrayConstPtr const & scalar,
+    DbAddr &dbAddr,
+    bool shareData)
+{
+    return PVUShortArrayPtr(new V3UShortArray(parent,scalar,dbAddr,shareData));
+}
+
 PVIntArrayPtr V3ValueArrayCreate::createIntArray(
     PVStructurePtr const & parent,
     ScalarArrayConstPtr const & scalar,
@@ -431,6 +449,15 @@ PVIntArrayPtr V3ValueArrayCreate::createIntArray(
     bool shareData)
 {
     return PVIntArrayPtr(new V3IntArray(parent,scalar,dbAddr,shareData));
+}
+
+PVUIntArrayPtr V3ValueArrayCreate::createUIntArray(
+    PVStructurePtr const & parent,
+    ScalarArrayConstPtr const & scalar,
+    DbAddr &dbAddr,
+    bool shareData)
+{
+    return PVUIntArrayPtr(new V3UIntArray(parent,scalar,dbAddr,shareData));
 }
 
 PVFloatArrayPtr V3ValueArrayCreate::createFloatArray(
