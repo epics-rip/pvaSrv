@@ -183,7 +183,7 @@ MonitorElementPtr  V3ChannelMonitor::poll()
     return elements[ind];
 }
 
-void V3ChannelMonitor::release(MonitorElementPtr & element)
+void V3ChannelMonitor::release(MonitorElementPtr const & element)
 {
    if(element!=elements[nextReleaseUsed++]) {
         throw std::logic_error(
