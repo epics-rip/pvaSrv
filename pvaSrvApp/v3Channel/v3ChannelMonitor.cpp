@@ -129,7 +129,7 @@ bool V3ChannelMonitor::init(
     event.wait();
     Monitor::shared_pointer thisPointer = dynamic_pointer_cast<Monitor>(getPtrSelf());
     monitorRequester->monitorConnect(
-       Status::Ok,
+       Status::OK,
        thisPointer,
        saveStructure);
     return true;
@@ -165,13 +165,13 @@ Status V3ChannelMonitor::start()
         bitSet->clear();
     }
     caV3Monitor.get()->start();
-    return Status::Ok;
+    return Status::OK;
 }
 
 Status V3ChannelMonitor::stop()
 {
     caV3Monitor.get()->stop();
-    return Status::Ok;
+    return Status::OK;
 }
 
 MonitorElementPtr  V3ChannelMonitor::poll()

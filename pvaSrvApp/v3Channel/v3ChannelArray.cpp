@@ -114,7 +114,7 @@ bool V3ChannelArray::init(PVStructure::shared_pointer const &pvRequest)
     }
     pvScalarArray = getPVDataCreate()->createPVScalarArray(scalarType);
     channelArrayRequester->channelArrayConnect(
-        Status::Ok,
+        Status::OK,
         getPtrSelf(),
         pvScalarArray);
     return true;
@@ -148,7 +148,7 @@ void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
     if((offset+count)>length) count = length -offset;
     if(count<0) {
         dbScanUnlock(dbAddr.precord);
-        channelArrayRequester->getArrayDone(Status::Ok);
+        channelArrayRequester->getArrayDone(Status::OK);
         if(lastRequest) destroy();
         return;
     }
@@ -221,7 +221,7 @@ void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
     }
     }
     dbScanUnlock(dbAddr.precord);
-    channelArrayRequester->getArrayDone(Status::Ok);
+    channelArrayRequester->getArrayDone(Status::OK);
     if(lastRequest) destroy();
 }
 
@@ -232,7 +232,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
     if((offset+count)>no_elements) count = no_elements - count;
     if(count<=0) {
         dbScanUnlock(dbAddr.precord);
-        channelArrayRequester->getArrayDone(Status::Ok);
+        channelArrayRequester->getArrayDone(Status::OK);
         if(lastRequest) destroy();
         return;
     }
@@ -383,7 +383,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
     }
     db_post_events(dbAddr.precord,dbAddr.pfield,DBE_VALUE | DBE_LOG);
     dbScanUnlock(dbAddr.precord);
-    channelArrayRequester->getArrayDone(Status::Ok);
+    channelArrayRequester->getArrayDone(Status::OK);
     if(lastRequest) destroy();
 }
 
@@ -399,7 +399,7 @@ void V3ChannelArray::setLength(bool lastRequest,int length,int capacity)
         put_info(&dbAddr, length);
     }
     dbScanUnlock(dbAddr.precord);
-    channelArrayRequester->setLengthDone(Status::Ok);
+    channelArrayRequester->setLengthDone(Status::OK);
     if(lastRequest) destroy();
 }
 

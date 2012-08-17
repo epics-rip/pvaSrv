@@ -88,7 +88,7 @@ bool V3ChannelGet::init(PVStructure::shared_pointer const &pvRequest)
        pn->usrPvt = this;
     }
     channelGetRequester->channelGetConnect(
-       Status::Ok,
+       Status::OK,
        getPtrSelf(),
        pvStructure,
        bitSet);

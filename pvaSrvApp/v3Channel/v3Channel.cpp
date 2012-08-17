@@ -85,7 +85,7 @@ void V3Channel::getField(GetFieldRequester::shared_pointer const &requester,
         String subField)
 {
     if(recordField!=0) {
-        requester->getDone(Status::Ok,recordField);
+        requester->getDone(Status::OK,recordField);
         return;
     }
     Status status(Status::STATUSTYPE_ERROR,

@@ -111,7 +111,7 @@ printf("pvStructure\n%s\n",buffer.c_str());
     int numFields = pvStructure->getNumberFields();
     bitSet.reset(new BitSet(numFields));
     channelPutRequester->channelPutConnect(
-       Status::Ok,
+       Status::OK,
        getPtrSelf(),
        pvStructure,
        bitSet);
@@ -185,7 +185,7 @@ void V3ChannelPut::get()
     }
     dbScanUnlock(dbAddr.precord);
     }
-    channelPutRequester->getDone(Status::Ok);
+    channelPutRequester->getDone(Status::OK);
 }
 
 void V3ChannelPut::lock()
