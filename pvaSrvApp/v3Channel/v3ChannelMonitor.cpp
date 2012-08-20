@@ -139,7 +139,7 @@ String V3ChannelMonitor::getRequesterName() {
     return monitorRequester.get()->getRequesterName();
 }
 
-void V3ChannelMonitor::message(String message,MessageType messageType)
+void V3ChannelMonitor::message(String const &message,MessageType messageType)
 {
     monitorRequester->message(message,messageType);
 }

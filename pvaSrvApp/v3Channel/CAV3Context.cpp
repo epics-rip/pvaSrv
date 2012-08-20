@@ -98,7 +98,7 @@ void CAV3Context::release()
     referenceCount--;
 }
 
-void CAV3Context::exception(String message)
+void CAV3Context::exception(String const &message)
 {
     Lock xx(mutex);
     requester->message(message,errorMessage);

@@ -99,7 +99,7 @@ String V3ChannelGet::getRequesterName() {
     return channelGetRequester->getRequesterName();
 }
 
-void V3ChannelGet::message(String message,MessageType messageType)
+void V3ChannelGet::message(String const &message,MessageType messageType)
 {
     channelGetRequester->message(message,messageType);
 }

@@ -80,7 +80,7 @@ String V3ChannelProcess::getRequesterName() {
     return channelProcessRequester->getRequesterName();
 }
 
-void V3ChannelProcess::message(String message,MessageType messageType)
+void V3ChannelProcess::message(String const &message,MessageType messageType)
 {
     channelProcessRequester->message(message,messageType);
 }

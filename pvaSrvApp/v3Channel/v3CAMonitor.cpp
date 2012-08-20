@@ -251,7 +251,7 @@ void CAV3MonitorPvt::stop()
 
 CAV3Monitor::CAV3Monitor(
     CAV3MonitorRequesterPtr const &requester,
-    String pvName,V3Type v3Type)
+    String const &pvName,V3Type v3Type)
 : pImpl(new CAV3MonitorPvt(requester,pvName,v3Type))
 {
 //printf("CAV3Monitor::CAV3Monitor\n");

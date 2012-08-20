@@ -68,7 +68,7 @@ class CAV3Monitor : private epics::pvData::NoDefaultMethods {
 public:
     CAV3Monitor(
         CAV3MonitorRequesterPtr const &requester,
-        epics::pvData::String pvName,
+        epics::pvData::String const &pvName,
         V3Type v3Type);
     ~CAV3Monitor();
     CAV3Data & getData();

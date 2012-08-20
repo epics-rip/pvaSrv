@@ -48,13 +48,13 @@ public:
     V3ChannelProvider();
     virtual ~V3ChannelProvider();
     virtual epics::pvAccess::ChannelFind::shared_pointer channelFind(
-        epics::pvData::String const & channelName,
+        epics::pvData::String const &channelName,
         epics::pvAccess::ChannelFindRequester::shared_pointer const & channelFindRequester);
     virtual epics::pvAccess::Channel::shared_pointer createChannel(
-        epics::pvData::String const & channelName,
+        epics::pvData::String const &channelName,
         epics::pvAccess::ChannelRequester::shared_pointer  const &channelRequester,
         short priority,
-        epics::pvData::String const & address);
+        epics::pvData::String const &address);
 };
 
 class V3Channel :
@@ -72,7 +72,7 @@ public:
     void init();
     virtual void getField(
         epics::pvAccess::GetFieldRequester::shared_pointer const &requester,
-        epics::pvData::String const & subField);
+        epics::pvData::String const &subField);
     virtual epics::pvAccess::ChannelProcess::shared_pointer createChannelProcess(
         epics::pvAccess::ChannelProcessRequester::shared_pointer const &channelProcessRequester,
         epics::pvData::PVStructure::shared_pointer const &pvRequest);
@@ -109,7 +109,7 @@ public:
     bool init();
     virtual epics::pvData::String getRequesterName();
     virtual void message(
-        epics::pvData::String message,
+        epics::pvData::String const &message,
         epics::pvData::MessageType messageType);
     virtual void destroy();
     virtual void process(bool lastRequest);
@@ -143,7 +143,7 @@ public:
     bool init(epics::pvData::PVStructure::shared_pointer const & pvRequest);
     virtual epics::pvData::String getRequesterName();
     virtual void message(
-        epics::pvData::String message,
+        epics::pvData::String const &message,
         epics::pvData::MessageType messageType);
     virtual void destroy();
     virtual void get(bool lastRequest);
@@ -183,7 +183,7 @@ public:
     bool init(epics::pvData::PVStructure::shared_pointer const & pvRequest);
     virtual epics::pvData::String getRequesterName();
     virtual void message(
-        epics::pvData::String message,
+        epics::pvData::String const &message,
         epics::pvData::MessageType messageType);
     virtual void destroy();
     virtual void put(bool lastRequest);
@@ -226,7 +226,7 @@ public:
     bool init(epics::pvData::PVStructure::shared_pointer const &  pvRequest);
     virtual epics::pvData::String getRequesterName();
     virtual void message(
-        epics::pvData::String message,
+        epics::pvData::String const &message,
         epics::pvData::MessageType messageType);
     virtual void destroy();
     virtual epics::pvData::Status start();

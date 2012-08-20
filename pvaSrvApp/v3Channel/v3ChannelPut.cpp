@@ -122,7 +122,7 @@ String V3ChannelPut::getRequesterName() {
     return channelPutRequester->getRequesterName();
 }
 
-void V3ChannelPut::message(String message,MessageType messageType)
+void V3ChannelPut::message(String const &message,MessageType messageType)
 {
     channelPutRequester->message(message,messageType);
 }

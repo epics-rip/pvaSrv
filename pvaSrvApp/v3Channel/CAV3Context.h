@@ -33,7 +33,7 @@ public:
     ~CAV3Context();
     void release();
     void stop();
-    void exception(epics::pvData::String message);
+    void exception(epics::pvData::String const &message);
     void checkContext();
 private:
     std::list<epicsThreadId> auxThreadList ;

@@ -69,7 +69,7 @@ public:
     {
         return name;
     }
-    virtual void message(String message,MessageType messageType)
+    virtual void message(String const &message,MessageType messageType)
     {
         String typeName = getMessageTypeName(messageType);
         printf("ChannelRequester message %s messageType %s\n",
