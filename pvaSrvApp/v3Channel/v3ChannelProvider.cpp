@@ -34,7 +34,7 @@ V3ChannelProvider::~V3ChannelProvider()
 }
 
 ChannelFind::shared_pointer V3ChannelProvider::channelFind(
-    String channelName,
+    String const & channelName,
     ChannelFindRequester::shared_pointer const &channelFindRequester)
 {
     struct dbAddr dbAddr;
@@ -44,10 +44,10 @@ ChannelFind::shared_pointer V3ChannelProvider::channelFind(
 }
 
 Channel::shared_pointer V3ChannelProvider::createChannel(
-    String channelName,
+    String const & channelName,
     ChannelRequester::shared_pointer  const &channelRequester,
     short priority,
-    String address)
+    String const & address)
 {
 printf("V3ChannelProvider::createChannel\n");
     struct dbAddr dbAddr;

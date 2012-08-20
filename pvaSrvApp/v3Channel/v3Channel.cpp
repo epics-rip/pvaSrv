@@ -26,7 +26,7 @@ using namespace epics::pvAccess;
 V3Channel::V3Channel(
     ChannelBaseProvider::shared_pointer const & provider,
         ChannelRequester::shared_pointer const & requester,
-        String name,
+        String const & name,
         std::auto_ptr<DbAddr> dbAddr
 )
 :  ChannelBase(provider,requester,name),
@@ -82,7 +82,7 @@ V3Channel::~V3Channel()
 }
 
 void V3Channel::getField(GetFieldRequester::shared_pointer const &requester,
-        String subField)
+        String const & subField)
 {
     if(recordField!=0) {
         requester->getDone(Status::OK,recordField);

@@ -48,13 +48,13 @@ public:
     V3ChannelProvider();
     virtual ~V3ChannelProvider();
     virtual epics::pvAccess::ChannelFind::shared_pointer channelFind(
-        epics::pvData::String channelName,
+        epics::pvData::String const & channelName,
         epics::pvAccess::ChannelFindRequester::shared_pointer const & channelFindRequester);
     virtual epics::pvAccess::Channel::shared_pointer createChannel(
-        epics::pvData::String channelName,
+        epics::pvData::String const & channelName,
         epics::pvAccess::ChannelRequester::shared_pointer  const &channelRequester,
         short priority,
-        epics::pvData::String address);
+        epics::pvData::String const & address);
 };
 
 class V3Channel :
@@ -65,14 +65,14 @@ public:
     V3Channel(
         epics::pvAccess::ChannelBaseProvider::shared_pointer const & channelProvider,
         epics::pvAccess::ChannelRequester::shared_pointer const & requester,
-        epics::pvData::String name,
+        epics::pvData::String const & name,
         std::auto_ptr<DbAddr> addr
         );
     virtual ~V3Channel();
     void init();
     virtual void getField(
         epics::pvAccess::GetFieldRequester::shared_pointer const &requester,
-        epics::pvData::String subField);
+        epics::pvData::String const & subField);
     virtual epics::pvAccess::ChannelProcess::shared_pointer createChannelProcess(
         epics::pvAccess::ChannelProcessRequester::shared_pointer const &channelProcessRequester,
         epics::pvData::PVStructure::shared_pointer const &pvRequest);
