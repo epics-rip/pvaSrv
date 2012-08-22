@@ -1,8 +1,11 @@
 /* CAV3Context.h */
 /**
  * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvDataCPP is distributed subject to a Software License Agreement found
+ * EPICS pvData is distributed subject to a Software License Agreement found
  * in file LICENSE that is included with this distribution.
+ */
+/**
+ * @author mrk
  */
 /* Marty Kraimer 2011.03 
  * This creates a CAV3 context the first time a thread calls 

@@ -12,13 +12,15 @@ DBD += pvServiceChannelRegister.dbd
 INC += channelBase.h
 INC += pvServiceProvider.h
 INC += service.h
-INC += ezchannelRPC.h
 LIBSRCS += channelBase.cpp
 LIBSRCS += channelBaseProvider.cpp
 LIBSRCS += pvServiceProvider.cpp
 LIBSRCS += pvServiceChannelRegister.cpp
 LIBSRCS += pvServiceChannelCTX.cpp
 LIBSRCS += serviceChannelRPC.cpp
+
+SRC_DIRS += $(IOC)/ezchannelRPC
+INC += ezchannelRPC.h
 LIBSRCS += ezchannelRPC.cpp
 
 SRC_DIRS += $(IOC)/v3Channel
@@ -69,8 +71,8 @@ LIBSRCS += v3ChannelMonitor.cpp
 #LIBSRCS += periodicScanner.cpp
 #LIBSRCS += scanField.cpp
 
-SRC_DIRS += $(IOC)/monitor
-INC += monitorAlgorithm.h
+#SRC_DIRS += $(IOC)/monitor
+#INC += monitorAlgorithm.h
 
 #SRC_DIRS += $(IOC)/pvCopy
 #INC += pvCopy.h

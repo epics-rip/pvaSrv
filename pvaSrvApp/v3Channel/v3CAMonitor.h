@@ -1,8 +1,11 @@
 /* v3CAMonitor.h */
 /**
  * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvDataCPP is distributed subject to a Software License Agreement found
+ * EPICS pvData is distributed subject to a Software License Agreement found
  * in file LICENSE that is included with this distribution.
+ */
+/**
+ * @author mrk
  */
 /* Marty Kraimer 2011.03 */
 /* This connects to a V3 record and calls V3CA to monitor data.
@@ -14,7 +17,6 @@
 
 #include <epicsTime.h>
 
-#include <pv/noDefaultMethods.h>
 #include <pv/pvIntrospect.h>
 #include <pv/requester.h>
 #include <pv/lock.h>

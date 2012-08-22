@@ -1,32 +1,22 @@
 /* v3Channel.h */
 /**
  * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvDataCPP is distributed subject to a Software License Agreement found
+ * EPICS pvData is distributed subject to a Software License Agreement found
  * in file LICENSE that is included with this distribution.
+ */
+/**
+ * @author mrk
  */
 #ifndef V3CHANNEL_H
 #define V3CHANNEL_H
-#include <string>
-#include <cstring>
-#include <stdexcept>
-#include <memory>
 
 #include <dbAccess.h>
 #include <dbNotify.h>
-
-#include <pv/status.h>
-#include <pv/monitor.h>
-#include <pv/pvIntrospect.h>
-#include <pv/pvData.h>
-#include <pv/noDefaultMethods.h>
-#include <pv/pvEnumerated.h>
-#include <pv/thread.h>
-#include <pv/event.h>
-#include <pv/pvAccess.h>
-#include <pv/lock.h>
-
 #include <pv/channelBase.h>
 #include <pv/v3CAMonitor.h>
+#include <pv/thread.h>
+#include <pv/event.h>
+
 
 namespace epics { namespace pvIOC { 
 

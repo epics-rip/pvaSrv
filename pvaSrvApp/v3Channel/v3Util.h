@@ -1,11 +1,15 @@
 /* v3Util.h */
 /**
  * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvDataCPP is distributed subject to a Software License Agreement found
+ * EPICS pvData is distributed subject to a Software License Agreement found
  * in file LICENSE that is included with this distribution.
+ */
+/**
+ * @author mrk
  */
 #ifndef V3UTIL_H
 #define V3UTIL_H
+#include <pv/v3Channel.h>
 #include <string>
 #include <cstring>
 
@@ -20,7 +24,6 @@
 #include <pv/pvIntrospect.h>
 #include <pv/pvData.h>
 
-#include <pv/v3Channel.h>
 
 namespace epics { namespace pvIOC { 
 
