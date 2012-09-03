@@ -72,8 +72,8 @@ bool V3ChannelGet::init(PVStructure::shared_pointer const &pvRequest)
     bitSet.reset(new BitSet(numFields));
     if((propertyMask&V3Util::processBit)!=0) {
        process = true;
-       pNotify = std::auto_ptr<struct putNotify>(new (struct putNotify)());
-       notifyAddr = std::auto_ptr<DbAddr>(new DbAddr());
+       pNotify.reset(new (struct putNotify)());
+       notifyAddr.reset(new DbAddr());
        memcpy(notifyAddr.get(),&dbAddr,sizeof(DbAddr));
        DbAddr *paddr = notifyAddr.get();
        struct dbCommon *precord = paddr->precord;

@@ -106,7 +106,7 @@ public:
     virtual void lock();
     virtual void unlock();
 private:
-    V3ChannelProcess::shared_pointer getPtrSelf()
+    shared_pointer getPtrSelf()
     {
         return shared_from_this();
     }
@@ -140,7 +140,7 @@ public:
     virtual void lock();
     virtual void unlock();
 private:
-    V3ChannelGet::shared_pointer getPtrSelf()
+    shared_pointer getPtrSelf()
     {
         return shared_from_this();
     }
@@ -181,7 +181,7 @@ public:
     virtual void lock();
     virtual void unlock();
 private:
-    V3ChannelPut::shared_pointer getPtrSelf()
+    shared_pointer getPtrSelf()
     {
         return shared_from_this();
     }
@@ -231,7 +231,7 @@ public:
     virtual void lock();
     virtual void unlock();
 private:
-    V3ChannelMonitor::shared_pointer getPtrSelf()
+    shared_pointer getPtrSelf()
     {
         return shared_from_this();
     }
@@ -278,7 +278,7 @@ public:
     virtual void lock();
     virtual void unlock();
 private:
-    V3ChannelArray::shared_pointer getPtrSelf()
+    shared_pointer getPtrSelf()
     {
         return shared_from_this();
     }

@@ -57,7 +57,7 @@ V3ChannelMonitor::V3ChannelMonitor(
   gotEvent(false),
   v3Type(v3Byte),
   queueSize(2),
-  caV3Monitor(std::auto_ptr<CAV3Monitor>()),
+  caV3Monitor(),
   numberFree(queueSize),
   numberUsed(0),
   nextGetFree(0),
@@ -126,7 +126,7 @@ bool V3ChannelMonitor::init(
         }
     }
     String pvName = v3Channel->getChannelName();
-    caV3Monitor = std::auto_ptr<CAV3Monitor>(
+    caV3Monitor.reset(
         new CAV3Monitor(getPtrSelf(), pvName, v3Type));
     caV3Monitor->connect();
     event.wait();
