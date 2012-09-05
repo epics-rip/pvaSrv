@@ -83,7 +83,7 @@ printf("propertyMask %x\n",propertyMask);
             propertyMask,
             dbAddr));
     if(pvStructure.get()==0) return 0;
-buffer.clear();
+buffer.erase();
 pvStructure->toString(&buffer);
 printf("pvStructure\n%s\n",buffer.c_str());
     if((propertyMask&V3Util::dbPutBit)!=0) {
@@ -114,7 +114,7 @@ printf("pvStructure\n%s\n",buffer.c_str());
     int numFields = pvStructure->getNumberFields();
     bitSet.reset(new BitSet(numFields));
     channelPutRequester->channelPutConnect(
-       Status::OK,
+       Status::Ok,
        getPtrSelf(),
        pvStructure,
        bitSet);
@@ -188,7 +188,7 @@ void V3ChannelPut::get()
     }
     dbScanUnlock(dbAddr.precord);
     }
-    channelPutRequester->getDone(Status::OK);
+    channelPutRequester->getDone(Status::Ok);
 }
 
 void V3ChannelPut::lock()

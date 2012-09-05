@@ -903,7 +903,7 @@ Status  V3Util::get(
             bitSet->set(pvField->getFieldOffset());
         }
     }
-    return Status::OK;
+    return Status::Ok;
 }
 
 Status  V3Util::put(
@@ -973,7 +973,7 @@ Status  V3Util::put(
         default:
             requester->message(
                 String("Logic Error did not handle scalarType"),errorMessage);
-            return Status::OK;
+            return Status::Ok;
         }
     } else if((propertyMask&arrayValueBit)!=0) {
         // client or deserialize already handled this.
@@ -989,12 +989,12 @@ Status  V3Util::put(
         } else {
             requester->message(
                 String("Logic Error unknown enum field"),errorMessage);
-            return Status::OK;
+            return Status::Ok;
         }
     } else {
         requester->message(
             String("Logic Error unknown field to put"),errorMessage);
-            return Status::OK;
+            return Status::Ok;
     }
     dbCommon *precord = dbAddr.precord;
     dbFldDes *pfldDes = dbAddr.pfldDes;
@@ -1006,7 +1006,7 @@ Status  V3Util::put(
     if(post) {
         db_post_events(precord, dbAddr.pfield, DBE_VALUE | DBE_LOG);
     }
-    return Status::OK;
+    return Status::Ok;
 }
 
 Status  V3Util::putField(
@@ -1087,7 +1087,7 @@ Status  V3Util::putField(
         default:
             requester->message(
                 String("Logic Error did not handle scalarType"),errorMessage);
-            return Status::OK;
+            return Status::Ok;
         }
     } else if((propertyMask&enumValueBit)!=0) {
         PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
@@ -1097,7 +1097,7 @@ Status  V3Util::putField(
     } else {
         requester->message(
                 String("Logic Error unknown field to put"),errorMessage);
-        return Status::OK;
+        return Status::Ok;
     }
     long status = dbPutField(&dbAddr,dbrType,pbuffer,1);
     if(status!=0) {
@@ -1106,7 +1106,7 @@ Status  V3Util::putField(
         String message(buf);
         requester->message(message,warningMessage);
     }
-    return Status::OK;
+    return Status::Ok;
 }
 
 ScalarType V3Util::getScalarType(Requester::shared_pointer const &requester, DbAddr &dbAddr)
