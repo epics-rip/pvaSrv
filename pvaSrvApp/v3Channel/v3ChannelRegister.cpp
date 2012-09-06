@@ -51,7 +51,7 @@ private:
 V3ChannelRun::V3ChannelRun()
 : event(),
   ctx(ServerContextImpl::create()),
-  thread(new Thread(String("v3ChannelServer"),lowerPriority,this))
+  thread(new Thread(String("v3ChannelServer"),lowerPriority,this,epicsThreadStackBig))
 {}
 
 V3ChannelRun::~V3ChannelRun()
@@ -80,7 +80,7 @@ static V3ChannelRun *myRun = 0;
 static const iocshFuncDef startV3ChannelFuncDef = {
     "startV3Channel", 0, 0
 };
-static void startV3ChannelCallFunc(const iocshArgBuf *args)
+extern "C" void startV3Channel(const iocshArgBuf *args)
 {
     if(myRun!=0) {
         printf("server already started\n");
@@ -92,7 +92,7 @@ static void startV3ChannelCallFunc(const iocshArgBuf *args)
 static const iocshFuncDef stopV3ChannelFuncDef = {
     "stopV3Channel", 0, 0
 };
-static void stopV3ChannelCallFunc(const iocshArgBuf *args)
+extern "C" void stopV3Channel(const iocshArgBuf *args)
 {
    printf("stopPVAccessServer\n");
    if(myRun!=0) delete myRun;
@@ -104,7 +104,7 @@ static void startV3ChannelRegister(void)
     static int firstTime = 1;
     if (firstTime) {
         firstTime = 0;
-        iocshRegister(&startV3ChannelFuncDef, startV3ChannelCallFunc);
+        iocshRegister(&startV3ChannelFuncDef, startV3Channel);
     }
 }
 
@@ -113,7 +113,7 @@ static void stopV3ChannelRegister(void)
     static int firstTime = 1;
     if (firstTime) {
         firstTime = 0;
-        iocshRegister(&stopV3ChannelFuncDef, stopV3ChannelCallFunc);
+        iocshRegister(&stopV3ChannelFuncDef, stopV3Channel);
     }
 }
 
