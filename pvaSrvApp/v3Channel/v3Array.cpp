@@ -230,11 +230,7 @@ void V3ValueArray<T>::deserialize(ByteBuffer *pbuffer,
         size_t maxIndex = std::min(length-i, (pbuffer->getRemaining()/sizeof(T)))+i;
         if(shareV3Data) dbScanLock(dbAddr.precord);
         for(; i<maxIndex; i++) {
-#if defined(__GNUC__) && __GNUC__ < 3
-        	pvalue[i] = pbuffer->get(pvalue);
-#else
-            pvalue[i] = pbuffer->get<T>();
-#endif
+            pvalue[i] = pbuffer->GET(T);
         }
         if(shareV3Data) dbScanUnlock(dbAddr.precord);
         if(i>=length) break;
@@ -266,11 +262,7 @@ void V3ValueArray<T>::serialize(ByteBuffer *pbuffer,
     while(true) {
         size_t maxIndex = std::min(end-i, (pbuffer->getRemaining()/sizeof(T)))+i;
         for(; i<maxIndex; i++)
-#if defined(__GNUC__) && __GNUC__ < 3
         	pbuffer->put(pvalue[i]);
-#else
-    		pbuffer->put<T>(pvalue[i]);
-#endif
         if(i>=end) break;
         pflusher->flushSerializeBuffer();
     }
