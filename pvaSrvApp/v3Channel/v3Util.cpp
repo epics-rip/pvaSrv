@@ -459,7 +459,7 @@ PVStructurePtr V3Util::createPVStructure(
     FieldConstPtrArray fields;
     fieldNames.reserve(numberFields);
     fields.reserve(numberFields);
-    fieldNames.push_back(pvField->getFieldName());
+    fieldNames.push_back("value");
     fields.push_back(pvField->getField());
     if((propertyMask&timeStampBit)!=0) {
         fieldNames.push_back("timeStamp");
@@ -510,8 +510,8 @@ PVStructurePtr V3Util::createPVStructure(
     }
     StructureConstPtr structure = fieldCreate->createStructure(fieldNames,fields);
     PVStructurePtr pvParent = getPVDataCreate()->createPVStructure(structure);
-    PVFieldPtrArray pvFields = pvParent->getPVFields();
-    pvFields[0]->replacePVField(pvField);
+    // TODO a hack
+    const_cast<PVFieldPtrArray&>(pvParent->getPVFields())[0] = pvField;
     return pvParent;
 }
 
