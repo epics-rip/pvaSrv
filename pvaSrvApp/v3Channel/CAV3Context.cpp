@@ -64,20 +64,28 @@ CAV3Context::~CAV3Context()
 {
 }
 
+// TODO commented out exceptions to avoid SIGSEGs (to reproduce: pvget -m counter01 and then CTRL+C the pvget)
 void CAV3Context::stop()
 {
     epicsThreadId id = epicsThreadGetIdSelf();
     if(id!=threadId) {
-        throw std::logic_error(String(
-           "CAV3Context::stop not same thread"));
+    	printf("CAV3Context::stop not same thread\n");
+    	return;
+        //throw std::logic_error(String(
+        //   "CAV3Context::stop not same thread"));
     }
     if(referenceCount!=0) {
-        throw std::logic_error(String(
-           "CAV3Context::stop referenceCount != 0"));
+    	printf("CAV3Context::stop referenceCount != 0\n");
+    	return;
+        //throw std::logic_error(String(
+        //   "CAV3Context::stop referenceCount != 0"));
     }
-    CAV3ContextCreate::erase(threadId);
-    ca_context_destroy();
-    delete this;
+    else
+    {
+        CAV3ContextCreate::erase(threadId);
+        ca_context_destroy();
+        delete this;
+    }
 }
 
 typedef std::list<epicsThreadId>::iterator threadListIter;
