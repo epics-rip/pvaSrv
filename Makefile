@@ -6,8 +6,9 @@ DIRS += configure
 DIRS += pvIocApp
 pvIocApp_DEPEND_DIRS = configure
 
-#In order to build testApp configure/RELEASE must change
-#NT=/home/mrk/hg/alphaCPP/normativeTypes to point to a working version of normativeTypes
+DIRS += exampleApp
+exampleApp_DEPEND_DIRS = pvIocApp
+
 DIRS += testApp
 testApp_DEPEND_DIRS = pvIocApp
 
