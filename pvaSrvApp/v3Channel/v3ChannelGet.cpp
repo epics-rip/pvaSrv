@@ -108,13 +108,11 @@ void V3ChannelGet::message(String const &message,MessageType messageType)
 }
 
 void V3ChannelGet::destroy() {
-printf("V3ChannelGet::destroy\n");
     v3Channel->removeChannelGet(getPtrSelf());
 }
 
 void V3ChannelGet::get(bool lastRequest)
 {
-printf("V3ChannelGet::get lastRequest %s\n",(lastRequest ? "true" : "false"));
     if(process) {
         epicsUInt8 value = 1;
         pNotify.get()->pbuffer = &value;
@@ -140,7 +138,6 @@ printf("V3ChannelGet::get lastRequest %s\n",(lastRequest ? "true" : "false"));
     }
     
     lock.unlock();
-printf("V3ChannelGet::get calling getDone\n");
     channelGetRequester->getDone(status);
     if(lastRequest) destroy();
 }
