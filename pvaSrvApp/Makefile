@@ -40,6 +40,12 @@ LIBSRCS += v3ChannelArray.cpp
 LIBSRCS += v3ChannelRegister.cpp
 LIBSRCS += v3ChannelMonitor.cpp
 
+SRC_DIRS += $(IOC)/channelProviderLocal
+DBD += channelProviderLocal.dbd
+INC += channelProviderLocal.h
+LIBSRCS += channelProviderLocal.cpp
+LIBSRCS += channelProviderLocalRegister.cpp
+
 #SRC_DIRS += $(IOC)/support
 #INC += support.h
 #LIBSRCS += support.cpp
