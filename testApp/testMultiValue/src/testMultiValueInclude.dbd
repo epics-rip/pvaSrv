@@ -1,0 +1,4 @@
+include "base.dbd"
+include "v3Channel.dbd"
+include "channelProviderLocal.dbd"
+include "createMultiValueChannel.dbd"
