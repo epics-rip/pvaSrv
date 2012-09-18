@@ -94,13 +94,14 @@ V3ValueArray<T>::V3ValueArray(
 {
     size_t capacity = dbAddr.no_elements;
     value->reserve(capacity);
+    value->resize(capacity);
     if(shareV3Data) {
         parent->message("shareV3Data not implemented",warningMessage);
     }
     size_t length = getV3Length();
     T* v3data = static_cast<T *>(dbAddr.pfield);
     T * data = get();
-    for(size_t i=0; i<capacity; i++) data[i] = v3data[i];
+    for(size_t i=0; i<length; i++) data[i] = v3data[i];
     PVArray::setCapacityLength(capacity,length);
     PVArray::setCapacityMutable(false);
 }
