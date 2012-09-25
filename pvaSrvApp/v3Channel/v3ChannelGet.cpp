@@ -67,7 +67,7 @@ bool V3ChannelGet::init(PVStructure::shared_pointer const &pvRequest)
         V3Util::createPVStructure(
              channelGetRequester, propertyMask, dbAddr));
     if(pvStructure.get()==0) return 0;
-    V3Util::getPropertyData( channelGetRequester,propertyMask,dbAddr,pvStructure);
+    V3Util::getPropertyData(channelGetRequester,propertyMask,dbAddr,pvStructure);
     int numFields = pvStructure->getNumberFields();
     bitSet.reset(new BitSet(numFields));
     if((propertyMask&V3Util::processBit)!=0) {

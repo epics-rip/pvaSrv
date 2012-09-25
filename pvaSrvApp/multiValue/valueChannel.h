@@ -32,18 +32,21 @@ class ValueChannel :
 {
 public:
     POINTER_DEFINITIONS(ValueChannel);
-    virtual ~ValueChannel();
     ValueChannel(
          epics::pvData::RequesterPtr const &requester,
          epics::pvAccess::ChannelProvider::shared_pointer const &channelProvider,
          epics::pvData::String const &channelName);
+    virtual ~ValueChannel();
     void connect();
-    bool waitConnect();
+    virtual void destroy();
+    epics::pvData::Status waitConnect();
     epics::pvData::PVFieldPtr getValue();
-    void get();
-    bool waitGet();
-    void getTimeStamp(epics::pvData::TimeStamp const &timeStamp);
-    void getAlarm(epics::pvData::Alarm const &alarm);
+    epics::pvData::Status get();
+    epics::pvData::Status waitGet();
+    epics::pvData::Status getTimeStamp(
+        epics::pvData::TimeStamp &timeStamp);
+    epics::pvData::Status getAlarm(
+        epics::pvData::Alarm &alarm);
     virtual epics::pvData::String getRequesterName();
     virtual void message(
         epics::pvData::String const & message,
@@ -68,9 +71,12 @@ private:
     epics::pvData::RequesterPtr requester;
     epics::pvAccess::ChannelProvider::shared_pointer channelProvider;
     epics::pvData::String channelName;
+    bool isConnected;
+    epics::pvData::Status status;
+    epics::pvData::PVStructurePtr getRequest;
     epics::pvAccess::Channel::shared_pointer channel;
     epics::pvAccess::ChannelGet::shared_pointer channelGet;
-    epics::pvAccess::ChannelPut::shared_pointer channelPut;
+    epics::pvData::PVStructurePtr pvGetStructure;
     epics::pvData::Mutex mutex;
     epics::pvData::Event event;
 };

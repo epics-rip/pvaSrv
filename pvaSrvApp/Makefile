@@ -47,14 +47,14 @@ LIBSRCS += channelProviderLocal.cpp
 LIBSRCS += channelProviderLocalRegister.cpp
 
 SRC_DIRS += $(IOC)/multiValue
-DBD += createMultiValueChannel.dbd
-INC += multiValueChannel.h
+DBD += createMultiValue.dbd
+INC += multiValue.h
 INC += valueChannel.h
-INC += createMultiValueChannel.h
-LIBSRCS += multiValueChannel.cpp
-LIBSRCS += createMultiValueChannel.cpp
 LIBSRCS += valueChannel.cpp
-LIBSRCS += createMultiValueChannelRegister.cpp
+LIBSRCS += createMultiValueRegister.cpp
+LIBSRCS += multiValueChannelProvider.cpp
+LIBSRCS += multiValueChannel.cpp
+LIBSRCS += multiValueChannelGet.cpp
 
 #SRC_DIRS += $(IOC)/support
 #INC += support.h

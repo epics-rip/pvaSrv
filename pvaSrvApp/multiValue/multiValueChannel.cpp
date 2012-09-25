@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <memory>
 
-#include <pv/multiValueChannel.h>
+#include <pv/multiValue.h>
 #include <pv/channelProviderLocal.h>
 #include <pv/service.h>
 #include <pv/serverContext.h>
@@ -24,91 +24,93 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 using std::tr1::static_pointer_cast;
 
-static ChannelProviderLocalPtr localProvider;
-static ChannelFind::shared_pointer noChannelFind;
-static Channel::shared_pointer noChannel;
-
-static String multiValueProvider("multiValue");
-
-MultiValueChannel::~MultiValueChannel() {}
+static FieldCreatePtr fieldCreate = getFieldCreate();
+static StandardFieldPtr standardField = getStandardField();
+static PVDataCreatePtr pvDataCreate = getPVDataCreate();
+static StandardPVFieldPtr standardPVField = getStandardPVField();
 
 MultiValueChannel::MultiValueChannel(
-     String const &channelName,
-     ValueChannelPtrArrayPtr const &arrayValueChannel)
-: ChannelBaseProvider(multiValueProvider),
-  channelName(channelName),
-  arrayValueChannel(arrayValueChannel)
-{
-}
+    MultiValueChannelProviderPtr const & channelProvider,
+    ChannelRequester::shared_pointer const & requester)
+: ChannelBase(channelProvider,requester,channelProvider->channelName),
+  multiValueProvider(channelProvider),
+  requester(requester),
+  arrayValueChannel(new ValueChannelPtrArray())
+{}
 
-bool MultiValueChannel::connect(RequesterPtr const & requester)
+bool MultiValueChannel::create()
 {
-    return false;
+    size_t n = multiValueProvider->fieldNames->size();
+    arrayValueChannel->reserve(n);
+    for(size_t i=0; i<n; i++) {
+        ValueChannelPtr valueChannel(
+            new ValueChannel(
+                 requester,
+                 multiValueProvider->valueChannelProvider,
+                 (*multiValueProvider->valueChannelNames)[i]));
+        arrayValueChannel->push_back(valueChannel);
+    }
+    for(size_t i=0; i<n; i++) {
+        (*arrayValueChannel)[i]->connect();
+    }
+    bool allOK = true;
+    for(size_t i=0; i<n; i++) {
+        Status status = (*arrayValueChannel)[i]->waitConnect();
+        if(!status.isOK()) {
+             allOK = false;
+        }
+    }
+    if(!allOK) {
+        destroy();
+        return false;
+    }
+    FieldConstPtrArray fields;
+    fields.reserve(n+2);
+    StringArray fieldNames;
+    fieldNames.reserve(n+2);
+    fields.push_back(standardField->alarm());
+    fieldNames.push_back("alarm");
+    fields.push_back(standardField->timeStamp());
+    fieldNames.push_back("timeStamp");
+    for(size_t i=0; i<n; i++) {
+        FieldConstPtr valueField =
+            (*arrayValueChannel)[i]->getValue()->getField();
+        fields.push_back(valueField);
+        fieldNames.push_back((*multiValueProvider->fieldNames)[i]);
+    }
+    structure = fieldCreate->createStructure(fieldNames,fields);
+    return allOK;
 }
 
 void MultiValueChannel::destroy()
 {
-}
-
-ChannelFind::shared_pointer MultiValueChannel::channelFind(
-    String const & channelName,
-    ChannelFindRequester::shared_pointer const & channelFindRequester)
-{
-    return noChannelFind;
-}
-
-Channel::shared_pointer MultiValueChannel::createChannel(
-    String const & channelName,
-    ChannelRequester::shared_pointer  const & channelRequester,
-    short priority,
-    String const & address)
-{
-    return noChannel;
-}
-
-
-
-
-static void createMessage(RequesterPtr const & requester,String const &message)
-{
-    String mess("V3RecordVALS::create error ");
-    mess += message;
-    requester->message(mess,errorMessage);
-}
-
-
-bool MultiValueChannel::create(
-    RequesterPtr const & requester,
-    ChannelProvider::shared_pointer const &valueChannelProvider,
-    String const & channelName,
-    StringArrayPtr const & fieldNames,
-    StringArrayPtr const & valueChannelNames)
-{
-    static Mutex mutex;
-    Lock lock(mutex);
-    ChannelProvider::shared_pointer provider = getChannelAccess()->getProvider("local");
-    if(provider.get()==NULL) {
-       createMessage(requester,"provider local does not exist");
-       return false;
+    size_t n = arrayValueChannel->size();
+    for(size_t i=0; i<n; i++) {
+       (*arrayValueChannel)[i]->destroy();
     }
-    localProvider = static_pointer_cast<ChannelProviderLocal>(provider);
-    ValueChannelPtrArrayPtr accessPtrArrayPtr(new ValueChannelPtrArray());
-    size_t numberChannels = valueChannelNames->size();
-    accessPtrArrayPtr->reserve(numberChannels);
-    for(size_t i=0; i<numberChannels; i++)
-    {
-        String recordName = (*valueChannelNames)[i];
-        accessPtrArrayPtr->push_back(ValueChannelPtr(
-            new ValueChannel(requester,valueChannelProvider,recordName)));
-    }
-    MultiValueChannelPtr multiValueChannels(
-        new MultiValueChannel(channelName,accessPtrArrayPtr));
-    bool result = multiValueChannels->connect(requester);
-    if(!result) return false;
-    localProvider->registerProvider(channelName,multiValueChannels);
-    return true;
+    arrayValueChannel.reset();
 }
 
+void MultiValueChannel::getField(
+    GetFieldRequester::shared_pointer const &requester,
+    String const &subField)
+{
+    // for now just return structure
+    requester->getDone(Status::Ok,structure);
+}
+
+ChannelGet::shared_pointer MultiValueChannel::createChannelGet(
+    ChannelGetRequester::shared_pointer const &channelGetRequester,
+    PVStructure::shared_pointer const &pvRequest)
+{
+    MultiValueChannelPtr xxx =
+        static_pointer_cast<MultiValueChannel>(getPtrSelf());
+    MultiValueChannelGetPtr channelGet(
+        new MultiValueChannelGet(xxx,channelGetRequester));
+    bool result = channelGet->init(pvRequest);
+    if(!result) channelGet.reset();
+    return channelGet;
+}
 
 }}
 

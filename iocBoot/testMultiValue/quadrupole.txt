@@ -1,6 +1,0 @@
-channelValueProvider v3Channel
-channelName quadrupole
-channelValue
-    bfield quadrupole:BField
-    current quadrupole:Current
-    conversionPolynomial quadrupole:POLYNOMIAL

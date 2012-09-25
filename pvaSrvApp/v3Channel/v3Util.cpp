@@ -100,7 +100,7 @@ int V3Util::getProperties(
     pvField = pvRequest->getSubField(recordShareString);
     if(pvField.get()!=NULL) {
          pvShareString = pvRequest->getStringField(recordShareString);
-    } else {
+    } else if(fieldPV.get()!=NULL){
          pvField = fieldPV->getSubField(valueShareArrayString);
          if(pvField.get()!=NULL) {
              pvShareString = fieldPV->getStringField(valueShareArrayString);
@@ -405,45 +405,45 @@ PVStructurePtr V3Util::createPVStructure(
     }
     // the value is an array. Must use implementation that "wraps" V3 array 
     bool share = (propertyMask&shareArrayBit) ? true : false;
-    PVFieldPtr pvField;
+    PVFieldPtr pvValue;
     ScalarArrayConstPtr scalarArray = getFieldCreate()->createScalarArray(
          scalarType);
     V3ValueArrayCreatePtr v3ValueArrayCreate = getV3ValueArrayCreate();
     switch(scalarType) {
     case pvByte:
-       pvField = v3ValueArrayCreate->createByteArray(
+       pvValue = v3ValueArrayCreate->createByteArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
     case pvUByte:
-       pvField = v3ValueArrayCreate->createUByteArray(
+       pvValue = v3ValueArrayCreate->createUByteArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
     case pvShort:
-       pvField = v3ValueArrayCreate->createShortArray(
+       pvValue = v3ValueArrayCreate->createShortArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
     case pvUShort:
-       pvField = v3ValueArrayCreate->createUShortArray(
+       pvValue = v3ValueArrayCreate->createUShortArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
     case pvInt:
-       pvField = v3ValueArrayCreate->createIntArray(
+       pvValue = v3ValueArrayCreate->createIntArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
     case pvUInt:
-       pvField = v3ValueArrayCreate->createUIntArray(
+       pvValue = v3ValueArrayCreate->createUIntArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
     case pvFloat:
-       pvField = v3ValueArrayCreate->createFloatArray(
+       pvValue = v3ValueArrayCreate->createFloatArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
     case pvDouble:
-       pvField = v3ValueArrayCreate->createDoubleArray(
+       pvValue = v3ValueArrayCreate->createDoubleArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
     case pvString:
-       pvField = v3ValueArrayCreate->createStringArray(
+       pvValue = v3ValueArrayCreate->createStringArray(
            nullPVStructure,scalarArray,dbAddr);
        break;
     default:
@@ -456,62 +456,72 @@ PVStructurePtr V3Util::createPVStructure(
     if((propertyMask&controlBit)!=0) numberFields++;
     if((propertyMask&valueAlarmBit)!=0) numberFields++;
     StringArray fieldNames;
-    FieldConstPtrArray fields;
+    PVFieldPtrArray pvFields;
     fieldNames.reserve(numberFields);
-    fields.reserve(numberFields);
+    pvFields.reserve(numberFields);
     fieldNames.push_back("value");
-    fields.push_back(pvField->getField());
+    pvFields.push_back(pvValue);
     if((propertyMask&timeStampBit)!=0) {
         fieldNames.push_back("timeStamp");
-        fields.push_back(standardField->timeStamp());
+        pvFields.push_back(
+             pvDataCreate->createPVStructure(standardField->timeStamp()));
     }
     if((propertyMask&alarmBit)!=0) {
         fieldNames.push_back("alarm");
-        fields.push_back(standardField->alarm());
+        pvFields.push_back(
+             pvDataCreate->createPVStructure(standardField->alarm()));
     }
     if((propertyMask&displayBit)!=0) {
         fieldNames.push_back("display");
-        fields.push_back(standardField->display());
+        pvFields.push_back(
+             pvDataCreate->createPVStructure(standardField->display()));
     }
     if((propertyMask&controlBit)!=0) {
         fieldNames.push_back("control");
-        fields.push_back(standardField->control());
+        pvFields.push_back(
+             pvDataCreate->createPVStructure(standardField->control()));
     }
     if((propertyMask&valueAlarmBit)!=0) {
        fieldNames.push_back("valueAlarm");
        switch(scalarType) {
        case pvByte:
-          fields.push_back(standardField->byteAlarm());
+          pvFields.push_back(
+             pvDataCreate->createPVStructure(standardField->byteAlarm()));
           break;
        case pvUByte:
-          fields.push_back(standardField->ubyteAlarm());
+          pvFields.push_back(
+             pvDataCreate->createPVStructure(standardField->ubyteAlarm()));
           break;
        case pvShort:
-          fields.push_back(standardField->shortAlarm());
+          pvFields.push_back(
+             pvDataCreate->createPVStructure(standardField->shortAlarm()));
           break;
        case pvUShort:
-          fields.push_back(standardField->ushortAlarm());
+          pvFields.push_back(
+             pvDataCreate->createPVStructure(standardField->ushortAlarm()));
           break;
        case pvInt:
-          fields.push_back(standardField->intAlarm());
+          pvFields.push_back(
+             pvDataCreate->createPVStructure(standardField->intAlarm()));
           break;
        case pvUInt:
-          fields.push_back(standardField->uintAlarm());
+          pvFields.push_back(
+             pvDataCreate->createPVStructure(standardField->uintAlarm()));
           break;
        case pvFloat:
-          fields.push_back(standardField->floatAlarm());
+          pvFields.push_back(
+             pvDataCreate->createPVStructure(standardField->floatAlarm()));
           break;
        case pvDouble:
-          fields.push_back(standardField->doubleAlarm());
+          pvFields.push_back(
+             pvDataCreate->createPVStructure(standardField->doubleAlarm()));
           break;
        default:
           throw std::logic_error(String("Should never get here"));
        }
     }
-    StructureConstPtr structure = fieldCreate->createStructure(fieldNames,fields);
-    PVStructurePtr pvParent = getPVDataCreate()->createPVStructure(structure);
-    // TODO a hack
-    const_cast<PVFieldPtrArray&>(pvParent->getPVFields())[0] = pvField;
+    PVStructurePtr pvParent = pvDataCreate->createPVStructure(
+        fieldNames,pvFields);
     return pvParent;
 }
 

@@ -14,4 +14,4 @@ iocInit()
 
 startV3Channel
 startChannelProviderLocal
-createMultiValueChannel quadrupole.txt
+createMultiValue quadruple.txt

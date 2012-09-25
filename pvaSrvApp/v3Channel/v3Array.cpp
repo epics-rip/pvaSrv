@@ -93,7 +93,7 @@ V3ValueArray<T>::V3ValueArray(
   value(std::tr1::shared_ptr<std::vector<T> >(new std::vector<T>()))
 {
     size_t capacity = dbAddr.no_elements;
-    value->reserve(capacity);
+    value->resize(capacity);
     if(shareV3Data) {
         parent->message("shareV3Data not implemented",warningMessage);
     }
@@ -162,7 +162,7 @@ size_t V3ValueArray<T>::get(size_t offset, size_t len, PVArrayData<T> &data)
         n = length-offset;
     }
     if(n<1) n = 0;
-    data.data = *value.get();
+    data.data = getVector();
     data.offset = offset;
     return n;
 }
