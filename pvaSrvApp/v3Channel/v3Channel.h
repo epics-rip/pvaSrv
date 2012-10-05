@@ -20,7 +20,11 @@
 
 namespace epics { namespace pvIOC { 
 
+class V3Util;
+typedef std::tr1::shared_ptr<V3Util> V3UtilPtr;
+
 class V3ChannelProvider;
+typedef std::tr1::shared_ptr<V3ChannelProvider> V3ChannelProviderPtr;
 class V3Channel;
 class V3ChannelProcess;
 class V3ChannelGet;
@@ -35,7 +39,7 @@ class V3ChannelProvider :
 {
 public:
      POINTER_DEFINITIONS(V3ChannelProvider);
-    V3ChannelProvider();
+    static V3ChannelProviderPtr getV3ChannelProvider();
     virtual ~V3ChannelProvider();
     virtual epics::pvAccess::ChannelFind::shared_pointer channelFind(
         epics::pvData::String const &channelName,
@@ -45,6 +49,8 @@ public:
         epics::pvAccess::ChannelRequester::shared_pointer  const &channelRequester,
         short priority,
         epics::pvData::String const &address);
+private:
+    V3ChannelProvider();
 };
 
 class V3Channel :
@@ -114,6 +120,11 @@ private:
     epics::pvAccess::ChannelBase::shared_pointer v3Channel;
     epics::pvAccess::ChannelProcessRequester::shared_pointer channelProcessRequester;
     DbAddr &dbAddr;
+    epics::pvData::String recordString;
+    epics::pvData::String processString;
+    epics::pvData::String fieldString;
+    epics::pvData::String fieldListString;
+    epics::pvData::String valueString;
     std::auto_ptr<struct putNotify> pNotify;
     std::auto_ptr<DbAddr> notifyAddr;
     epics::pvData::Event event;
@@ -145,6 +156,7 @@ private:
         return shared_from_this();
     }
     static void notifyCallback(struct putNotify *);
+    V3UtilPtr v3Util;
     epics::pvAccess::ChannelBase::shared_pointer v3Channel;
     epics::pvAccess::ChannelGetRequester::shared_pointer channelGetRequester;
     epics::pvData::PVStructure::shared_pointer pvStructure;
@@ -186,6 +198,7 @@ private:
         return shared_from_this();
     }
     static void notifyCallback(struct putNotify *);
+    V3UtilPtr v3Util;
     epics::pvAccess::ChannelBase::shared_pointer v3Channel;
     epics::pvAccess::ChannelPutRequester::shared_pointer channelPutRequester;
     epics::pvData::PVStructure::shared_pointer pvStructure;
@@ -235,6 +248,7 @@ private:
     {
         return shared_from_this();
     }
+    V3UtilPtr v3Util;
     epics::pvData::MonitorElementPtr &getFree();
     epics::pvAccess::ChannelBase::shared_pointer v3Channel;
     epics::pvData::MonitorRequester::shared_pointer  monitorRequester;

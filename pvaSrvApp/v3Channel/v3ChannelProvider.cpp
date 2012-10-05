@@ -31,6 +31,18 @@ V3ChannelProvider::V3ChannelProvider()
 //printf("V3ChannelProvider::V3ChannelProvider\n");
 }
 
+V3ChannelProviderPtr V3ChannelProvider::getV3ChannelProvider()
+{
+    static V3ChannelProviderPtr v3ChannelProvider;
+    static Mutex mutex;
+    Lock xx(mutex);
+
+    if(v3ChannelProvider.get()==0) {
+        v3ChannelProvider = V3ChannelProviderPtr(new V3ChannelProvider());
+    }
+    return v3ChannelProvider;
+}
+
 V3ChannelProvider::~V3ChannelProvider()
 {
 //printf("V3ChannelProvider::~V3ChannelProvider\n");

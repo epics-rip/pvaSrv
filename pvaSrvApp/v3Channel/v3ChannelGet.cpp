@@ -37,7 +37,8 @@ V3ChannelGet::V3ChannelGet(
     ChannelBase::shared_pointer const &v3Channel,
     ChannelGetRequester::shared_pointer const &channelGetRequester,
     DbAddr &dbAddr)
-: v3Channel(v3Channel),
+: v3Util(V3Util::getV3Util()),
+  v3Channel(v3Channel),
   channelGetRequester(channelGetRequester),
   dbAddr(dbAddr),
   process(false),
@@ -58,19 +59,19 @@ V3ChannelGet::~V3ChannelGet()
 
 bool V3ChannelGet::init(PVStructure::shared_pointer const &pvRequest)
 {
-    propertyMask = V3Util::getProperties(
+    propertyMask = v3Util->getProperties(
         channelGetRequester,
         pvRequest,
         dbAddr);
-    if(propertyMask==V3Util::noAccessBit) return false;
+    if(propertyMask==v3Util->noAccessBit) return false;
     pvStructure =  PVStructure::shared_pointer(
-        V3Util::createPVStructure(
+        v3Util->createPVStructure(
              channelGetRequester, propertyMask, dbAddr));
     if(pvStructure.get()==0) return 0;
-    V3Util::getPropertyData(channelGetRequester,propertyMask,dbAddr,pvStructure);
+    v3Util->getPropertyData(channelGetRequester,propertyMask,dbAddr,pvStructure);
     int numFields = pvStructure->getNumberFields();
     bitSet.reset(new BitSet(numFields));
-    if((propertyMask&V3Util::processBit)!=0) {
+    if((propertyMask&v3Util->processBit)!=0) {
        process = true;
        pNotify.reset(new (struct putNotify)());
        notifyAddr.reset(new DbAddr());
@@ -124,7 +125,7 @@ void V3ChannelGet::get(bool lastRequest)
 
     bitSet->clear();
     dbScanLock(dbAddr.precord);
-    Status status = V3Util::get(
+    Status status = v3Util->get(
         channelGetRequester,
         propertyMask,dbAddr,
         pvStructure,

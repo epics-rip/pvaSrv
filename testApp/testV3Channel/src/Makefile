@@ -12,6 +12,9 @@ include $(TOP)/configure/CONFIG
 DBDINC += byteRecord
 DBDINC += shortRecord
 DBDINC += floatRecord
+DBDINC += ubyteRecord
+DBDINC += ushortRecord
+DBDINC += ulongRecord
 
 DBD += testV3Channel.dbd
 
@@ -19,6 +22,9 @@ LIBRARY_IOC += testV3ChannelSupport
 testV3ChannelSupport_SRCS += byteRecord.c
 testV3ChannelSupport_SRCS += shortRecord.c
 testV3ChannelSupport_SRCS += floatRecord.c
+testV3ChannelSupport_SRCS += ubyteRecord.c
+testV3ChannelSupport_SRCS += ushortRecord.c
+testV3ChannelSupport_SRCS += ulongRecord.c
 testV3ChannelSupport_SRCS += testV3Channel.cpp
 testV3ChannelSupport_LIBS += pvData
 testV3ChannelSupport_LIBS += pvAccess

@@ -41,43 +41,54 @@ namespace epics { namespace pvIOC {
 using namespace epics::pvData;
 using std::tr1::static_pointer_cast;
 
-// client request bits
-int V3Util::processBit       = 0x0001;
-int V3Util::shareArrayBit    = 0x0002;
-int V3Util::timeStampBit     = 0x0004;
-int V3Util::alarmBit         = 0x0008;
-int V3Util::displayBit       = 0x0010;
-int V3Util::controlBit       = 0x0020;
-int V3Util::valueAlarmBit    = 0x0040;
-// V3 data characteristics
-int V3Util::scalarValueBit   = 0x0080;
-int V3Util::arrayValueBit    = 0x0100;
-int V3Util::enumValueBit     = 0x0200;
-int V3Util::noAccessBit      = 0x0400;
-int V3Util::noModBit         = 0x0800;
-int V3Util::dbPutBit         = 0x1000;
-int V3Util::isLinkBit        = 0x2000;
+V3UtilPtr V3Util::getV3Util()
+{
+    static V3UtilPtr v3Util;
+    static Mutex mutex;
+    Lock xx(mutex);
 
-static String recordString("record");
-static String processString("record._options.process");
-static String queueSizeString("record._options.queueSize");
-static String recordShareString("record._options.shareData");
-static String fieldString("field");
-static String valueString("value");
-static String valueShareArrayString("value._options.shareData");
-static String timeStampString("timeStamp");
-static String alarmString("alarm");
-static String displayString("display");
-static String controlString("control");
-static String valueAlarmString("valueAlarm");
-static String lowAlarmLimitString("lowAlarmLimit");
-static String lowWarningLimitString("lowWarningLimit");
-static String highWarningLimitString("highWarningLimit");
-static String highAlarmLimitString("highAlarmLimit");
-static String allString("value,timeStamp,alarm,display,control,valueAlarm");
-static String indexString("index");
+    if(v3Util.get()==NULL) {
+        v3Util = V3UtilPtr(new V3Util());
+    }
+    return v3Util;
+}
 
-static PVStructurePtr  nullPVStructure;
+V3Util::V3Util()
+: 
+  processBit(0x0001),
+  shareArrayBit(0x0002),
+  timeStampBit(0x0004),
+  alarmBit(0x0008),
+  displayBit(0x0010),
+  controlBit(0x0020),
+  valueAlarmBit(0x0040),
+  // V3 data characteristics
+  scalarValueBit(0x0080),
+  arrayValueBit(0x0100),
+  enumValueBit(0x0200),
+  noAccessBit(0x0400),
+  noModBit(0x0800),
+  dbPutBit(0x1000),
+  isLinkBit(0x2000),
+  recordString("record"),
+  processString("record._options.process"),
+  queueSizeString("record._options.queueSize"),
+  recordShareString("record._options.shareData"),
+  fieldString("field"),
+  valueString("value"),
+  valueShareArrayString("value._options.shareData"),
+  timeStampString("timeStamp"),
+  alarmString("alarm"),
+  displayString("display"),
+  controlString("control"),
+  valueAlarmString("valueAlarm"),
+  lowAlarmLimitString("lowAlarmLimit"),
+  lowWarningLimitString("lowWarningLimit"),
+  highWarningLimitString("highWarningLimit"),
+  highAlarmLimitString("highAlarmLimit"),
+  allString("value,timeStamp,alarm,display,control,valueAlarm"),
+  indexString("index")
+{}
 
 
 int V3Util::getProperties(

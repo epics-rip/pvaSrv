@@ -490,11 +490,11 @@ PVStringArrayPtr V3ValueArrayCreate::createStringArray(
     return PVStringArrayPtr(new V3StringArray(parent,scalar,dbAddr,false));
 }
 
-static V3ValueArrayCreatePtr v3ValueArrayCreate;
  
 V3ValueArrayCreatePtr getV3ValueArrayCreate()
 {
-static Mutex mutex;
+     static Mutex mutex;
+     static V3ValueArrayCreatePtr v3ValueArrayCreate;
      Lock xx(mutex);
 
      if(v3ValueArrayCreate.get()==0){

@@ -30,11 +30,6 @@ namespace epics { namespace pvIOC {
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
-static String recordString("record");
-static String processString("process");
-static String fieldString("field");
-static String fieldListString("fieldList");
-static String valueString("value");
 
 V3ChannelProcess::V3ChannelProcess(
     ChannelBase::shared_pointer const &v3Channel,
@@ -43,6 +38,11 @@ V3ChannelProcess::V3ChannelProcess(
 : v3Channel(v3Channel),
   channelProcessRequester(channelProcessRequester),
   dbAddr(dbAddr),
+  recordString("record"),
+  processString("process"),
+  fieldString("field"),
+  fieldListString("fieldList"),
+  valueString("value"),
   pNotify(0),
   notifyAddr(0),
   event()

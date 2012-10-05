@@ -9,7 +9,6 @@
  */
 #ifndef V3UTIL_H
 #define V3UTIL_H
-#include <pv/v3Channel.h>
 #include <string>
 #include <cstring>
 
@@ -18,6 +17,7 @@
 #include <recSup.h>
 #include <dbBase.h>
 
+#include <pv/v3Channel.h>
 #include <pv/status.h>
 #include <pv/bitSet.h>
 #include <pv/requester.h>
@@ -38,54 +38,80 @@ typedef long (*get_control_double) (DBADDR *, struct dbr_ctrlDouble  *);
 typedef long (*get_alarm_double) (DBADDR *, struct dbr_alDouble  *);
 }
 
-class V3Util : private epics::pvData::NoDefaultMethods {
+class V3Util;
+typedef std::tr1::shared_ptr<V3Util> V3UtilPtr;
+
+class V3Util {
 public:
-
+    POINTER_DEFINITIONS(V3Util);
+    virtual ~V3Util() {}
+    static V3UtilPtr getV3Util();
     // client request bits
-    static int processBit;       // is processing requested
-    static int shareArrayBit;    // share V3array instead of copy
-    static int timeStampBit;     // get timeStamp;
-    static int alarmBit;         // get alarm
-    static int displayBit;       // get display info
-    static int controlBit;       // get control info
-    static int valueAlarmBit;    // get value alarm info
+    int processBit;       // is processing requested
+    int shareArrayBit;    // share V3array instead of copy
+    int timeStampBit;     // get timeStamp;
+    int alarmBit;         // get alarm
+    int displayBit;       // get display info
+    int controlBit;       // get control info
+    int valueAlarmBit;    // get value alarm info
     // V3 data characteristics
-    static int scalarValueBit;   // value is a scalar
-    static int arrayValueBit;    // value is an array
-    static int enumValueBit;     // value is an enum
-    static int noAccessBit;      // fields can not be accessed
-    static int noModBit;         // fields can not be modified
-    static int dbPutBit;         // Must call dbPutField
-    static int isLinkBit;        // field is a DBF_XXLINK field
+    int scalarValueBit;   // value is a scalar
+    int arrayValueBit;    // value is an array
+    int enumValueBit;     // value is an enum
+    int noAccessBit;      // fields can not be accessed
+    int noModBit;         // fields can not be modified
+    int dbPutBit;         // Must call dbPutField
+    int isLinkBit;        // field is a DBF_XXLINK field
 
-    static int getProperties(
+    int getProperties(
         epics::pvData::Requester::shared_pointer const &requester,
         epics::pvData::PVStructure::shared_pointer const &pvRequest,
         DbAddr &dbAddr);
-    static epics::pvData::PVStructurePtr createPVStructure(
+    epics::pvData::PVStructurePtr createPVStructure(
         epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr);
-    static void getPropertyData(
+    void getPropertyData(
         epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr,
         epics::pvData::PVStructurePtr const &pvStructure);
-    static epics::pvData::Status get(
+    epics::pvData::Status get(
         epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr,
         epics::pvData::PVStructurePtr const &pvStructure,
         epics::pvData::BitSet::shared_pointer const &bitSet,
         CAV3Data *caV3Data);
-    static epics::pvData::Status put(
+    epics::pvData::Status put(
         epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr,
         epics::pvData::PVFieldPtr const &pvField);
-    static epics::pvData::Status putField(
+    epics::pvData::Status putField(
         epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr,
         epics::pvData::PVFieldPtr const &pvField);
-    static epics::pvData::ScalarType getScalarType(
+    epics::pvData::ScalarType getScalarType(
         epics::pvData::Requester::shared_pointer const &requester,
         DbAddr &dbAddr);
+private:
+    V3Util();
+    epics::pvData::PVStructurePtr  nullPVStructure;
+    epics::pvData::String recordString;
+    epics::pvData::String processString;
+    epics::pvData::String queueSizeString;
+    epics::pvData::String recordShareString;
+    epics::pvData::String fieldString;
+    epics::pvData::String valueString;
+    epics::pvData::String valueShareArrayString;
+    epics::pvData::String timeStampString;
+    epics::pvData::String alarmString;
+    epics::pvData::String displayString;
+    epics::pvData::String controlString;
+    epics::pvData::String valueAlarmString;
+    epics::pvData::String lowAlarmLimitString;
+    epics::pvData::String lowWarningLimitString;
+    epics::pvData::String highWarningLimitString;
+    epics::pvData::String highAlarmLimitString;
+    epics::pvData::String allString;
+    epics::pvData::String indexString;
 };
 
 }}

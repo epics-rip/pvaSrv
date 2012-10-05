@@ -37,24 +37,51 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 using namespace epics::pvIOC;
 
-class V3ChannelRun : public Runnable {
+class V3ChannelCTX;
+typedef std::tr1::shared_ptr<V3ChannelCTX> V3ChannelCTXPtr;
+
+class V3ChannelCTX :
+    public Runnable,
+    public std::tr1::enable_shared_from_this<V3ChannelCTX>
+{
 public:
-    V3ChannelRun();
-    ~V3ChannelRun();
+    POINTER_DEFINITIONS(V3ChannelCTX);
+    static V3ChannelCTXPtr getV3ChannelCTX();
+    V3ChannelProviderPtr getV3ChannelProvider() {return v3ChannelProvider;}
+    virtual ~V3ChannelCTX();
     virtual void run();
 private:
+    V3ChannelCTX();
+    shared_pointer getPtrSelf()
+    {
+        return shared_from_this();
+    }
+    V3ChannelProviderPtr v3ChannelProvider;
     Event event;
     ServerContextImpl::shared_pointer ctx;
     Thread *thread;
 };
 
-V3ChannelRun::V3ChannelRun()
-: event(),
+V3ChannelCTXPtr V3ChannelCTX::getV3ChannelCTX()
+{
+    static V3ChannelCTXPtr pvV3ChannelCTX;
+    static Mutex mutex;
+    Lock xx(mutex);
+
+   if(pvV3ChannelCTX.get()==0) {
+      pvV3ChannelCTX = V3ChannelCTXPtr(new V3ChannelCTX());
+   }
+   return pvV3ChannelCTX;
+}
+
+V3ChannelCTX::V3ChannelCTX()
+: v3ChannelProvider(V3ChannelProvider::getV3ChannelProvider()),
+  event(),
   ctx(ServerContextImpl::create()),
   thread(new Thread(String("v3ChannelServer"),lowerPriority,this,epicsThreadStackBig))
 {}
 
-V3ChannelRun::~V3ChannelRun()
+V3ChannelCTX::~V3ChannelCTX()
 {
     ctx->shutdown();
     // we need thead.waitForCompletion()
@@ -63,11 +90,11 @@ V3ChannelRun::~V3ChannelRun()
     delete thread;
 }
 
-void V3ChannelRun::run()
+void V3ChannelCTX::run()
 {
-    ChannelProvider::shared_pointer channelProvider(new V3ChannelProvider());
-    registerChannelProvider(channelProvider);
-    ctx->setChannelProviderName(channelProvider->getProviderName());
+    v3ChannelProvider->registerSelf();
+    String providerName = v3ChannelProvider->getProviderName();
+    ctx->setChannelProviderName(providerName);
     ctx->initialize(getChannelAccess());
     ctx->printInfo();
     ctx->run(0);
@@ -75,18 +102,15 @@ void V3ChannelRun::run()
     event.signal();
 }
 
-static V3ChannelRun *myRun = 0;
 
 static const iocshFuncDef startV3ChannelFuncDef = {
     "startV3Channel", 0, 0
 };
 extern "C" void startV3Channel(const iocshArgBuf *args)
 {
-    if(myRun!=0) {
-        printf("server already started\n");
-        return;
-    }
-    myRun = new V3ChannelRun();
+    V3ChannelCTXPtr v3ChannelCTX = V3ChannelCTX::getV3ChannelCTX();
+    epicsThreadSleep(.1);
+    v3ChannelCTX->getV3ChannelProvider()->registerSelf();
 }
 
 static const iocshFuncDef stopV3ChannelFuncDef = {
@@ -94,9 +118,8 @@ static const iocshFuncDef stopV3ChannelFuncDef = {
 };
 extern "C" void stopV3Channel(const iocshArgBuf *args)
 {
-   printf("stopPVAccessServer\n");
-   if(myRun!=0) delete myRun;
-   myRun = 0;
+    V3ChannelCTXPtr v3ChannelCTX = V3ChannelCTX::getV3ChannelCTX();
+    v3ChannelCTX->getV3ChannelProvider()->unregisterSelf();
 }
 
 static void startV3ChannelRegister(void)

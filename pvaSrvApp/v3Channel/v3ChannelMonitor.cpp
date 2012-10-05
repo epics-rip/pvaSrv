@@ -48,7 +48,8 @@ V3ChannelMonitor::V3ChannelMonitor(
     ChannelBase::shared_pointer const &v3Channel,
     MonitorRequester::shared_pointer const &monitorRequester,
     DbAddr &dbAddr)
-: v3Channel(v3Channel),
+: v3Util(V3Util::getV3Util()),
+  v3Channel(v3Channel),
   monitorRequester(monitorRequester),
   dbAddr(dbAddr),
   event(),
@@ -85,18 +86,18 @@ bool V3ChannelMonitor::init(
              queueSize = atoi(value.c_str());
         }
     }
-    propertyMask = V3Util::getProperties(
+    propertyMask = v3Util->getProperties(
         monitorRequester,
         pvRequest,
         dbAddr);
-    if(propertyMask==V3Util::noAccessBit) return false;
-    if(propertyMask&V3Util::isLinkBit) {
+    if(propertyMask==v3Util->noAccessBit) return false;
+    if(propertyMask&v3Util->isLinkBit) {
         monitorRequester->message("can not monitor a link field",errorMessage);
         return 0;
     }
     elements.reserve(queueSize);
     for(int i=0; i<queueSize; i++) {
-        PVStructurePtr pvStructure(V3Util::createPVStructure(
+        PVStructurePtr pvStructure(v3Util->createPVStructure(
                 monitorRequester,
                 propertyMask,
                 dbAddr));
@@ -105,10 +106,10 @@ bool V3ChannelMonitor::init(
     }
     MonitorElementPtr element = elements[0];
     StructureConstPtr saveStructure = element->pvStructurePtr->getStructure();
-    if((propertyMask&V3Util::enumValueBit)!=0) {
+    if((propertyMask&v3Util->enumValueBit)!=0) {
         v3Type = v3Enum;
     } else {
-        ScalarType scalarType = V3Util::getScalarType(
+        ScalarType scalarType = v3Util->getScalarType(
             monitorRequester,
             dbAddr);
         switch(scalarType) {
@@ -220,7 +221,7 @@ void V3ChannelMonitor::eventCallback(const char *status)
     dbScanLock(dbAddr.precord);
     CAV3Data &caV3Data = caV3Monitor.get()->getData();
     BitSet::shared_pointer overrunBitSet = currentElement->overrunBitSet;
-    Status stat = V3Util::get(
+    Status stat = v3Util->get(
        monitorRequester,
        propertyMask,
        dbAddr,
@@ -241,7 +242,7 @@ void V3ChannelMonitor::eventCallback(const char *status)
         if(nextElement.get()!=0) {
             PVStructure::shared_pointer pvNext = nextElement->pvStructurePtr;
             BitSet::shared_pointer bitSetNext = nextElement->changedBitSet;
-            Status stat = V3Util::get(
+            Status stat = v3Util->get(
                 monitorRequester,
                 propertyMask,
                 dbAddr,

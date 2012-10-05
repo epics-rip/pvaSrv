@@ -42,7 +42,8 @@ V3ChannelPut::V3ChannelPut(
     ChannelBase::shared_pointer const &v3Channel,
     ChannelPutRequester::shared_pointer const &channelPutRequester,
     DbAddr &dbAddr)
-: v3Channel(v3Channel),
+: v3Util(V3Util::getV3Util()),
+  v3Channel(v3Channel),
   channelPutRequester(channelPutRequester),
   dbAddr(dbAddr),
   propertyMask(0),
@@ -63,28 +64,28 @@ V3ChannelPut::~V3ChannelPut()
 
 bool V3ChannelPut::init(PVStructure::shared_pointer const &pvRequest)
 {
-    propertyMask = V3Util::getProperties(
+    propertyMask = v3Util->getProperties(
         channelPutRequester,
         pvRequest,
         dbAddr);
-    if(propertyMask==V3Util::noAccessBit) return false;
-    if(propertyMask==V3Util::noModBit) {
+    if(propertyMask==v3Util->noAccessBit) return false;
+    if(propertyMask==v3Util->noModBit) {
         channelPutRequester->message(
              String("field not allowed to be changed"),errorMessage);
         return 0;
     }
     pvStructure = PVStructure::shared_pointer(
-        V3Util::createPVStructure(
+        v3Util->createPVStructure(
             channelPutRequester,
             propertyMask,
             dbAddr));
     if(pvStructure.get()==0) return 0;
-    if((propertyMask&V3Util::dbPutBit)!=0) {
-        if((propertyMask&V3Util::processBit)!=0) {
+    if((propertyMask&v3Util->dbPutBit)!=0) {
+        if((propertyMask&v3Util->processBit)!=0) {
             channelPutRequester->message(
              String("process determined by dbPutField"),errorMessage);
         }
-    } else if((propertyMask&V3Util::processBit)!=0) {
+    } else if((propertyMask&v3Util->processBit)!=0) {
        process = true;
        pNotify.reset(new (struct putNotify)());
        notifyAddr.reset(new DbAddr());
@@ -131,8 +132,8 @@ void V3ChannelPut::put(bool lastRequest)
 {
     Lock lock(dataMutex);
     PVFieldPtr pvField = pvStructure.get()->getPVFields()[0];
-    if(propertyMask&V3Util::dbPutBit) {
-        Status status = V3Util::putField(
+    if(propertyMask&v3Util->dbPutBit) {
+        Status status = v3Util->putField(
             channelPutRequester,propertyMask,dbAddr,pvField);
         lock.unlock();
         channelPutRequester->putDone(status);
@@ -140,7 +141,7 @@ void V3ChannelPut::put(bool lastRequest)
         return;
     }
     dbScanLock(dbAddr.precord);
-    Status status = V3Util::put(
+    Status status = v3Util->put(
         channelPutRequester,propertyMask,dbAddr,pvField);
     dbScanUnlock(dbAddr.precord);
     lock.unlock();
@@ -166,7 +167,7 @@ void V3ChannelPut::get()
     Lock lock(dataMutex);
     bitSet->clear();
     dbScanLock(dbAddr.precord);
-    Status status = V3Util::get(
+    Status status = v3Util->get(
         channelPutRequester,
         propertyMask,dbAddr,
         pvStructure,
