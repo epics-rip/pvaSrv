@@ -1,0 +1,5 @@
+channelValueProvider v3Channel
+channelName bpm
+channelValue
+    current bpm:Current
+    field   bpm:Field
