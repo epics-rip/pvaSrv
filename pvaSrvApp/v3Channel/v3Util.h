@@ -58,6 +58,7 @@ public:
     int scalarValueBit;   // value is a scalar
     int arrayValueBit;    // value is an array
     int enumValueBit;     // value is an enum
+    int enumIndexBit;     // pvRequest specified value.index
     int noAccessBit;      // fields can not be accessed
     int noModBit;         // fields can not be modified
     int dbPutBit;         // Must call dbPutField
@@ -100,6 +101,7 @@ private:
     epics::pvData::String recordShareString;
     epics::pvData::String fieldString;
     epics::pvData::String valueString;
+    epics::pvData::String valueIndexString;
     epics::pvData::String valueShareArrayString;
     epics::pvData::String timeStampString;
     epics::pvData::String alarmString;

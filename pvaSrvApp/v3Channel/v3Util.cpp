@@ -66,16 +66,18 @@ V3Util::V3Util()
   scalarValueBit(0x0080),
   arrayValueBit(0x0100),
   enumValueBit(0x0200),
-  noAccessBit(0x0400),
-  noModBit(0x0800),
-  dbPutBit(0x1000),
-  isLinkBit(0x2000),
+  enumIndexBit(0x400),
+  noAccessBit(0x0800),
+  noModBit(0x1000),
+  dbPutBit(0x2000),
+  isLinkBit(0x4000),
   recordString("record"),
   processString("record._options.process"),
   queueSizeString("record._options.queueSize"),
   recordShareString("record._options.shareData"),
   fieldString("field"),
   valueString("value"),
+  valueIndexString("value.index"),
   valueShareArrayString("value._options.shareData"),
   timeStampString("timeStamp"),
   alarmString("alarm"),
@@ -302,6 +304,10 @@ int V3Util::getProperties(
              }
         }
     }
+    if(propertyMask&enumValueBit) {
+        pvField = pvRequest->getSubField(valueIndexString);
+        if(pvField.get()!=NULL) propertyMask |= enumIndexBit;
+    }
     return propertyMask;
 }
 
@@ -331,6 +337,10 @@ PVStructurePtr V3Util::createPVStructure(
         properties += valueAlarmString;
     }
     if((propertyMask&enumValueBit)!=0) {
+        if((propertyMask&enumIndexBit)!=0) {
+            PVStructurePtr xxx = standardPVField->scalar(pvInt,properties);
+              return xxx;
+        }
         struct dbr_enumStrs enumStrs;
         struct rset *prset = dbGetRset(&dbAddr);
         if(prset && prset->get_enum_strs) {
@@ -850,7 +860,6 @@ Status  V3Util::get(
         }
         bitSet->set(pvField->getFieldOffset());
     } else if((propertyMask&enumValueBit)!=0) {
-        PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
         int32 val = 0;
         if(caV3Data) {
             val = caV3Data->intValue;
@@ -861,10 +870,19 @@ Status  V3Util::get(
                 val = *static_cast<int32 *>(dbAddr.pfield);
             }
         }
-        PVIntPtr pvIndex = pvEnum->getIntField(indexString);
-        if(pvIndex->get()!=val) {
-            pvIndex->put(val);
-            bitSet->set(pvIndex->getFieldOffset());
+        if((propertyMask&enumIndexBit)!=0) {
+            PVIntPtr pvIndex = static_pointer_cast<PVInt>(pvField);
+            if(pvIndex->get()!=val) {
+                pvIndex->put(val);
+                bitSet->set(pvIndex->getFieldOffset());
+            }
+        } else {
+            PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
+            PVIntPtr pvIndex = pvEnum->getIntField(indexString);
+            if(pvIndex->get()!=val) {
+                pvIndex->put(val);
+                bitSet->set(pvIndex->getFieldOffset());
+            }
         }
     }
     if((propertyMask&timeStampBit)!=0) {
@@ -999,8 +1017,13 @@ Status  V3Util::put(
     } else if((propertyMask&arrayValueBit)!=0) {
         // client or deserialize already handled this.
     } else if((propertyMask&enumValueBit)!=0) {
-        PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
-        PVIntPtr pvIndex = pvEnum->getIntField(indexString);
+        PVIntPtr pvIndex;
+        if((propertyMask&enumIndexBit)!=0) {
+            pvIndex = static_pointer_cast<PVInt>(pvField);
+        } else {
+            PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
+            pvEnum->getIntField(indexString);
+        }
         if(dbAddr.field_type==DBF_MENU) {
             requester->message(
                 String("Not allowed to change a menu field"),errorMessage);
