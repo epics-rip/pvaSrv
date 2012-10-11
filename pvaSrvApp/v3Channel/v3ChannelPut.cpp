@@ -67,7 +67,8 @@ bool V3ChannelPut::init(PVStructure::shared_pointer const &pvRequest)
     propertyMask = v3Util->getProperties(
         channelPutRequester,
         pvRequest,
-        dbAddr);
+        dbAddr,
+        true);
     if(propertyMask==v3Util->noAccessBit) return false;
     if(propertyMask==v3Util->noModBit) {
         channelPutRequester->message(

@@ -94,7 +94,10 @@ V3Util::V3Util()
 
 
 int V3Util::getProperties(
-    Requester::shared_pointer const &requester,PVStructure::shared_pointer const &pvr,DbAddr &dbAddr)
+    Requester::shared_pointer const &requester,
+    PVStructure::shared_pointer const &pvr,
+    DbAddr &dbAddr,
+    bool processDefault)
 {
     PVStructure *pvRequest = pvr.get();
     int propertyMask = 0;
@@ -105,6 +108,8 @@ int V3Util::getProperties(
             String value = pvString->get();
             if(value.compare("true")==0) propertyMask |= processBit;
         }
+    } else {
+        if(processDefault) propertyMask |= processBit;
     }
     PVStructurePtr fieldPV;
     PVFieldPtr pvTemp = pvRequest->getSubField(fieldString);

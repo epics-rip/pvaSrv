@@ -62,7 +62,8 @@ bool V3ChannelGet::init(PVStructure::shared_pointer const &pvRequest)
     propertyMask = v3Util->getProperties(
         channelGetRequester,
         pvRequest,
-        dbAddr);
+        dbAddr,
+        false);
     if(propertyMask==v3Util->noAccessBit) return false;
     pvStructure =  PVStructure::shared_pointer(
         v3Util->createPVStructure(

@@ -89,7 +89,8 @@ bool V3ChannelMonitor::init(
     propertyMask = v3Util->getProperties(
         monitorRequester,
         pvRequest,
-        dbAddr);
+        dbAddr,
+        false);
     if(propertyMask==v3Util->noAccessBit) return false;
     if(propertyMask&v3Util->isLinkBit) {
         monitorRequester->message("can not monitor a link field",errorMessage);

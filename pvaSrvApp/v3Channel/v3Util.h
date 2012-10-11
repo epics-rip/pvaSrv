@@ -67,7 +67,8 @@ public:
     int getProperties(
         epics::pvData::Requester::shared_pointer const &requester,
         epics::pvData::PVStructure::shared_pointer const &pvRequest,
-        DbAddr &dbAddr);
+        DbAddr &dbAddr,
+        bool processDefault);
     epics::pvData::PVStructurePtr createPVStructure(
         epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr);
