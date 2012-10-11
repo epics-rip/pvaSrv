@@ -1134,8 +1134,13 @@ Status  V3Util::putField(
             return Status::Ok;
         }
     } else if((propertyMask&enumValueBit)!=0) {
-        PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
-        PVIntPtr pvIndex = pvEnum->getIntField(indexString);
+        PVIntPtr pvIndex;
+        if(pvField->getField()->getType()==structure) {
+             PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
+             pvIndex = pvEnum->getIntField(indexString);
+        } else {
+            pvIndex = static_pointer_cast<PVInt>(pvField);
+        }
         svalue = pvIndex->get(); pbuffer = &svalue;
         dbrType = DBF_ENUM;
     } else {
