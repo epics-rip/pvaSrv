@@ -220,21 +220,22 @@ void V3ValueArray<T>::deserialize(ByteBuffer *pbuffer,
         DeserializableControl *pcontrol)
 {
     size_t length = SerializeHelper::readSize(pbuffer, pcontrol);
-    if(length<=0) return;
-    if(length>this->getCapacity()) {
-        throw std::logic_error(String("Capacity immutable"));
-    }
-    T * pvalue = get();
-    size_t i=0;
-    while(true) {
-        size_t maxIndex = std::min(length-i, (pbuffer->getRemaining()/sizeof(T)))+i;
-        if(shareV3Data) dbScanLock(dbAddr.precord);
-        for(; i<maxIndex; i++) {
-            pvalue[i] = pbuffer->GET(T);
-        }
-        if(shareV3Data) dbScanUnlock(dbAddr.precord);
-        if(i>=length) break;
-        pcontrol->ensureData(sizeof(T));
+	T * pvalue = get();
+    if(length>0) {
+		if(length>this->getCapacity()) {
+			throw std::logic_error(String("Capacity immutable"));
+		}
+		size_t i=0;
+		while(true) {
+			size_t maxIndex = std::min(length-i, (pbuffer->getRemaining()/sizeof(T)))+i;
+			if(shareV3Data) dbScanLock(dbAddr.precord);
+			for(; i<maxIndex; i++) {
+				pvalue[i] = pbuffer->GET(T);
+			}
+			if(shareV3Data) dbScanUnlock(dbAddr.precord);
+			if(i>=length) break;
+			pcontrol->ensureData(sizeof(T));
+		}
     }
     this->setLength(length);
     // update v4Record
