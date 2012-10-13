@@ -282,6 +282,34 @@ bool V3ValueArray<T>::operator!=(PVField& pv)
 }
 
 template<>
+V3ValueArray<String>::V3ValueArray(
+    PVStructurePtr const & parent,ScalarArrayConstPtr const &scalarArray,
+    DbAddr &dbAddr,bool shareData)
+: PVValueArray<String>(scalarArray),
+  dbAddr(dbAddr),
+  shareV3Data(false),
+  value(std::tr1::shared_ptr<std::vector<String> >(new std::vector<String>()))
+{
+    size_t capacity = dbAddr.no_elements;
+    value->resize(capacity);
+    if(shareV3Data) {
+        parent->message("shareV3Data not implemented",warningMessage);
+    }
+    size_t length = getV3Length();
+    char *pchar = static_cast<char *>(dbAddr.pfield);
+    String *pvalue = get();
+    for(size_t i=0; i<length; i++) {
+        if(strcmp(pchar,pvalue[i].c_str())!=0) {
+           pvalue[i] = String(pchar);
+        }
+        pchar += dbAddr.field_size;
+    }
+    PVArray::setCapacityLength(capacity,length);
+    PVArray::setCapacityMutable(false);
+}
+
+
+template<>
 size_t V3ValueArray<String>::get(size_t offset, size_t len, PVArrayData<String> &data)
 {
     dbScanLock(dbAddr.precord);

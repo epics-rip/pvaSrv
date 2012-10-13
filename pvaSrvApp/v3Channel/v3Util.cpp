@@ -1013,6 +1013,7 @@ Status  V3Util::put(
             int len = dbAddr.field_size;
             strncpy(to,pvString->get().c_str(),len -1);
             *(to + len -1) = 0;
+            break;
         }
         default:
             requester->message(
