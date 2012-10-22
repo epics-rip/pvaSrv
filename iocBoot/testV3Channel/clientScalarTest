@@ -1,0 +1,16 @@
+pvput -w 1 byte01 5.0
+pvget -w 1 byte01
+pvput -w 1 short01 5.0
+pvget -w 1 short01
+pvput -w 1 int01 5.0
+pvget -w 1 int01
+pvput -w 1 ubyte01 5.0
+pvget -w 1 ubyte01
+pvput -w 1 ushort01 5.0
+pvget -w 1 ushort01
+pvput -w 1 uint01 5.0
+pvget -w 1 uint01
+pvput -w 1 float01 5.0
+pvget -w 1 float01
+pvput -w 1 double01 5.0
+pvget -w 1 double01

@@ -1,0 +1,4 @@
+pvput -w 1 -r "field(value.index)" enum01 1
+pvget -w 1 enum01
+pvput -w 1 -r "field(value.index)" enum01 2
+pvget -w 1 enum01
