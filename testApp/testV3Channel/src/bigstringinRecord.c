@@ -93,13 +93,14 @@ static long init_record(bigstringinRecord *prec, int pass)
 
 static long process(bigstringinRecord *prec)
 {
-	prec->pact = TRUE;
-
-	recGblGetTimeStamp(prec);
-
-	/* process the forward scan link record */
-	recGblFwdLink(prec);
-
-	prec->pact=FALSE;
-	return(0);
+    unsigned short  monitor_mask;
+    monitor_mask = recGblResetAlarms(prec);
+    prec->pact = TRUE;
+    recGblGetTimeStamp(prec);
+    /* process the forward scan link record */
+    recGblFwdLink(prec);
+    monitor_mask |= DBE_VALUE|DBE_LOG;
+    db_post_events(prec,&(prec->val[0]),monitor_mask);
+    prec->pact=FALSE;
+    return(0);
 }
