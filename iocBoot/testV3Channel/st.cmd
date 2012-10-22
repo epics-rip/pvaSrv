@@ -21,6 +21,7 @@ dbLoadRecords("db/dbArray.db","name=intArray01,type=LONG")
 dbLoadRecords("db/dbArray.db","name=floatArray01,type=FLOAT")
 dbLoadRecords("db/dbArray.db","name=doubleArray01,type=DOUBLE")
 dbLoadRecords("db/dbString.db","name=string01")
+dbLoadRecords("db/dbBigstringin.db","name=bigstring01")
 dbLoadRecords("db/dbStringArray.db","name=stringArray01")
 dbLoadRecords("db/dbEnum.db","name=enum01")
 dbLoadRecords("db/dbCounter.db","name=counter01");

@@ -770,8 +770,8 @@ Status  V3Util::get(
         case pvString: {
             char * val = 0;
             if(propertyMask&isLinkBit) {
-                char buffer[100];
-                for(int i=0; i<100; i++) buffer[i]  = 0;
+                char buffer[200];
+                for(int i=0; i<200; i++) buffer[i]  = 0;
                 long result = dbGetField(&dbAddr,DBR_STRING,
                     buffer,0,0,0);
                 if(result!=0) {
@@ -783,9 +783,14 @@ Status  V3Util::get(
             }
             String sval(val);
             PVStringPtr pvString = static_pointer_cast<PVString>(pvField);
-            if((pvString->get().compare(sval))!=0) {
+            if(pvString->get().empty()) {
                 pvString->put(sval);
                 wasChanged = true;
+            } else {
+                if((pvString->get().compare(sval))!=0) {
+                    pvString->put(sval);
+                    wasChanged = true;
+                }
             }
             break;
         }
@@ -1010,9 +1015,15 @@ Status  V3Util::put(
         case pvString: {
             char * to = static_cast<char *>(dbAddr.pfield);
             PVStringPtr pvString = static_pointer_cast<PVString>(pvField);
-            int len = dbAddr.field_size;
-            strncpy(to,pvString->get().c_str(),len -1);
-            *(to + len -1) = 0;
+            if(pvString->get().empty()) {
+                *(to) = 0;
+            } else {
+                int size = dbAddr.field_size-1;
+                int fromLen = pvString->get().length();
+                if(fromLen<size) size = fromLen;
+                strncpy(to,pvString->get().c_str(),size);
+                *(to + size) = 0;
+            }
             break;
         }
         default:

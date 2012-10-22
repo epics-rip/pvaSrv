@@ -13,6 +13,7 @@ include $(TOP)/configure/CONFIG
 DB += dbScalar.db
 DB += dbArray.db
 DB += dbString.db
+DB += dbBigstringin.db
 DB += dbStringArray.db
 DB += dbEnum.db
 DB += dbCounter.db

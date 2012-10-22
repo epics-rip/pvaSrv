@@ -15,6 +15,7 @@ DBDINC += floatRecord
 DBDINC += ubyteRecord
 DBDINC += ushortRecord
 DBDINC += ulongRecord
+DBDINC += bigstringinRecord
 
 DBD += testV3Channel.dbd
 
@@ -25,6 +26,7 @@ testV3ChannelSupport_SRCS += floatRecord.c
 testV3ChannelSupport_SRCS += ubyteRecord.c
 testV3ChannelSupport_SRCS += ushortRecord.c
 testV3ChannelSupport_SRCS += ulongRecord.c
+testV3ChannelSupport_SRCS += bigstringinRecord.c
 testV3ChannelSupport_SRCS += testV3Channel.cpp
 testV3ChannelSupport_LIBS += pvData
 testV3ChannelSupport_LIBS += pvAccess
