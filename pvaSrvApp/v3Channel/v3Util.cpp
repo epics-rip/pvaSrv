@@ -55,22 +55,23 @@ V3UtilPtr V3Util::getV3Util()
 
 V3Util::V3Util()
 : 
-  processBit(0x0001),
-  shareArrayBit(0x0002),
-  timeStampBit(0x0004),
-  alarmBit(0x0008),
-  displayBit(0x0010),
-  controlBit(0x0020),
-  valueAlarmBit(0x0040),
+  processBit(    0x0001),
+  shareArrayBit( 0x0002),
+  timeStampBit(  0x0004),
+  alarmBit(      0x0008),
+  displayBit(    0x0010),
+  controlBit(    0x0020),
+  valueAlarmBit( 0x0040),
   // V3 data characteristics
-  scalarValueBit(0x0080),
-  arrayValueBit(0x0100),
-  enumValueBit(0x0200),
-  enumIndexBit(0x400),
-  noAccessBit(0x0800),
-  noModBit(0x1000),
-  dbPutBit(0x2000),
-  isLinkBit(0x4000),
+  getValueBit(   0x0080),
+  scalarValueBit(0x0100),
+  arrayValueBit( 0x0200),
+  enumValueBit(  0x0400),
+  enumIndexBit(  0x0800),
+  noAccessBit(   0x1000),
+  noModBit(      0x2000),
+  dbPutBit(      0x4000),
+  isLinkBit(     0x8000),
   recordString("record"),
   processString("record._options.process"),
   queueSizeString("record._options.queueSize"),
@@ -128,7 +129,7 @@ int V3Util::getProperties(
         String value = pvShareString->get();
         if(value.compare("true")==0) propertyMask |= shareArrayBit;
     }
-    bool getValue;
+    bool getValue = false;
     if(fieldPV.get()!=NULL) pvRequest = fieldPV.get();
     String fieldList;
     if(pvRequest->getStructure()->getNumberFields()==0) {
@@ -167,10 +168,8 @@ int V3Util::getProperties(
             fieldList += valueAlarmString;
         }
     }
-    if(fieldList.length()>0) {
-        if(fieldList.find(valueString)!=String::npos) getValue = true;
-    }
     if(getValue) {
+        propertyMask |= getValueBit;
         Type type = (dbAddr.special==SPC_DBADDR) ? scalarArray : scalar;
         ScalarType scalarType(pvBoolean);
         // Note that pvBoolean is not a supported type
@@ -218,26 +217,26 @@ int V3Util::getProperties(
         if(type==scalarArray&&scalarType!=pvBoolean) {
            propertyMask |= arrayValueBit;
         }
-    }
-    if(dbAddr.special!=0) {
-        switch(dbAddr.special) {
-        case SPC_NOMOD:
-            propertyMask |= noModBit; break;
-        case SPC_DBADDR: // already used
-            break;
-        case SPC_SCAN:
-        case SPC_ALARMACK:
-        case SPC_AS:
-        case SPC_ATTRIBUTE:
-        case SPC_MOD:
-        case SPC_RESET:
-        case SPC_LINCONV:
-        case SPC_CALC:
-            propertyMask |= dbPutBit; break;
-        default:
-            requester->message(String(
-                "logic error unknown special type"),errorMessage);
-            propertyMask = noAccessBit; return propertyMask;
+        if(dbAddr.special!=0) {
+            switch(dbAddr.special) {
+            case SPC_NOMOD:
+                propertyMask |= noModBit; break;
+            case SPC_DBADDR: // already used
+                break;
+            case SPC_SCAN:
+            case SPC_ALARMACK:
+            case SPC_AS:
+            case SPC_ATTRIBUTE:
+            case SPC_MOD:
+            case SPC_RESET:
+            case SPC_LINCONV:
+            case SPC_CALC:
+                propertyMask |= dbPutBit; break;
+            default:
+                requester->message(String(
+                    "logic error unknown special type"),errorMessage);
+                propertyMask = noAccessBit; return propertyMask;
+            }
         }
     }
     if(fieldList.length()!=0) {
@@ -261,52 +260,6 @@ int V3Util::getProperties(
             if(dbAddr.field_type==DBF_LONG||dbAddr.field_type==DBF_DOUBLE) {
                 propertyMask |= valueAlarmBit;
             }
-        }
-    } else {
-        pvField = pvRequest->getSubField(timeStampString);
-        if(pvField.get()!=NULL) {
-             PVStringPtr pvString = pvRequest->getStringField(timeStampString);
-             if(pvString.get()!=NULL) {
-                  if(pvString->get().compare("true")==0) {
-                      propertyMask |= timeStampBit;
-                  }
-             }
-        }
-        pvField = pvRequest->getSubField(alarmString);
-        if(pvField.get()!=NULL) {
-             PVStringPtr pvString = pvRequest->getStringField(alarmString);
-             if(pvString.get()!=NULL) {
-                  if(pvString->get().compare("true")==0) {
-                      propertyMask |= alarmBit;
-                  }
-             }
-        }
-        pvField = pvRequest->getSubField(displayString);
-        if(pvField.get()!=NULL) {
-             PVStringPtr pvString = pvRequest->getStringField(displayString);
-             if(pvString.get()!=NULL) {
-                  if(pvString->get().compare("true")==0) {
-                      propertyMask |= displayBit;
-                  }
-             }
-        }
-        pvField = pvRequest->getSubField(controlString);
-        if(pvField.get()!=NULL) {
-             PVStringPtr pvString = pvRequest->getStringField(controlString);
-             if(pvString.get()!=NULL) {
-                  if(pvString->get().compare("true")==0) {
-                      propertyMask |= controlBit;
-                  }
-             }
-        }
-        pvField = pvRequest->getSubField(valueAlarmString);
-        if(pvField.get()!=NULL) {
-             PVStringPtr pvString = pvRequest->getStringField(valueAlarmString);
-             if(pvString.get()!=NULL) {
-                  if(pvString->get().compare("true")==0) {
-                      propertyMask |= valueAlarmBit;
-                  }
-             }
         }
     }
     if(propertyMask&enumValueBit) {
@@ -421,6 +374,11 @@ PVStructurePtr V3Util::createPVStructure(
              } else {
                 throw std::logic_error("Should never get here");
              }
+    }
+    if(!(propertyMask&getValueBit)) {
+        PVStructurePtr pvParent = standardPVField->scalar(pvByte,properties);
+        pvParent->removePVField("value");
+        return pvParent;
     }
     if((propertyMask&scalarValueBit)!=0) {
         return standardPVField->scalar(scalarType,properties);
@@ -618,6 +576,8 @@ void  V3Util::getPropertyData(
         }
         PVStructurePtr pvAlarmLimits =
             pvStructure->getStructureField(valueAlarmString);
+        PVBooleanPtr pvActive = pvAlarmLimits->getBooleanField("active");
+        if(pvActive.get()!=NULL) pvActive->put(false);
         PVFieldPtr pvf = pvAlarmLimits->getSubField(lowAlarmLimitString);
         if(pvf.get()!=NULL && pvf->getField()->getType()==scalar) {
             PVScalarPtr pvScalar = static_pointer_cast<PVScalar>(pvf);
@@ -931,20 +891,25 @@ Status  V3Util::get(
             throw std::logic_error(String("V3ChannelGet::get logic error"));
         }
         struct dbCommon *precord = dbAddr.precord;
-        const char * stat = "";
+        const char * status = "";
+        epicsEnum16 stat;
         epicsEnum16 sevr;
         if(caV3Data) {
-            stat = caV3Data->status;
+            status = caV3Data->status;
+            stat = caV3Data->stat;
             sevr = caV3Data->sevr;
         } else {
-            stat = epicsAlarmConditionStrings[precord->stat];
+            status = epicsAlarmConditionStrings[precord->stat];
+            stat = precord->stat;
             sevr = precord->sevr;
         }
         pvAlarm.get(alarm);
-        AlarmSeverity prev = alarm.getSeverity();
-        epicsEnum16 prevSevr = static_cast<epicsEnum16>(prev);
-        if(prevSevr!=sevr) {
-            String message(stat);
+        AlarmSeverity alarmSeverity = alarm.getSeverity();
+        epicsEnum16 prevSeverity = static_cast<epicsEnum16>(alarmSeverity);
+        AlarmStatus alarmStatus = alarm.getStatus();
+        epicsEnum16 prevStatus = static_cast<epicsEnum16>(alarmStatus);
+        if((prevSeverity!=sevr) || (prevStatus!=stat)) {
+            String message(status);
             AlarmSeverity severity = static_cast<AlarmSeverity>(sevr);
             alarm.setSeverity(severity);
             alarm.setMessage(message);

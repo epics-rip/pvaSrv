@@ -1,16 +1,12 @@
-pvput -w 1 byteArray01 5 1 2 3 4 5
-pvget -w 1 byteArray01
-pvput -w 1 shortArray01 5 1 2 3 4 5
-pvget -w 1 shortArray01
-pvput -w 1 intArray01 5 1 2 3 4 5
-pvget -w 1 intArray01
-pvput -w 1 ubyteArray01 5 1 2 3 4 5
-pvget -w 1 ubyteArray01
-pvput -w 1 ushortArray01 5 1 2 3 4 5
-pvget -w 1 ushortArray01
-pvput -w 1 uintArray01 5 1 2 3 4 5
-pvget -w 1 uintArray01
-pvput -w 1 floatArray01 5 1 2 3 4 5
-pvget -w 1 floatArray01
-pvput -w 1 doubleArray01 5 1 2 3 4 5
-pvget -w 1 doubleArray01
+pvput  byteArray01 5 1 2 3 4 5
+pvput  shortArray01 5 1 2 3 4 5
+pvput  intArray01 5 1 2 3 4 5
+pvput  ubyteArray01 5 1 2 3 4 5
+pvput  ushortArray01 5 1 2 3 4 5
+pvput  uintArray01 5 1 2 3 4 5
+pvput  floatArray01 5 1 2 3 4 5
+pvput  doubleArray01 5 1 2 3 4 5
+pvget  -r "value,alarm,timeStamp" \
+    byteArray01 shortArray01 intArray01 \
+    ubyteArray01 ushortArray01 uintArray01 \
+    floatArray01 doubleArray01

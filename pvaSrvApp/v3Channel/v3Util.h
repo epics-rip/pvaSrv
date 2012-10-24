@@ -55,6 +55,7 @@ public:
     int controlBit;       // get control info
     int valueAlarmBit;    // get value alarm info
     // V3 data characteristics
+    int getValueBit;      // client requested value
     int scalarValueBit;   // value is a scalar
     int arrayValueBit;    // value is an array
     int enumValueBit;     // value is an enum
