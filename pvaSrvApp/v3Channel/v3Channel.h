@@ -62,7 +62,7 @@ public:
         epics::pvAccess::ChannelBaseProvider::shared_pointer const & channelProvider,
         epics::pvAccess::ChannelRequester::shared_pointer const & requester,
         epics::pvData::String const & name,
-        std::auto_ptr<DbAddr> addr
+        std::tr1::shared_ptr<DbAddr> addr
         );
     virtual ~V3Channel();
     void init();
@@ -87,7 +87,7 @@ public:
     virtual void printInfo();
     virtual void printInfo(epics::pvData::StringBuilder out);
 private:
-    std::auto_ptr<DbAddr> dbAddr;
+    std::tr1::shared_ptr<DbAddr> dbAddr;
     epics::pvData::FieldConstPtr recordField; 
 };
 
@@ -125,9 +125,11 @@ private:
     epics::pvData::String fieldString;
     epics::pvData::String fieldListString;
     epics::pvData::String valueString;
-    std::auto_ptr<struct putNotify> pNotify;
-    std::auto_ptr<DbAddr> notifyAddr;
+    std::tr1::shared_ptr<struct putNotify> pNotify;
+    std::tr1::shared_ptr<DbAddr> notifyAddr;
     epics::pvData::Event event;
+    epics::pvData::Mutex mutex;
+    bool beingDestroyed;
 };
 
 class V3ChannelGet :
@@ -165,10 +167,12 @@ private:
     bool process;
     bool firstTime;
     int propertyMask;
-    std::auto_ptr<struct putNotify> pNotify;
-    std::auto_ptr<DbAddr> notifyAddr;
+    std::tr1::shared_ptr<struct putNotify> pNotify;
+    std::tr1::shared_ptr<DbAddr> notifyAddr;
     epics::pvData::Event event;
     epics::pvData::Mutex dataMutex;
+    epics::pvData::Mutex mutex;
+    bool beingDestroyed;
 };
 
 class V3ChannelPut :
@@ -207,10 +211,12 @@ private:
     int propertyMask;
     bool process;
     bool firstTime;
-    std::auto_ptr<struct putNotify> pNotify;
-    std::auto_ptr<DbAddr> notifyAddr;
-    epics::pvData::Event event;
+    std::tr1::shared_ptr<struct putNotify> pNotify;
+    std::tr1::shared_ptr<DbAddr> notifyAddr;
     epics::pvData::Mutex dataMutex;
+    epics::pvData::Event event;
+    epics::pvData::Mutex mutex;
+    bool beingDestroyed;
 };
 
 class V3ChannelMonitor
@@ -259,13 +265,16 @@ private:
     bool gotEvent;
     V3Type v3Type;
     int queueSize;
-    std::auto_ptr<CAV3Monitor> caV3Monitor;
+    std::tr1::shared_ptr<CAV3Monitor> caV3Monitor;
     int numberFree;
     int numberUsed;
     int nextGetFree;
     int nextSetUsed;
     int nextGetUsed;
     int nextReleaseUsed;
+    epics::pvData::Mutex mutex;
+    bool beingDestroyed;
+    bool isStarted;
     epics::pvData::MonitorElementPtrArray elements;
     epics::pvData::MonitorElementPtr currentElement;
     epics::pvData::MonitorElementPtr nextElement;
@@ -301,6 +310,8 @@ private:
     epics::pvData::PVScalarArray::shared_pointer pvScalarArray;
     DbAddr &dbAddr;
     epics::pvData::Mutex dataMutex;
+    epics::pvData::Mutex mutex;
+    bool beingDestroyed;
 };
 
 }}

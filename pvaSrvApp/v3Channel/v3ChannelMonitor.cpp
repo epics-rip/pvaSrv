@@ -44,6 +44,8 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 using std::tr1::dynamic_pointer_cast;
 
+static bool debug = true;
+
 V3ChannelMonitor::V3ChannelMonitor(
     ChannelBase::shared_pointer const &v3Channel,
     MonitorRequester::shared_pointer const &monitorRequester,
@@ -64,13 +66,15 @@ V3ChannelMonitor::V3ChannelMonitor(
   nextGetFree(0),
   nextSetUsed(0),
   nextGetUsed(0),
-  nextReleaseUsed(0)
+  nextReleaseUsed(0),
+  beingDestroyed(false),
+  isStarted(false)
 {
-//printf("V3ChannelMonitor construct\n");
+    if(debug) printf("V3ChannelMonitor::V3ChannelMonitor\n");
 }
 
 V3ChannelMonitor::~V3ChannelMonitor() {
-//printf("~V3ChannelMonitor\n");
+    if(debug) printf("V3ChannelMonitor::~V3ChannelMonitor\n");
 }
 
 
@@ -150,12 +154,25 @@ void V3ChannelMonitor::message(String const &message,MessageType messageType)
 }
 
 void V3ChannelMonitor::destroy() {
-//printf("V3ChannelMonitor::destroy\n");
+    if(debug) printf("V3ChannelMonitor::destroy beingDestroyed %s\n",
+         (beingDestroyed ? "true" : "false"));
+    {
+        Lock xx(mutex);
+        if(beingDestroyed) return;
+        beingDestroyed = true;
+    }
+    stop();
     v3Channel->removeChannelMonitor(getPtrSelf());
 }
 
 Status V3ChannelMonitor::start()
 {
+    if(debug) printf("V3ChannelMonitor::start\n");
+    {
+        Lock xx(mutex);
+        if(isStarted) return Status::Ok;
+        isStarted = true;
+    }
     currentElement =getFree();
     if(currentElement.get()==0) {
         printf("V3ChannelMonitor::start will throw\n");
@@ -175,12 +192,19 @@ Status V3ChannelMonitor::start()
 
 Status V3ChannelMonitor::stop()
 {
+    {
+        Lock xx(mutex);
+        if(!isStarted) return Status::Ok;
+        isStarted = false;
+    }
+    if(debug) printf("V3ChannelMonitor::stop\n");
     caV3Monitor.get()->stop();
     return Status::Ok;
 }
 
 MonitorElementPtr  V3ChannelMonitor::poll()
 {
+    if(debug) printf("V3ChannelMonitor::poll\n");
     if(numberUsed==0) return nullElement;
     int ind = nextGetUsed;
     nextGetUsed++;
@@ -190,6 +214,7 @@ MonitorElementPtr  V3ChannelMonitor::poll()
 
 void V3ChannelMonitor::release(MonitorElementPtr const & element)
 {
+    if(debug) printf("V3ChannelMonitor::release\n");
    if(element!=elements[nextReleaseUsed++]) {
         throw std::logic_error(
            "not queueElement returned by last call to getUsed");
@@ -205,6 +230,7 @@ void V3ChannelMonitor::exceptionCallback(long status,long op)
 
 void V3ChannelMonitor::connectionCallback()
 {
+    if(debug) printf("V3ChannelMonitor::connectionCallback\n");
     event.signal();
 }
 
@@ -214,6 +240,7 @@ void V3ChannelMonitor::accessRightsCallback()
 
 void V3ChannelMonitor::eventCallback(const char *status)
 {
+    if(debug) printf("V3ChannelMonitor::eventCallback\n");
     if(status!=0) {
          monitorRequester->message(String(status),errorMessage);
     }

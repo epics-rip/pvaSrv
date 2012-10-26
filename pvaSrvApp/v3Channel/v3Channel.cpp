@@ -30,7 +30,7 @@ V3Channel::V3Channel(
     ChannelBaseProvider::shared_pointer const & provider,
         ChannelRequester::shared_pointer const & requester,
         String const &name,
-        std::auto_ptr<DbAddr> dbAddr
+        std::tr1::shared_ptr<DbAddr> dbAddr
 )
 :  ChannelBase(provider,requester,name),
     dbAddr(dbAddr),

@@ -59,6 +59,8 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 using std::tr1::static_pointer_cast;
 
+static bool debug = true;
+
 extern "C" {
 typedef long (*get_array_info) (DBADDR *,long *,long *);
 typedef long (*put_array_info) (DBADDR *,long );
@@ -70,14 +72,15 @@ V3ChannelArray::V3ChannelArray(
     DbAddr &dbAddr)
 : v3Channel(v3Channel),
   channelArrayRequester(channelArrayRequester),
-  dbAddr(dbAddr)
+  dbAddr(dbAddr),
+  beingDestroyed(false)
 {
-//printf("V3ChannelArray construct\n");
+    if(debug)printf("V3ChannelArray::V3ChannelArray\n");
 }
 
 V3ChannelArray::~V3ChannelArray()
 {
-//printf("V3ChannelArray::~V3ChannelArray()\n");
+    if(debug) printf("V3ChannelArray::~V3ChannelArray\n");
 }
 
 
@@ -124,6 +127,13 @@ bool V3ChannelArray::init(PVStructure::shared_pointer const &pvRequest)
 }
 
 void V3ChannelArray::destroy() {
+    if(debug) printf("V3ChannelArray::destroy beingDestroyed %s\n",
+         (beingDestroyed ? "true" : "false"));
+     {
+        Lock xx(mutex);
+        if(beingDestroyed) return;
+        beingDestroyed = true;
+    }
     v3Channel->removeChannelArray(getPtrSelf());
 }
 

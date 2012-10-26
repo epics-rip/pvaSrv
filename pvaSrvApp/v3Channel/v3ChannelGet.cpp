@@ -33,6 +33,8 @@ namespace epics { namespace pvIOC {
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
+static bool debug = true;
+
 V3ChannelGet::V3ChannelGet(
     ChannelBase::shared_pointer const &v3Channel,
     ChannelGetRequester::shared_pointer const &channelGetRequester,
@@ -44,16 +46,14 @@ V3ChannelGet::V3ChannelGet(
   process(false),
   firstTime(true),
   propertyMask(0),
-  pNotify(0),
-  notifyAddr(0),
-  event()
+  beingDestroyed(false)
 {
-//printf("V3ChannelGet construct\n");
+    if(debug)printf("V3ChannelGet::V3ChannelGet\n");
 }
 
 V3ChannelGet::~V3ChannelGet()
 {
-//printf("V3ChannelGet destruct\n");
+    if(debug)printf("V3ChannelGet::~V3ChannelGet\n");
 }
 
 
@@ -110,6 +110,13 @@ void V3ChannelGet::message(String const &message,MessageType messageType)
 }
 
 void V3ChannelGet::destroy() {
+    if(debug) printf("V3ChannelGet::destroy beingDestroyed %s\n",
+         (beingDestroyed ? "true" : "false"));
+    {
+        Lock xx(mutex);
+        if(beingDestroyed) return;
+        beingDestroyed = true;
+    }
     v3Channel->removeChannelGet(getPtrSelf());
 }
 

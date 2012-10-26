@@ -70,7 +70,7 @@ Channel::shared_pointer V3ChannelProvider::createChannel(
         channelNotCreated(channelRequester);
         return Channel::shared_pointer();
     }
-    std::auto_ptr<DbAddr> addr(new DbAddr());
+    std::tr1::shared_ptr<DbAddr> addr(new DbAddr());
     memcpy(addr.get(),&dbAddr,sizeof(dbAddr));
     V3Channel *v3Channel = new V3Channel(
             getPtrSelf(),
