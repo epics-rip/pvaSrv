@@ -160,6 +160,7 @@ void V3ChannelMonitor::destroy() {
         beingDestroyed = true;
     }
     stop();
+    caV3Monitor.reset();
     v3Channel->removeChannelMonitor(getPtrSelf());
     v3Channel.reset();
 }
@@ -169,6 +170,10 @@ Status V3ChannelMonitor::start()
     if(V3ChannelDebug::getLevel()>0) printf("V3ChannelMonitor::start\n");
     {
         Lock xx(mutex);
+        if(beingDestroyed) {
+             Status status(Status::STATUSTYPE_ERROR,"beingDestroyed");
+             return status;
+        }
         if(isStarted) return Status::Ok;
         isStarted = true;
     }
@@ -240,6 +245,7 @@ void V3ChannelMonitor::accessRightsCallback()
 void V3ChannelMonitor::eventCallback(const char *status)
 {
     if(V3ChannelDebug::getLevel()>0) printf("V3ChannelMonitor::eventCallback\n");
+    if(beingDestroyed) return;
     if(status!=0) {
          monitorRequester->message(String(status),errorMessage);
     }

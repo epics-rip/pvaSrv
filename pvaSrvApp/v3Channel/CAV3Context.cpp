@@ -93,7 +93,6 @@ void CAV3Context::stop()
     {
         CAV3ContextCreate::erase(threadId);
         ca_context_destroy();
-        delete this;
     }
 }
 
