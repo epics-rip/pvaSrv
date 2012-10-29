@@ -25,10 +25,10 @@
 
 #include <pv/v3CAMonitor.h>
 #include "CAV3Context.h"
+#include <v3ChannelDebug.h>
 
 using namespace epics::pvData;
-
-static bool debug = true;
+using namespace epics::pvIOC;
 
 CAV3Data::CAV3Data()
 : doubleValue(0.0),
@@ -60,7 +60,7 @@ extern "C" {
 
 static void connectionCallback(struct connection_handler_args args)
 {
-    if(debug) printf("connectionCallback\n");
+    if(V3ChannelDebug::getLevel()>0) printf("connectionCallback\n");
     CAV3MonitorPvt *pvt = static_cast<CAV3MonitorPvt *>(ca_puser(args.chid));   
     pvt->requester->connectionCallback();
 }
@@ -73,7 +73,7 @@ static void accessRightsCallback(struct access_rights_handler_args args)
 
 static void eventCallback(struct event_handler_args eha)
 {
-    if(debug) printf("eventCallback\n");
+    if(V3ChannelDebug::getLevel()>0) printf("eventCallback\n");
     CAV3MonitorPvt *pvt = static_cast<CAV3MonitorPvt *>(ca_puser(eha.chid));   
     if(eha.status!=ECA_NORMAL) {
         pvt->requester->eventCallback(ca_message(eha.status));
@@ -181,9 +181,9 @@ static void eventCallback(struct event_handler_args eha)
             break;
         }
     }
-    if(debug) printf("eventCallback calling requester->eventCallback\n");
+    if(V3ChannelDebug::getLevel()>0) printf("eventCallback calling requester->eventCallback\n");
     pvt->requester->eventCallback(0);
-    if(debug) printf("eventCallback after calling requester->eventCallback\n");
+    if(V3ChannelDebug::getLevel()>0) printf("eventCallback after calling requester->eventCallback\n");
 }
 
 } //extern "C"
@@ -195,12 +195,12 @@ CAV3MonitorPvt::CAV3MonitorPvt(
 : requester(requester),pvName(pvName),v3Type(v3Type),
   data(),chid(0),myevid(0),context(CAV3ContextCreate::get(requester))
 {
-    if(debug) printf("CAV3MonitorPvt::CAV3MonitorPvt\n");
+    if(V3ChannelDebug::getLevel()>0) printf("CAV3MonitorPvt::CAV3MonitorPvt\n");
 }
 
 CAV3MonitorPvt::~CAV3MonitorPvt()
 {
-    if(debug) printf("CAV3MonitorPvt::~CAV3MonitorPvt\n");
+    if(V3ChannelDebug::getLevel()>0) printf("CAV3MonitorPvt::~CAV3MonitorPvt\n");
     if(chid!=0) {
         context->checkContext();
         ca_clear_channel(chid);
@@ -211,7 +211,7 @@ CAV3MonitorPvt::~CAV3MonitorPvt()
 
 void CAV3MonitorPvt::connect()
 {
-    if(debug) printf("CAV3MonitorPvt::connect\n");
+    if(V3ChannelDebug::getLevel()>0) printf("CAV3MonitorPvt::connect\n");
     int status = 0;
     context->checkContext();
     status = ca_create_channel(
@@ -231,7 +231,7 @@ void CAV3MonitorPvt::connect()
 
 void CAV3MonitorPvt::start()
 {
-    if(debug) printf("CAV3MonitorPvt::start\n");
+    if(V3ChannelDebug::getLevel()>0) printf("CAV3MonitorPvt::start\n");
     chtype type = DBR_STRING;
     switch(v3Type) {
         case v3Enum: type = DBR_TIME_ENUM; break;
@@ -257,7 +257,7 @@ void CAV3MonitorPvt::start()
 
 void CAV3MonitorPvt::stop()
 {
-    if(debug) printf("CAV3MonitorPvt::stop\n");
+    if(V3ChannelDebug::getLevel()>0) printf("CAV3MonitorPvt::stop\n");
     context->checkContext();
     ca_clear_subscription(myevid);
 }
@@ -267,12 +267,12 @@ CAV3Monitor::CAV3Monitor(
     String const &pvName,V3Type v3Type)
 : pImpl(new CAV3MonitorPvt(requester,pvName,v3Type))
 {
-    if(debug) printf("CAV3Monitor::CAV3Monitor\n");
+    if(V3ChannelDebug::getLevel()>0) printf("CAV3Monitor::CAV3Monitor\n");
 }
 
 CAV3Monitor::~CAV3Monitor()
 {
-    if(debug) printf("CAV3Monitor::~CAV3Monitor\n");
+    if(V3ChannelDebug::getLevel()>0) printf("CAV3Monitor::~CAV3Monitor\n");
     delete pImpl;
 }
 

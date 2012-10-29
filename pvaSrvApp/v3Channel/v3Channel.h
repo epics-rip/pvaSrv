@@ -16,6 +16,7 @@
 #include <pv/v3CAMonitor.h>
 #include <pv/thread.h>
 #include <pv/event.h>
+#include <pv/v3ChannelDebug.h>
 
 
 namespace epics { namespace pvIOC { 

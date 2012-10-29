@@ -26,6 +26,10 @@ namespace epics { namespace pvIOC {
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
+int V3ChannelDebugLevel = 0;
+void V3ChannelDebug::setLevel(int level) {V3ChannelDebugLevel = level;}
+int V3ChannelDebug::getLevel() {return V3ChannelDebugLevel;}
+
 V3Channel::V3Channel(
     ChannelBaseProvider::shared_pointer const & provider,
         ChannelRequester::shared_pointer const & requester,

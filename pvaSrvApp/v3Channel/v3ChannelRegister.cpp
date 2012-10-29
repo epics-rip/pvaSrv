@@ -102,6 +102,17 @@ void V3ChannelCTX::run()
     event.signal();
 }
 
+static const iocshArg setV3ChannelDebugLevelArg0 = { "level",iocshArgInt};
+static const iocshArg *setV3ChannelDebugLevelArgs[] =
+     {&setV3ChannelDebugLevelArg0};
+static const iocshFuncDef setV3ChannelDebugLevelFuncDef = {
+    "setV3ChannelDebugLevel", 1, setV3ChannelDebugLevelArgs };
+extern "C" void setV3ChannelDebugLevel(const iocshArgBuf *args)
+{
+    int level = args[0].ival;
+    V3ChannelDebug::setLevel(level);
+    printf("new level %d\n",level);
+}
 
 static const iocshFuncDef startV3ChannelFuncDef = {
     "startV3Channel", 0, 0
@@ -122,6 +133,15 @@ extern "C" void stopV3Channel(const iocshArgBuf *args)
     v3ChannelCTX->getV3ChannelProvider()->unregisterSelf();
 }
 
+static void setV3ChannelDebugLevelRegister(void)
+{
+    static int firstTime = 1;
+    if (firstTime) {
+        firstTime = 0;
+        iocshRegister(&setV3ChannelDebugLevelFuncDef, setV3ChannelDebugLevel);
+    }
+}
+
 static void startV3ChannelRegister(void)
 {
     static int firstTime = 1;
@@ -140,5 +160,6 @@ static void stopV3ChannelRegister(void)
     }
 }
 
+epicsExportRegistrar(setV3ChannelDebugLevelRegister);
 epicsExportRegistrar(startV3ChannelRegister);
 epicsExportRegistrar(stopV3ChannelRegister);

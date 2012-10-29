@@ -26,6 +26,7 @@ LIBSRCS += ezchannelRPC.cpp
 SRC_DIRS += $(IOC)/v3Channel
 DBD += v3Channel.dbd
 INC += v3Channel.h
+INC += v3ChannelDebug.h
 INC += v3CAMonitor.h
 LIBSRCS += v3Util.cpp
 LIBSRCS += CAV3Context.cpp

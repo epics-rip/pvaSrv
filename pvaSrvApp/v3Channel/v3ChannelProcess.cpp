@@ -27,8 +27,6 @@
 
 namespace epics { namespace pvIOC { 
 
-static bool debug = true;
-
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
@@ -47,12 +45,12 @@ V3ChannelProcess::V3ChannelProcess(
   valueString("value"),
   beingDestroyed(false)
 {
-    if(debug) printf("V3ChannelProcess::V3ChannelProcess\n");
+    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelProcess::V3ChannelProcess\n");
 }
 
 V3ChannelProcess::~V3ChannelProcess()
 {
-    if(debug) printf("V3ChannelProcess::~V3ChannelProcess\n");
+    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelProcess::~V3ChannelProcess\n");
 }
 
 
@@ -89,7 +87,7 @@ void V3ChannelProcess::message(String const &message,MessageType messageType)
 }
 
 void V3ChannelProcess::destroy() {
-    if(debug) printf("V3ChannelProcess::destroy beingDestroyed %s\n",
+    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelProcess::destroy beingDestroyed %s\n",
          (beingDestroyed ? "true" : "false"));
     {
         Lock xx(mutex);

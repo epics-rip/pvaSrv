@@ -37,8 +37,6 @@ namespace epics { namespace pvIOC {
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
-static bool debug = true;
-
 V3ChannelPut::V3ChannelPut(
     ChannelBase::shared_pointer const &v3Channel,
     ChannelPutRequester::shared_pointer const &channelPutRequester,
@@ -52,12 +50,12 @@ V3ChannelPut::V3ChannelPut(
   firstTime(true),
   beingDestroyed(false)
 {
-    if(debug) printf("V3ChannelPut::V3ChannelPut()\n");
+    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelPut::V3ChannelPut()\n");
 }
 
 V3ChannelPut::~V3ChannelPut()
 {
-    if(debug) printf("V3ChannelPut::~V3ChannelPut()\n");
+    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelPut::~V3ChannelPut()\n");
 }
 
 
@@ -125,7 +123,7 @@ void V3ChannelPut::message(String const &message,MessageType messageType)
 }
 
 void V3ChannelPut::destroy() {
-    if(debug) printf("V3ChannelPut::destroy beingDestroyed %s\n",
+    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelPut::destroy beingDestroyed %s\n",
          (beingDestroyed ? "true" : "false"));
     {
         Lock xx(mutex);

@@ -23,16 +23,17 @@
 #include <dbDefs.h>
 
 #include <CAV3Context.h>
+#include <v3ChannelDebug.h>
 
 using namespace epics::pvData;
+using namespace epics::pvIOC;
 
-static bool debug = true;
 
 extern "C" {
 
 static void exceptionCallback(struct exception_handler_args args)
 {
-    if(debug) printf("CAV3Context::exceptionCallback\n");
+    if(V3ChannelDebug::getLevel()>0) printf("CAV3Context::exceptionCallback\n");
     CAV3Context *context = static_cast<CAV3Context *>(args.usr);   
     String message(ca_message(args.stat));
     context->exception(message);
@@ -40,7 +41,7 @@ static void exceptionCallback(struct exception_handler_args args)
 
 static void threadExitFunc(void *arg)
 {
-    if(debug) printf("CAV3Context::threadExitFunc\n");
+    if(V3ChannelDebug::getLevel()>0) printf("CAV3Context::threadExitFunc\n");
     CAV3Context * context = static_cast<CAV3Context * >(arg);
     context->stop();
 }
@@ -54,7 +55,7 @@ CAV3Context::CAV3Context(RequesterPtr const & requester)
   context(0),
   referenceCount(0)
 {
-    if(debug) printf("CAV3Context::CAV3Context\n");
+    if(V3ChannelDebug::getLevel()>0) printf("CAV3Context::CAV3Context\n");
     SEVCHK(ca_context_create(ca_enable_preemptive_callback),
         "CAV3Context::CAV3Context calling ca_context_create");
     int status = ca_add_exception_event(exceptionCallback,this);
@@ -67,13 +68,13 @@ CAV3Context::CAV3Context(RequesterPtr const & requester)
 
 CAV3Context::~CAV3Context()
 {
-    if(debug) printf("CAV3Context::~CAV3Context\n");
+    if(V3ChannelDebug::getLevel()>0) printf("CAV3Context::~CAV3Context\n");
 }
 
 // TODO commented out exceptions to avoid SIGSEGs (to reproduce: pvget -m counter01 and then CTRL+C the pvget)
 void CAV3Context::stop()
 {
-    if(debug) printf("CAV3Context::stop\n");
+    if(V3ChannelDebug::getLevel()>0) printf("CAV3Context::stop\n");
     epicsThreadId id = epicsThreadGetIdSelf();
     if(id!=threadId) {
     	printf("CAV3Context::stop not same thread\n");
@@ -100,7 +101,7 @@ typedef std::list<epicsThreadId>::iterator threadListIter;
 
 void CAV3Context::checkContext()
 {
-    if(debug) printf("CAV3Context::checkContext\n");
+    if(V3ChannelDebug::getLevel()>0) printf("CAV3Context::checkContext\n");
     epicsThreadId id = epicsThreadGetIdSelf();
     if(id==threadId) return;
     Lock xx(mutex);
@@ -114,7 +115,7 @@ void CAV3Context::checkContext()
 
 void CAV3Context::release()
 {
-    if(debug) printf("CAV3Context::release referenceCount %d\n",referenceCount);
+    if(V3ChannelDebug::getLevel()>0) printf("CAV3Context::release referenceCount %d\n",referenceCount);
     Lock xx(mutex);
     referenceCount--;
 }
@@ -132,7 +133,7 @@ Mutex CAV3ContextCreate::mutex;
 
 CAV3ContextPtr CAV3ContextCreate::get(RequesterPtr const &requester)
 {
-    if(debug) printf("CAV3Context::get\n");
+    if(V3ChannelDebug::getLevel()>0) printf("CAV3Context::get\n");
     Lock xx(mutex);
     epicsThreadId id = epicsThreadGetIdSelf();
     contextMapIter iter = contextMap.find(id);
@@ -149,7 +150,7 @@ CAV3ContextPtr CAV3ContextCreate::get(RequesterPtr const &requester)
 
 void CAV3ContextCreate::erase(epicsThreadId threadId)
 {
-    if(debug) printf("CAV3Context::erase\n");
+    if(V3ChannelDebug::getLevel()>0) printf("CAV3Context::erase\n");
     Lock xx(mutex);
     contextMap.erase(threadId);
 }

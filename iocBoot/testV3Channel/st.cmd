@@ -69,6 +69,8 @@ cd ${TOP}/iocBoot/${IOC}
 iocInit()
 epicsThreadSleep(2.0)
 casr
+setV3ChannelDebugLevel 1
+setChannelBaseDebugLevel 1
 startV3Channel
 startExampleService serviceRPC
 startPVServiceChannel
