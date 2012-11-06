@@ -25,7 +25,7 @@
 
 #include <pv/v3CAMonitor.h>
 #include "CAV3Context.h"
-#include <v3ChannelDebug.h>
+#include <pv/v3ChannelDebug.h>
 
 using namespace epics::pvData;
 using namespace epics::pvIOC;
