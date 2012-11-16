@@ -135,6 +135,7 @@ void V3ChannelPut::destroy() {
 
 void V3ChannelPut::put(bool lastRequest)
 {
+    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelPut::put()\n");
     Lock lock(dataMutex);
     PVFieldPtr pvField = pvStructure.get()->getPVFields()[0];
     if(propertyMask&v3Util->dbPutBit) {
@@ -168,6 +169,7 @@ void V3ChannelPut::notifyCallback(struct putNotify *pn)
 
 void V3ChannelPut::get()
 {
+    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelPut::get()\n");
     {
     Lock lock(dataMutex);
     bitSet->clear();

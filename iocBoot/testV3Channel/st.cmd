@@ -7,6 +7,7 @@ dbLoadDatabase("dbd/testV3Channel.dbd")
 testV3Channel_registerRecordDeviceDriver(pdbbase)
 
 ## Load record instances
+dbLoadRecords("db/synchronous.db")
 dbLoadRecords("db/dbInteger.db","name=byte01,type=byte")
 dbLoadRecords("db/dbInteger.db","name=short01,type=short")
 dbLoadRecords("db/dbInteger.db","name=ubyte01,type=ubyte")

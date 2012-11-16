@@ -26,9 +26,16 @@ namespace epics { namespace pvIOC {
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
-int V3ChannelDebugLevel = 0;
-void V3ChannelDebug::setLevel(int level) {V3ChannelDebugLevel = level;}
-int V3ChannelDebug::getLevel() {return V3ChannelDebugLevel;}
+static int v3ChannelDebugLevel = 0;
+void V3ChannelDebug::setLevel(int level)
+{
+    v3ChannelDebugLevel = level;
+}
+
+int V3ChannelDebug::getLevel()
+{
+    return v3ChannelDebugLevel;
+}
 
 V3Channel::V3Channel(
     ChannelBaseProvider::shared_pointer const & provider,
@@ -115,9 +122,35 @@ ChannelGet::shared_pointer V3Channel::createChannelGet(
         ChannelGetRequester::shared_pointer const &channelGetRequester,
         PVStructure::shared_pointer const &pvRequest)
 {
+    PVFieldPtr pvField = pvRequest->getSubField("getField");
+    if(pvField.get()!=NULL) {
+        V3ChannelMultiGet::shared_pointer v3ChannelMultiGet(
+            new V3ChannelMultiGet(
+                getPtrSelf(),channelGetRequester,*(dbAddr.get())));
+        if(v3ChannelMultiGet->init(pvRequest)) {
+            addChannelGet(v3ChannelMultiGet);
+        } else {
+            Status createFailed(Status::STATUSTYPE_ERROR, "create v3ChannelMultiGet failed");
+            channelGetRequester->channelGetConnect(
+                createFailed,
+                v3ChannelMultiGet,
+                pvNullStructure,
+                emptyBitSet);
+        }
+        return v3ChannelMultiGet;
+    }
     V3ChannelGet::shared_pointer v3ChannelGet(
         new V3ChannelGet(getPtrSelf(),channelGetRequester,*(dbAddr.get())));
-    if(v3ChannelGet->init(pvRequest)) addChannelGet(v3ChannelGet);
+    if(v3ChannelGet->init(pvRequest)) {
+        addChannelGet(v3ChannelGet);
+    } else {
+        Status createFailed(Status::STATUSTYPE_ERROR, "create v3ChannelGet failed");
+        channelGetRequester->channelGetConnect(
+            createFailed,
+            v3ChannelGet,
+            pvNullStructure,
+            emptyBitSet);
+    }
     return v3ChannelGet;
 }
 
@@ -125,9 +158,35 @@ ChannelPut::shared_pointer V3Channel::createChannelPut(
         ChannelPutRequester::shared_pointer const &channelPutRequester,
         PVStructure::shared_pointer const &pvRequest)
 {
+    PVFieldPtr pvField = pvRequest->getSubField("putField");
+    if(pvField.get()!=NULL) {
+        V3ChannelMultiPut::shared_pointer v3ChannelMultiPut(
+            new V3ChannelMultiPut(
+                getPtrSelf(),channelPutRequester,*(dbAddr.get())));
+        if(v3ChannelMultiPut->init(pvRequest)) {
+            addChannelPut(v3ChannelMultiPut);
+        } else {
+            Status createFailed(Status::STATUSTYPE_ERROR, "create v3ChannelMultiPut failed");
+            channelPutRequester->channelPutConnect(
+                createFailed,
+                v3ChannelMultiPut,
+                pvNullStructure,
+                emptyBitSet);
+        }
+        return v3ChannelMultiPut;
+    }
     V3ChannelPut::shared_pointer v3ChannelPut(
           new V3ChannelPut(getPtrSelf(),channelPutRequester,*(dbAddr.get())));
-    if(v3ChannelPut->init(pvRequest)) addChannelPut(v3ChannelPut);
+    if(v3ChannelPut->init(pvRequest)) {
+        addChannelPut(v3ChannelPut);
+    } else {
+        Status createFailed(Status::STATUSTYPE_ERROR, "create v3ChannelPut failed");
+        channelPutRequester->channelPutConnect(
+            createFailed,
+            v3ChannelPut,
+            pvNullStructure,
+            emptyBitSet);
+    }
     return v3ChannelPut;
 }
 
@@ -138,7 +197,16 @@ Monitor::shared_pointer V3Channel::createMonitor(
 {
     V3ChannelMonitor::shared_pointer v3ChannelMonitor(
          new V3ChannelMonitor(getPtrSelf(),monitorRequester,*(dbAddr.get())));
-    if(v3ChannelMonitor->init(pvRequest)) addChannelMonitor(v3ChannelMonitor);
+    if(v3ChannelMonitor->init(pvRequest)) {
+        addChannelMonitor(v3ChannelMonitor);
+    } else {
+        Status createFailed(Status::STATUSTYPE_ERROR, "create v3ChannelMonitor failed");
+        StructureConstPtr xxx;
+        monitorRequester->monitorConnect(
+            createFailed,
+            v3ChannelMonitor,
+            xxx);
+    }
     return v3ChannelMonitor;
 }
 
@@ -148,7 +216,16 @@ ChannelArray::shared_pointer V3Channel::createChannelArray(
 {
     V3ChannelArray::shared_pointer v3ChannelArray(
          new V3ChannelArray(getPtrSelf(),channelArrayRequester,*(dbAddr.get())));
-    if(v3ChannelArray->init(pvRequest)) addChannelArray(v3ChannelArray);
+    if(v3ChannelArray->init(pvRequest)) {
+        addChannelArray(v3ChannelArray);
+    } else {
+        Status createFailed(Status::STATUSTYPE_ERROR, "create v3ChannelArray failed");
+        PVScalarArrayPtr xxx;
+        channelArrayRequester->channelArrayConnect(
+            createFailed,
+            v3ChannelArray,
+            xxx);
+    }
     return v3ChannelArray;
 }
 

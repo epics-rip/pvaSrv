@@ -112,60 +112,64 @@ int V3Util::getProperties(
     } else {
         if(processDefault) propertyMask |= processBit;
     }
-    PVStructurePtr fieldPV;
-    PVFieldPtr pvTemp = pvRequest->getSubField(fieldString);
-    if(pvTemp.get()!=NULL) fieldPV = static_pointer_cast<PVStructure>(pvTemp);
-    PVStringPtr pvShareString;
-    pvField = pvRequest->getSubField(recordShareString);
-    if(pvField.get()!=NULL) {
-         pvShareString = pvRequest->getStringField(recordShareString);
-    } else if(fieldPV.get()!=NULL){
-         pvField = fieldPV->getSubField(valueShareArrayString);
-         if(pvField.get()!=NULL) {
-             pvShareString = fieldPV->getStringField(valueShareArrayString);
-         }
-    }
-    if(pvShareString.get()!=NULL) {
-        String value = pvShareString->get();
-        if(value.compare("true")==0) propertyMask |= shareArrayBit;
-    }
     bool getValue = false;
-    if(fieldPV.get()!=NULL) pvRequest = fieldPV.get();
     String fieldList;
-    if(pvRequest->getStructure()->getNumberFields()==0) {
+    PVFieldPtr pvTemp = pvRequest->getSubField(fieldString);
+    if(pvTemp.get()==NULL) {
+        fieldList += valueString;
         getValue = true;
-        fieldList = allString;
     } else {
-        pvField = pvRequest->getSubField(valueString);
+        PVStructurePtr fieldPV = static_pointer_cast<PVStructure>(pvTemp);
+        PVStringPtr pvShareString;
+        pvField = pvRequest->getSubField(recordShareString);
         if(pvField.get()!=NULL) {
-            if(fieldList.size()>0) fieldList += ',';
-            fieldList += valueString;
+             pvShareString = pvRequest->getStringField(recordShareString);
+        } else if(fieldPV.get()!=NULL){
+             pvField = fieldPV->getSubField(valueShareArrayString);
+             if(pvField.get()!=NULL) {
+                 pvShareString = fieldPV->getStringField(valueShareArrayString);
+             }
+        }
+        if(pvShareString.get()!=NULL) {
+            String value = pvShareString->get();
+            if(value.compare("true")==0) propertyMask |= shareArrayBit;
+        }
+        if(fieldPV.get()!=NULL) pvRequest = fieldPV.get();
+        if(pvRequest->getStructure()->getNumberFields()==0) {
             getValue = true;
-        }
-        pvField = pvRequest->getSubField(alarmString);
-        if(pvField.get()!=NULL) {
-            if(fieldList.size()>0) fieldList += ',';
-            fieldList += alarmString;
-        }
-        pvField = pvRequest->getSubField(timeStampString);
-        if(pvField.get()!=NULL) {
-            if(fieldList.size()>0) fieldList += ',';
-            fieldList += timeStampString;
-        }
-        pvField = pvRequest->getSubField(displayString);
-        if(pvField.get()!=NULL) {
-            if(fieldList.size()>0) fieldList += ',';
-            fieldList += displayString;
-        }
-        pvField = pvRequest->getSubField(controlString);
-        if(pvField.get()!=NULL) {
-            if(fieldList.size()>0) fieldList += ',';
-            fieldList += controlString;
-        }
-        pvField = pvRequest->getSubField(valueAlarmString);
-        if(pvField.get()!=NULL) {
-            if(fieldList.size()>0) fieldList += ',';
-            fieldList += valueAlarmString;
+            fieldList = allString;
+        } else {
+            pvField = pvRequest->getSubField(valueString);
+            if(pvField.get()!=NULL) {
+                if(fieldList.size()>0) fieldList += ',';
+                fieldList += valueString;
+                getValue = true;
+            }
+            pvField = pvRequest->getSubField(alarmString);
+            if(pvField.get()!=NULL) {
+                if(fieldList.size()>0) fieldList += ',';
+                fieldList += alarmString;
+            }
+            pvField = pvRequest->getSubField(timeStampString);
+            if(pvField.get()!=NULL) {
+                if(fieldList.size()>0) fieldList += ',';
+                fieldList += timeStampString;
+            }
+            pvField = pvRequest->getSubField(displayString);
+            if(pvField.get()!=NULL) {
+                if(fieldList.size()>0) fieldList += ',';
+                fieldList += displayString;
+            }
+            pvField = pvRequest->getSubField(controlString);
+            if(pvField.get()!=NULL) {
+                if(fieldList.size()>0) fieldList += ',';
+                fieldList += controlString;
+            }
+            pvField = pvRequest->getSubField(valueAlarmString);
+            if(pvField.get()!=NULL) {
+                if(fieldList.size()>0) fieldList += ',';
+                fieldList += valueAlarmString;
+            }
         }
     }
     if(getValue) {
@@ -315,6 +319,10 @@ PVStructurePtr V3Util::createPVStructure(
                  choices,properties);
             return pvStructure;
         } else if(dbAddr.field_type==DBF_DEVICE) {
+            requester->message(
+               String("DBF_DEVICE not supported"),errorMessage);
+            return nullPVStructure;
+/* FOLLOWING NO LONGER WORKS
             dbFldDes *pdbFldDes = dbAddr.pfldDes;
             dbDeviceMenu *pdbDeviceMenu
                 = static_cast<dbDeviceMenu *>(pdbFldDes->ftPvt);
@@ -328,6 +336,7 @@ PVStructurePtr V3Util::createPVStructure(
             PVStructurePtr pvStructure = standardPVField->enumerated(
                 choices,properties);
             return pvStructure;
+*/
         } else if(dbAddr.field_type==DBF_MENU) {
             dbFldDes *pdbFldDes = dbAddr.pfldDes;
             dbMenu *pdbMenu = static_cast<dbMenu *>(pdbFldDes->ftPvt);

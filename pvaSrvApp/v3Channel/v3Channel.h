@@ -34,6 +34,7 @@ class V3ChannelMonitor;
 class V3ChannelArray;
 
 typedef struct dbAddr DbAddr;
+typedef std::vector<DbAddr> DbAddrArray;
 
 class V3ChannelProvider :
     public epics::pvAccess::ChannelBaseProvider
@@ -72,24 +73,26 @@ public:
         epics::pvData::String const &subField);
     virtual epics::pvAccess::ChannelProcess::shared_pointer createChannelProcess(
         epics::pvAccess::ChannelProcessRequester::shared_pointer const &channelProcessRequester,
-        epics::pvData::PVStructure::shared_pointer const &pvRequest);
+        epics::pvData::PVStructurePtr const &pvRequest);
     virtual epics::pvAccess::ChannelGet::shared_pointer createChannelGet(
         epics::pvAccess::ChannelGetRequester::shared_pointer const &channelGetRequester,
-        epics::pvData::PVStructure::shared_pointer const &pvRequest);
+        epics::pvData::PVStructurePtr const &pvRequest);
     virtual epics::pvAccess::ChannelPut::shared_pointer createChannelPut(
         epics::pvAccess::ChannelPutRequester::shared_pointer const &channelPutRequester,
-        epics::pvData::PVStructure::shared_pointer const &pvRequest);
+        epics::pvData::PVStructurePtr const &pvRequest);
     virtual epics::pvData::Monitor::shared_pointer createMonitor(
         epics::pvData::MonitorRequester::shared_pointer const &monitorRequester,
-        epics::pvData::PVStructure::shared_pointer const &pvRequest);
+        epics::pvData::PVStructurePtr const &pvRequest);
     virtual epics::pvAccess::ChannelArray::shared_pointer createChannelArray(
         epics::pvAccess::ChannelArrayRequester::shared_pointer const &channelArrayRequester,
-        epics::pvData::PVStructure::shared_pointer const &pvRequest);
+        epics::pvData::PVStructurePtr const &pvRequest);
     virtual void printInfo();
     virtual void printInfo(epics::pvData::StringBuilder out);
 private:
     std::tr1::shared_ptr<DbAddr> dbAddr;
     epics::pvData::FieldConstPtr recordField; 
+    epics::pvData::PVStructurePtr pvNullStructure;
+    epics::pvData::BitSetPtr emptyBitSet;
 };
 
 class V3ChannelProcess :
@@ -144,7 +147,7 @@ public:
         epics::pvAccess::ChannelGetRequester::shared_pointer const &channelGetRequester,
         DbAddr &dbAddr);
     virtual ~V3ChannelGet();
-    bool init(epics::pvData::PVStructure::shared_pointer const & pvRequest);
+    bool init(epics::pvData::PVStructurePtr const & pvRequest);
     virtual epics::pvData::String getRequesterName();
     virtual void message(
         epics::pvData::String const &message,
@@ -162,7 +165,7 @@ private:
     V3UtilPtr v3Util;
     epics::pvAccess::ChannelBase::shared_pointer v3Channel;
     epics::pvAccess::ChannelGetRequester::shared_pointer channelGetRequester;
-    epics::pvData::PVStructure::shared_pointer pvStructure;
+    epics::pvData::PVStructurePtr pvStructure;
     epics::pvData::BitSet::shared_pointer bitSet;
     DbAddr &dbAddr;
     bool process;
@@ -172,6 +175,49 @@ private:
     std::tr1::shared_ptr<DbAddr> notifyAddr;
     epics::pvData::Event event;
     epics::pvData::Mutex dataMutex;
+    epics::pvData::Mutex mutex;
+    bool beingDestroyed;
+};
+
+class V3ChannelMultiGet :
+  public virtual epics::pvAccess::ChannelGet,
+  public std::tr1::enable_shared_from_this<V3ChannelMultiGet>
+{
+public:
+    POINTER_DEFINITIONS(V3ChannelMultiGet);
+    V3ChannelMultiGet(
+        epics::pvAccess::ChannelBase::shared_pointer const & v3Channel,
+        epics::pvAccess::ChannelGetRequester::shared_pointer const &channelGetRequester,
+        DbAddr &dbAddr);
+    virtual ~V3ChannelMultiGet();
+    bool init(epics::pvData::PVStructurePtr const & pvRequest);
+    virtual epics::pvData::String getRequesterName();
+    virtual void message(
+        epics::pvData::String const &message,
+        epics::pvData::MessageType messageType);
+    virtual void destroy();
+    virtual void get(bool lastRequest);
+    virtual void lock();
+    virtual void unlock();
+private:
+    shared_pointer getPtrSelf()
+    {
+        return shared_from_this();
+    }
+    static void notifyCallback(struct putNotify *);
+    V3UtilPtr v3Util;
+    epics::pvAccess::ChannelBase::shared_pointer v3Channel;
+    epics::pvAccess::ChannelGetRequester::shared_pointer channelGetRequester;
+    epics::pvData::PVStructurePtr pvStructure;
+    epics::pvData::PVScalarArrayPtr pvScalarArray;
+    epics::pvData::BitSet::shared_pointer bitSet;
+    DbAddr &dbAddr;
+    DbAddrArray dbAddrArray;
+    int propertyMask;
+    bool process;
+    bool firstTime;
+    epics::pvData::Mutex dataMutex;
+    epics::pvData::Event event;
     epics::pvData::Mutex mutex;
     bool beingDestroyed;
 };
@@ -187,7 +233,7 @@ public:
         epics::pvAccess::ChannelPutRequester::shared_pointer const &channelPutRequester,
         DbAddr &dbAddr);
     virtual ~V3ChannelPut();
-    bool init(epics::pvData::PVStructure::shared_pointer const & pvRequest);
+    bool init(epics::pvData::PVStructurePtr const & pvRequest);
     virtual epics::pvData::String getRequesterName();
     virtual void message(
         epics::pvData::String const &message,
@@ -206,7 +252,7 @@ private:
     V3UtilPtr v3Util;
     epics::pvAccess::ChannelBase::shared_pointer v3Channel;
     epics::pvAccess::ChannelPutRequester::shared_pointer channelPutRequester;
-    epics::pvData::PVStructure::shared_pointer pvStructure;
+    epics::pvData::PVStructurePtr pvStructure;
     epics::pvData::BitSet::shared_pointer bitSet;
     DbAddr &dbAddr;
     int propertyMask;
@@ -214,6 +260,50 @@ private:
     bool firstTime;
     std::tr1::shared_ptr<struct putNotify> pNotify;
     std::tr1::shared_ptr<DbAddr> notifyAddr;
+    epics::pvData::Mutex dataMutex;
+    epics::pvData::Event event;
+    epics::pvData::Mutex mutex;
+    bool beingDestroyed;
+};
+
+
+class V3ChannelMultiPut :
+  public virtual epics::pvAccess::ChannelPut,
+  public std::tr1::enable_shared_from_this<V3ChannelMultiPut>
+{
+public:
+    POINTER_DEFINITIONS(V3ChannelMultiPut);
+    V3ChannelMultiPut(
+        epics::pvAccess::ChannelBase::shared_pointer const & v3Channel,
+        epics::pvAccess::ChannelPutRequester::shared_pointer const &channelPutRequester,
+        DbAddr &dbAddr);
+    virtual ~V3ChannelMultiPut();
+    bool init(epics::pvData::PVStructurePtr const & pvRequest);
+    virtual epics::pvData::String getRequesterName();
+    virtual void message(
+        epics::pvData::String const &message,
+        epics::pvData::MessageType messageType);
+    virtual void destroy();
+    virtual void put(bool lastRequest);
+    virtual void get();
+    virtual void lock();
+    virtual void unlock();
+private:
+    shared_pointer getPtrSelf()
+    {
+        return shared_from_this();
+    }
+    V3UtilPtr v3Util;
+    epics::pvAccess::ChannelBase::shared_pointer v3Channel;
+    epics::pvAccess::ChannelPutRequester::shared_pointer channelPutRequester;
+    epics::pvData::PVStructurePtr pvStructure;
+    epics::pvData::PVScalarArrayPtr pvScalarArray;
+    epics::pvData::BitSet::shared_pointer bitSet;
+    DbAddr &dbAddr;
+    DbAddrArray dbAddrArray;
+    int propertyMask;
+    bool process;
+    bool firstTime;
     epics::pvData::Mutex dataMutex;
     epics::pvData::Event event;
     epics::pvData::Mutex mutex;
@@ -233,7 +323,7 @@ public:
         DbAddr &dbAddr
     );
     virtual ~V3ChannelMonitor();
-    bool init(epics::pvData::PVStructure::shared_pointer const &  pvRequest);
+    bool init(epics::pvData::PVStructurePtr const &  pvRequest);
     virtual epics::pvData::String getRequesterName();
     virtual void message(
         epics::pvData::String const &message,
@@ -294,7 +384,7 @@ public:
         epics::pvAccess::ChannelArrayRequester::shared_pointer const &channelArrayRequester,
         DbAddr &dbAddr);
     virtual ~V3ChannelArray();
-    bool init(epics::pvData::PVStructure::shared_pointer const & pvRequest);
+    bool init(epics::pvData::PVStructurePtr const & pvRequest);
     virtual void destroy();
     virtual void putArray(bool lastRequest, int offset, int count);
     virtual void getArray(bool lastRequest, int offset, int count);

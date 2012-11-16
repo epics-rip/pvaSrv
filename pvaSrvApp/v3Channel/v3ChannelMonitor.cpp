@@ -104,6 +104,7 @@ bool V3ChannelMonitor::init(
                 monitorRequester,
                 propertyMask,
                 dbAddr));
+        if(pvStructure.get()==NULL) return false;
         MonitorElementPtr element(new MonitorElement(pvStructure));
         elements.push_back(element);
     }

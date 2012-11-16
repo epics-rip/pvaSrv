@@ -12,6 +12,7 @@ include $(TOP)/configure/CONFIG
 # databases, templates, substitutions like this
 DB += quadruple.db
 DB += bpm.db
+DB += synchronous.db
 
 #----------------------------------------------------
 # If <anyname>.db template is not named <anyname>*.template add

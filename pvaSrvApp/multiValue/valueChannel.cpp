@@ -48,6 +48,7 @@ void ValueChannel::destroy()
 
 Status ValueChannel::waitConnect()
 {
+    status = Status::Ok;
     if(!event.wait(2.0)) {
          status= Status(Status::STATUSTYPE_ERROR, "waitConnect timeout");
     }
@@ -83,6 +84,9 @@ Status ValueChannel::getTimeStamp(TimeStamp &timeStamp)
     }
     PVTimeStamp pvTimeStamp;
     PVFieldPtr pvField = pvGetStructure->getSubField("timeStamp");
+    if(pvField.get()==NULL) {
+        return Status(Status::STATUSTYPE_ERROR, "no timeStamp field");
+    }
     if(!pvTimeStamp.attach(pvField)) {
         return Status(Status::STATUSTYPE_ERROR, "no timeStamp field");
     }
@@ -97,6 +101,9 @@ Status ValueChannel::getAlarm(Alarm &alarm)
     }
     PVAlarm pvAlarm;
     PVFieldPtr pvField = pvGetStructure->getSubField("alarm");
+    if(pvField.get()==NULL) {
+        return Status(Status::STATUSTYPE_ERROR, "no alarm field");
+    }
     if(!pvAlarm.attach(pvField)) {
         return Status(Status::STATUSTYPE_ERROR, "no alarm field");
     }
@@ -162,8 +169,6 @@ void ValueChannel::channelGetConnect(
         PVFieldPtr pvTimeStamp = pvGetStructure->getSubField("timeStamp");
         bool allGood = true;
         if(pvValue.get()==NULL) allGood = false;
-        if(pvAlarm.get()==NULL) allGood = false;
-        if(pvTimeStamp.get()==NULL) allGood = false;
         if(!allGood) {
             String builder("channel ");
             builder += channelName;
