@@ -319,13 +319,14 @@ PVStructurePtr V3Util::createPVStructure(
                  choices,properties);
             return pvStructure;
         } else if(dbAddr.field_type==DBF_DEVICE) {
-            requester->message(
-               String("DBF_DEVICE not supported"),errorMessage);
-            return nullPVStructure;
-/* FOLLOWING NO LONGER WORKS
             dbFldDes *pdbFldDes = dbAddr.pfldDes;
             dbDeviceMenu *pdbDeviceMenu
                 = static_cast<dbDeviceMenu *>(pdbFldDes->ftPvt);
+            if(pdbDeviceMenu==NULL) {
+                requester->message(
+                   String("record type has no device support"),errorMessage);
+                return nullPVStructure;
+            }
             size_t length = pdbDeviceMenu->nChoice;
             char **papChoice = pdbDeviceMenu->papChoice;
             StringArray choices;
@@ -336,7 +337,6 @@ PVStructurePtr V3Util::createPVStructure(
             PVStructurePtr pvStructure = standardPVField->enumerated(
                 choices,properties);
             return pvStructure;
-*/
         } else if(dbAddr.field_type==DBF_MENU) {
             dbFldDes *pdbFldDes = dbAddr.pfldDes;
             dbMenu *pdbMenu = static_cast<dbMenu *>(pdbFldDes->ftPvt);
