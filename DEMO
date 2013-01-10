@@ -92,3 +92,14 @@ counter01                      4
 counter01                      5
 counter01                      6
 ^C
+
+
+7. Scalar unsigned support (accessing V3 scalar PV as unsigned)
+--------------------------------------------------------------
+
+> pvput ubyte01 255
+Old : ubyte01                        0
+New : ubyte01                        255
+
+> pvget ubyte01
+ubyte01                        255
