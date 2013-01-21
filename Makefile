@@ -1,19 +1,18 @@
 #Makefile at top of application tree
 TOP = .
 include $(TOP)/configure/CONFIG
-DIRS += configure
+DIRS := $(DIRS) $(filter-out $(DIRS), configure)
+DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard *App))
+DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard iocBoot))
 
-DIRS += pvIocApp
-pvIocApp_DEPEND_DIRS = configure
+define DIR_template
+ $(1)_DEPEND_DIRS = configure
+endef
+$(foreach dir, $(filter-out configure,$(DIRS)),$(eval $(call DIR_template,$(dir))))
 
-DIRS += exampleApp
-exampleApp_DEPEND_DIRS = pvIocApp
+iocBoot_DEPEND_DIRS += $(filter %App,$(DIRS))
 
-DIRS += testApp
-testApp_DEPEND_DIRS = pvIocApp
-
-DIRS += iocBoot
+exampleApp_DEPEND_DIRS += pvaSrvApp
+testApp_DEPEND_DIRS += pvaSrvApp
 
 include $(TOP)/configure/RULES_TOP
-
-
