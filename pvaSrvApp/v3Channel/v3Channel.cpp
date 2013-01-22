@@ -19,7 +19,7 @@
 #include <pv/noDefaultMethods.h>
 
 #include <pv/standardField.h>
-#include <pv/v3Channel.h>
+#include <v3Channel.h>
 
 namespace epics { namespace pvIOC { 
 

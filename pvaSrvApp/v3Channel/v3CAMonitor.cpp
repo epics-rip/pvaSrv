@@ -23,9 +23,10 @@
 #include <dbDefs.h>
 #include <alarmString.h>
 
-#include <pv/v3CAMonitor.h>
+#include <v3ChannelDebug.h>
+
+#include "v3CAMonitor.h"
 #include "CAV3Context.h"
-#include <pv/v3ChannelDebug.h>
 
 using namespace epics::pvData;
 using namespace epics::pvIOC;

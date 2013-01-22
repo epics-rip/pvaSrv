@@ -8,9 +8,10 @@
  * @author mrk
  */
 
-#include <pv/valueChannel.h>
 #include <pv/pvTimeStamp.h>
 #include <pv/pvAlarm.h>
+
+#include "valueChannel.h"
 
 namespace epics { namespace pvIOC { 
 

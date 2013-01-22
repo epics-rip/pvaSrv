@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <memory>
 
-#include <pv/multiValue.h>
+#include <multiValue.h>
 #include <pv/channelProviderLocal.h>
 #include <pv/service.h>
 #include <pv/serverContext.h>

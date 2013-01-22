@@ -50,7 +50,7 @@
 #include <pv/pvEnumerated.h>
 #include <pv/pvTimeStamp.h>
 
-#include <pv/v3Channel.h>
+#include <v3Channel.h>
 
 
 namespace epics { namespace pvIOC { 

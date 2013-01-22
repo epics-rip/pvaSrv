@@ -18,7 +18,7 @@
 #include <epicsExit.h>
 #include <dbAccess.h>
 
-#include <pv/v3Channel.h>
+#include <v3Channel.h>
 
 namespace epics { namespace pvIOC { 
 

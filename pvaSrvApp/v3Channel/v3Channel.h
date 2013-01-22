@@ -13,10 +13,11 @@
 #include <dbAccess.h>
 #include <dbNotify.h>
 #include <pv/channelBase.h>
-#include <pv/v3CAMonitor.h>
 #include <pv/thread.h>
 #include <pv/event.h>
-#include <pv/v3ChannelDebug.h>
+
+#include <v3CAMonitor.h>
+#include <v3ChannelDebug.h>
 
 
 namespace epics { namespace pvIOC { 

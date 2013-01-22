@@ -23,7 +23,7 @@
 #include <pv/pvData.h>
 #include <pv/pvAccess.h>
 
-#include <pv/v3Channel.h>
+#include <v3Channel.h>
 
 namespace epics { namespace pvIOC { 
 

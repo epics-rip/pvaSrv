@@ -10,13 +10,14 @@
 #ifndef MULTIVALUE_H
 #define MULTIVALUE_H
 
-#include <pv/valueChannel.h>
 #include <pv/channelBase.h>
 #include <pv/convert.h>
 #include <pv/timeStamp.h>
 #include <pv/pvTimeStamp.h>
 #include <pv/alarm.h>
 #include <pv/pvAlarm.h>
+
+#include <valueChannel.h>
 
 namespace epics { namespace pvIOC { 
 

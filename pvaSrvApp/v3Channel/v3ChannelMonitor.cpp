@@ -31,10 +31,10 @@
 #include <pv/monitor.h>
 #include <pv/pvAccess.h>
 
-#include <pv/v3Channel.h>
+#include <v3Channel.h>
 
 #include "CAV3Context.h"
-#include <pv/v3CAMonitor.h>
+#include <v3CAMonitor.h>
 #include "v3Util.h"
 
 

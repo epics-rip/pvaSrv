@@ -30,7 +30,7 @@
 #include <pv/pvAccess.h>
 #include <pv/standardPVField.h>
 
-#include <pv/v3Channel.h>
+#include <v3Channel.h>
 #include "v3Util.h"
 
 namespace epics { namespace pvIOC { 

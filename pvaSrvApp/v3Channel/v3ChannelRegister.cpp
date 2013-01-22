@@ -31,7 +31,7 @@
 #include <pv/pvAccess.h>
 #include <pv/serverContext.h>
 
-#include <pv/v3Channel.h>
+#include <v3Channel.h>
 
 using namespace epics::pvData;
 using namespace epics::pvAccess;

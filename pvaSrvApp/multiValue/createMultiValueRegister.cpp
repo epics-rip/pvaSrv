@@ -23,7 +23,7 @@
 #include <epicsExport.h>
 #include <epicsThread.h>
 
-#include <pv/multiValue.h>
+#include <multiValue.h>
 #include <pv/channelProviderLocal.h>
 
 using namespace epics::pvData;
