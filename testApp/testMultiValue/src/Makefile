@@ -28,7 +28,7 @@ testMultiValue_SRCS_vxWorks += -nil-
 # The following adds support from base/src/vxWorks
 testMultiValue_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary
 
-testMultiValue_LIBS += pvIOC pvData pvAccess
+testMultiValue_LIBS += pvaSrv pvIOC pvAccess pvData
 testMultiValue_LIBS += testV3ChannelSupport
 testMultiValue_LIBS += $(EPICS_BASE_IOC_LIBS)
 

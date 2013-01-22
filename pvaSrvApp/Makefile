@@ -27,7 +27,7 @@ LIBSRCS += v3ChannelRegister.cpp
 LIBSRCS += v3ChannelMonitor.cpp
 
 SRC_DIRS += ../multiValue
-DBD += createMultiValue.dbd
+DBD += multiValue.dbd
 INC += multiValue.h
 INC += valueChannel.h
 LIBSRCS += valueChannel.cpp

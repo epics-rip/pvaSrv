@@ -49,7 +49,7 @@ testV3Channel_SRCS_vxWorks += -nil-
 # The following adds support from base/src/vxWorks
 testV3Channel_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary
 
-testV3Channel_LIBS += pvIOC pvData pvAccess
+testV3Channel_LIBS += pvaSrv pvIOC pvAccess pvData
 testV3Channel_LIBS += exampleServiceIOC
 testV3Channel_LIBS += testV3ChannelSupport
 testV3Channel_LIBS += $(EPICS_BASE_IOC_LIBS)

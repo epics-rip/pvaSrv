@@ -38,14 +38,14 @@
 <!-- Maturity: Working Draft or Request for Comments, or Recommendation, and date.  -->
 
 <h2 class="nocount">EPICS v4 Working Group, Working Draft,
-21-Jan-2013</h2>
+22-Jan-2013</h2>
 <dl>
   <dt>This version:</dt>
     <dd><a
-      href="http://epics-pvdata.sourceforge.net/pvaSrv_20130121.html">pvaSrv_20130121.html</a></dd>
+      href="http://epics-pvdata.sourceforge.net/pvaSrv_20130122.html">pvaSrv_20130122.html</a></dd>
   <dt>Latest version:</dt>
     <dd><a
-      href="http://epics-pvdata.sourceforge.net/pvaSrv_20130121.html">pvaSrv_20130121.html</a></dd>
+      href="http://epics-pvdata.sourceforge.net/pvaSrv_20130122.html">pvaSrv_20130122.html</a></dd>
   <dt>Editors:</dt>
   <dd>Marty Kraimer, BNL<br>Ralph Lange, HZB / BESSY II</dd>
 </dl>
@@ -70,11 +70,46 @@ Control System).</p>
 <div id="toc">
 <h2 class="nocount" style="page-break-before: always">Table of Contents</h2>
 </div>
+
 <div id="contents" class="contents">
 
 <h2>Introduction</h2>
 
-<p>Doxygen documentation is available at <a href="./html/index.html">doxygenDoc</a>.</p>
+pvaSrv is a pvAccess server that runs in the V3 IOC.
+This allows you to get, put and monitor V3 records over pvAccess.
+
+<h2>Usage</h2>
+
+<p>To use pvaSrv in a V3 IOC created in yourApp, you have to do the following steps:</p>
+
+<ul>
+<li>Add the pvaSrv dbd to your IOC, for example in myAppInclude.dbd
+<pre>
+include "base.dbd"
+include "pvaSrv.dbd"
+</pre>
+</li>
+
+<li>Add the EPICSv4 libraries, for example in myApp/src/Makefile
+<pre>
+myApp_LIBS += pvaSrv pvIOC pvAccess pvData
+myApp_LIBS += $(EPICS_BASE_IOC_LIBS)
+</pre>
+</li>
+
+<li>Start pvaSrc in your st.cmd, for example in iocBoot/myApp/st.cmd
+<pre>
+iocInit()
+
+epicsThreadSleep(2.0)
+startV3Channel
+</pre>
+</li>
+</ul>
+
+<h2>Reference</h2>
+
+<p>Doxygen generated documentation is available at <a href="html/index.html">doxygenDoc</a>.</p>
 
 </div>
 </body>
