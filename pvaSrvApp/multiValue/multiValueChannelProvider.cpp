@@ -18,10 +18,11 @@
 #include <pv/serverContext.h>
 
 
-namespace epics { namespace pvIOC { 
+namespace epics { namespace pvaSrv { 
 
 using namespace epics::pvData;
 using namespace epics::pvAccess;
+using namespace epics::pvIOC;
 using std::tr1::static_pointer_cast;
 
 static ChannelProviderLocalPtr localProvider;

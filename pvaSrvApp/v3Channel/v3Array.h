@@ -20,7 +20,7 @@
 #include <pv/pvData.h>
 #include <pv/pvAccess.h>
 
-namespace epics { namespace pvIOC { 
+namespace epics { namespace pvaSrv { 
 
 class V3ValueArrayCreate {
 public:

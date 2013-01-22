@@ -20,7 +20,7 @@
 #include <v3ChannelDebug.h>
 
 
-namespace epics { namespace pvIOC { 
+namespace epics { namespace pvaSrv { 
 
 class V3Util;
 typedef std::tr1::shared_ptr<V3Util> V3UtilPtr;

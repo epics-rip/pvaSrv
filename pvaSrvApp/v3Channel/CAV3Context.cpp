@@ -26,7 +26,7 @@
 #include <v3ChannelDebug.h>
 
 using namespace epics::pvData;
-using namespace epics::pvIOC;
+using namespace epics::pvaSrv;
 
 
 extern "C" {

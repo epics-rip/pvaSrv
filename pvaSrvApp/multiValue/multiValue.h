@@ -19,7 +19,7 @@
 
 #include <valueChannel.h>
 
-namespace epics { namespace pvIOC { 
+namespace epics { namespace pvaSrv { 
 
 class MultiValueChannel;
 class MultiValueChannelProvider;

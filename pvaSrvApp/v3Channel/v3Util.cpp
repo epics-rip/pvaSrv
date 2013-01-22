@@ -36,7 +36,7 @@
 #include "v3Util.h"
 #include "v3Array.h"
 
-namespace epics { namespace pvIOC { 
+namespace epics { namespace pvaSrv { 
 
 using namespace epics::pvData;
 using std::tr1::static_pointer_cast;

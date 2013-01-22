@@ -18,7 +18,7 @@
 #include <pv/timeStamp.h>
 #include <pv/pvAccess.h>
 
-namespace epics { namespace pvIOC { 
+namespace epics { namespace pvaSrv { 
 
 class ValueChannel;
 typedef std::tr1::shared_ptr<ValueChannel> ValueChannelPtr;

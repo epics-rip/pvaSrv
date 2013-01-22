@@ -38,7 +38,7 @@
 #include "v3Util.h"
 
 
-namespace epics { namespace pvIOC { 
+namespace epics { namespace pvaSrv { 
 
 using namespace epics::pvData;
 using namespace epics::pvAccess;

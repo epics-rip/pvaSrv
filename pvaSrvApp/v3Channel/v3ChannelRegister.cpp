@@ -35,7 +35,7 @@
 
 using namespace epics::pvData;
 using namespace epics::pvAccess;
-using namespace epics::pvIOC;
+using namespace epics::pvaSrv;
 
 class V3ChannelCTX;
 typedef std::tr1::shared_ptr<V3ChannelCTX> V3ChannelCTXPtr;

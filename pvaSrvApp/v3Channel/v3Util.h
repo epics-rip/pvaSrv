@@ -25,7 +25,7 @@
 #include <pv/pvData.h>
 
 
-namespace epics { namespace pvIOC { 
+namespace epics { namespace pvaSrv { 
 
 extern "C" {
 typedef long (*get_array_info) (DBADDR *,long *,long *);

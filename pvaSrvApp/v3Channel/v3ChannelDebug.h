@@ -10,7 +10,7 @@
 #ifndef V3CHANNELDEBUG_H
 #define V3CHANNELDEBUG_H
 
-namespace epics { namespace pvIOC { 
+namespace epics { namespace pvaSrv { 
 
 class V3ChannelDebug {
 public:
