@@ -20,13 +20,11 @@
 #include <stdexcept>
 #include <memory>
 
-
 #include <pv/pvData.h>
 #include <pv/pvAccess.h>
 
-#include <v3Channel.h>
+#include "v3Channel.h"
 #include "v3Util.h"
-
 
 namespace epics { namespace pvaSrv { 
 

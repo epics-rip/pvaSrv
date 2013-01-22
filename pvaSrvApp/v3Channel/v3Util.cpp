@@ -7,6 +7,7 @@
 /**
  * @author mrk
  */
+
 #include <string>
 #include <cstring>
 #include <stdexcept>

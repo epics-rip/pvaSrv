@@ -7,19 +7,20 @@
 /**
  * @author mrk
  */
+
 #include <string>
 #include <stdexcept>
 #include <memory>
 
-#include "dbFldTypes.h"
-#include "dbDefs.h"
+#include <dbFldTypes.h>
+#include <dbDefs.h>
 
 #include <pv/pvIntrospect.h>
 #include <pv/pvData.h>
 #include <pv/noDefaultMethods.h>
-
 #include <pv/standardField.h>
-#include <v3Channel.h>
+
+#include "v3Channel.h"
 
 namespace epics { namespace pvaSrv { 
 

@@ -19,12 +19,12 @@
 #include <vector>
 
 #include <iocsh.h>
-
 #include <epicsExport.h>
 #include <epicsThread.h>
 
-#include <multiValue.h>
 #include <pv/channelProviderLocal.h>
+
+#include "multiValue.h"
 
 using namespace epics::pvData;
 using namespace epics::pvAccess;

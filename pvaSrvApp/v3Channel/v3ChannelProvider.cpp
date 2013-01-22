@@ -11,14 +11,15 @@
 #include <stdexcept>
 #include <memory>
 
+#include <epicsExit.h>
+#include <dbAccess.h>
+
 #include <pv/pvIntrospect.h>
 #include <pv/pvData.h>
 #include <pv/noDefaultMethods.h>
 #include <pv/lock.h>
-#include <epicsExit.h>
-#include <dbAccess.h>
 
-#include <v3Channel.h>
+#include "v3Channel.h"
 
 namespace epics { namespace pvaSrv { 
 

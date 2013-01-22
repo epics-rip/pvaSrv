@@ -7,8 +7,10 @@
 /**
  * @author mrk
  */
+
 #ifndef V3ARRAY_H
 #define V3ARRAY_H
+
 #include <string>
 #include <cstring>
 #include <stdexcept>

@@ -16,8 +16,7 @@
 #include <pv/service.h>
 #include <pv/serverContext.h>
 
-#include <multiValue.h>
-
+#include "multiValue.h"
 
 namespace epics { namespace pvaSrv { 
 

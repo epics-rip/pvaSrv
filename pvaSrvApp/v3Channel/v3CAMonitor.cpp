@@ -23,8 +23,7 @@
 #include <dbDefs.h>
 #include <alarmString.h>
 
-#include <v3ChannelDebug.h>
-
+#include "v3ChannelDebug.h"
 #include "v3CAMonitor.h"
 #include "CAV3Context.h"
 

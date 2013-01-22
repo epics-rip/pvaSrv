@@ -28,17 +28,11 @@ testV3ChannelSupport_SRCS += ushortRecord.c
 testV3ChannelSupport_SRCS += ulongRecord.c
 testV3ChannelSupport_SRCS += bigstringinRecord.c
 testV3ChannelSupport_SRCS += testV3Channel.cpp
-testV3ChannelSupport_LIBS += pvData
-testV3ChannelSupport_LIBS += pvAccess
-testV3ChannelSupport_LIBS += pvIOC
-testV3ChannelSupport_LIBS += exampleServiceIOC
-testV3ChannelSupport_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 #=============================
-# build an ioc application
+# Build an IOC application
 
 PROD_IOC += testV3Channel
-
 
 # <name>_registerRecordDeviceDriver.cpp will be created from <name>.dbd
 testV3Channel_SRCS += testV3Channel_registerRecordDeviceDriver.cpp
@@ -59,4 +53,3 @@ testV3Channel_LIBS += $(EPICS_BASE_IOC_LIBS)
 include $(TOP)/configure/RULES
 #----------------------------------------
 #  ADD RULES AFTER THIS LINE
-

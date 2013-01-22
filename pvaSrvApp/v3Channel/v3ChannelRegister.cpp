@@ -23,7 +23,6 @@
 #include <epicsEvent.h>
 #include <epicsThread.h>
 #include <iocsh.h>
-
 #include <epicsExport.h>
 
 #include <pv/pvIntrospect.h>
@@ -31,7 +30,7 @@
 #include <pv/pvAccess.h>
 #include <pv/serverContext.h>
 
-#include <v3Channel.h>
+#include "v3Channel.h"
 
 using namespace epics::pvData;
 using namespace epics::pvAccess;

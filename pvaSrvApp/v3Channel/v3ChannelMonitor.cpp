@@ -23,7 +23,6 @@
 #include <dbAccess.h>
 #include <dbNotify.h>
 #include <dbCommon.h>
-
 #include <epicsExport.h>
 
 #include <pv/pvData.h>
@@ -31,12 +30,10 @@
 #include <pv/monitor.h>
 #include <pv/pvAccess.h>
 
-#include <v3Channel.h>
-
+#include "v3Channel.h"
 #include "CAV3Context.h"
-#include <v3CAMonitor.h>
+#include "v3CAMonitor.h"
 #include "v3Util.h"
-
 
 namespace epics { namespace pvaSrv { 
 

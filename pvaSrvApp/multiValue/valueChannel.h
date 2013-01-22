@@ -12,7 +12,6 @@
 
 #include <pv/lock.h>
 #include <pv/event.h>
-
 #include <pv/pvData.h>
 #include <pv/alarm.h>
 #include <pv/timeStamp.h>

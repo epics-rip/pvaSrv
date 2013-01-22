@@ -31,7 +31,6 @@
 #include <recSup.h>
 #include <dbBase.h>
 #include <dbEvent.h>
-
 #include <epicsExport.h>
 
 #include <pv/noDefaultMethods.h>
@@ -50,7 +49,7 @@
 #include <pv/pvEnumerated.h>
 #include <pv/pvTimeStamp.h>
 
-#include <v3Channel.h>
+#include "v3Channel.h"
 
 
 namespace epics { namespace pvaSrv { 

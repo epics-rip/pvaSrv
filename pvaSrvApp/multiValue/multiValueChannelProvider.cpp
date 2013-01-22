@@ -12,11 +12,11 @@
 #include <stdexcept>
 #include <memory>
 
-#include <multiValue.h>
 #include <pv/channelProviderLocal.h>
 #include <pv/service.h>
 #include <pv/serverContext.h>
 
+#include "multiValue.h"
 
 namespace epics { namespace pvaSrv { 
 
