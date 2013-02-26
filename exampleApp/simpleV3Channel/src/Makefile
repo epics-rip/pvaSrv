@@ -14,7 +14,7 @@ PROD_IOC += simpleV3Channel
 simpleV3Channel_SRCS += simpleV3Channel_registerRecordDeviceDriver.cpp
 simpleV3Channel_SRCS_DEFAULT += simpleV3ChannelMain.cpp
 
-simpleV3Channel_LIBS += pvaSrv pvIOC pvAccess pvData
+simpleV3Channel_LIBS += pvaSrv pvIOC pvAccess pvData pvMB
 simpleV3Channel_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 simpleV3Channel_SRCS_vxWorks += -nil-
