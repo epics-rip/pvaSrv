@@ -54,6 +54,7 @@ V3Channel::V3Channel(
 void V3Channel::init()
 {
     // this requires valid existance of V3Channel::shared_pointer instance
+    StandardFieldPtr standardField = getStandardField();
     ScalarType scalarType = pvBoolean;
     DbAddr *paddr = dbAddr.get();
     switch(paddr->field_type) {
@@ -75,11 +76,20 @@ void V3Channel::init()
             scalarType = pvDouble; break;
         case DBF_STRING:
             scalarType = pvString; break;
+
+        case DBF_ENUM:
+        case DBF_MENU:
+        case DBF_DEVICE:
+            recordField = standardField->enumerated("value,timeStamp,alarm");
+            return;
+        case DBF_INLINK:
+        case DBF_OUTLINK:
+        case DBF_FWDLINK:
+            scalarType = pvString; break;
         default:
           break;
     }
     if(scalarType!=pvBoolean) {
-        StandardFieldPtr standardField = getStandardField();
         bool isArray = (paddr->no_elements>1) ? true : false;
         if(isArray) {
             recordField = standardField->scalarArray(scalarType,
