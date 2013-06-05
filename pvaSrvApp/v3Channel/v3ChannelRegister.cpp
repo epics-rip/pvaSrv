@@ -47,6 +47,7 @@ public:
     POINTER_DEFINITIONS(V3ChannelCTX);
     static V3ChannelCTXPtr getV3ChannelCTX();
     V3ChannelProviderPtr getV3ChannelProvider() {return v3ChannelProvider;}
+    ChannelBaseProviderFactory::shared_pointer getChannelProviderFactory() {return factory;}
     virtual ~V3ChannelCTX();
     virtual void run();
 private:
@@ -56,6 +57,7 @@ private:
         return shared_from_this();
     }
     V3ChannelProviderPtr v3ChannelProvider;
+    ChannelBaseProviderFactory::shared_pointer factory;
     Event event;
     ServerContextImpl::shared_pointer ctx;
     Thread *thread;
@@ -75,6 +77,7 @@ V3ChannelCTXPtr V3ChannelCTX::getV3ChannelCTX()
 
 V3ChannelCTX::V3ChannelCTX()
 : v3ChannelProvider(V3ChannelProvider::getV3ChannelProvider()),
+  factory(new ChannelBaseProviderFactory(v3ChannelProvider)),
   event(),
   ctx(ServerContextImpl::create()),
   thread(new Thread(String("v3ChannelServer"),lowerPriority,this,epicsThreadStackBig))
@@ -91,7 +94,7 @@ V3ChannelCTX::~V3ChannelCTX()
 
 void V3ChannelCTX::run()
 {
-    v3ChannelProvider->registerSelf();
+    factory->registerSelf();
     String providerName = v3ChannelProvider->getProviderName();
     ctx->setChannelProviderName(providerName);
     ctx->initialize(getChannelAccess());
@@ -120,7 +123,7 @@ extern "C" void startV3Channel(const iocshArgBuf *args)
 {
     V3ChannelCTXPtr v3ChannelCTX = V3ChannelCTX::getV3ChannelCTX();
     epicsThreadSleep(.1);
-    v3ChannelCTX->getV3ChannelProvider()->registerSelf();
+    v3ChannelCTX->getChannelProviderFactory()->registerSelf();
 }
 
 static const iocshFuncDef stopV3ChannelFuncDef = {
@@ -129,7 +132,7 @@ static const iocshFuncDef stopV3ChannelFuncDef = {
 extern "C" void stopV3Channel(const iocshArgBuf *args)
 {
     V3ChannelCTXPtr v3ChannelCTX = V3ChannelCTX::getV3ChannelCTX();
-    v3ChannelCTX->getV3ChannelProvider()->unregisterSelf();
+    v3ChannelCTX->getChannelProviderFactory()->unregisterSelf();
 }
 
 static void setV3ChannelDebugLevelRegister(void)
