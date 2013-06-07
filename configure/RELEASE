@@ -18,9 +18,9 @@
 #
 # Create a file RELEASE.local pointing to your places
 # for the dependencies, e.g.
-#   PVDATA = /home/install/epics/pvDataCPP
-#   PVACCESS = /home/install/epics/pvAccessCPP
 #   PVIOCCPP = /home/install/epics/pvIOCCPP
+#   PVACCESS = /home/install/epics/pvAccessCPP
+#   PVDATA = /home/install/epics/pvDataCPP
 #   EPICS_BASE = /home/install/epics/base
 
 -include $(TOP)/configure/RELEASE.local
