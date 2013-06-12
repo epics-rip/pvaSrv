@@ -28,42 +28,41 @@ static ChannelProviderLocalPtr localProvider;
 static ChannelFind::shared_pointer noChannelFind;
 static Channel::shared_pointer noChannel;
 
-static String multiValueProvider("multiValue");
+static String dbGroupProvider("dbGroup");
 
-MultiValueChannelProvider::~MultiValueChannelProvider() {}
+DbGroupProvider::~DbGroupProvider() {}
 
-MultiValueChannelProvider::MultiValueChannelProvider(
+DbGroupProvider::DbGroupProvider(
      RequesterPtr const & requester,
-     ChannelProvider::shared_pointer const &valueChannelProvider,
+     ChannelProvider::shared_pointer const &pvValueProvider,
      String const &channelName,
      StringArrayPtr const & fieldNames,
-     StringArrayPtr const & valueChannelNames)
-: ChannelBaseProvider(multiValueProvider),
+     StringArrayPtr const & pvValueNames)
+: ChannelBaseProvider(dbGroupProvider),
   requester(requester),
-  valueChannelProvider(valueChannelProvider),
+  pvValueProvider(pvValueProvider),
   channelName(channelName),
   fieldNames(fieldNames),
-  valueChannelNames(valueChannelNames)
+  pvValueNames(pvValueNames)
 {}
 
-void MultiValueChannelProvider::dump()
+void DbGroupProvider::dump()
 {
-    printf("MultiValueChannelProvider channelName %s\n",channelName.c_str());
-    printf("channelName %s\n",channelName.c_str());
+    printf("dbGroupProvider channelName %s\n", channelName.c_str());
+    printf("channelName %s\n", channelName.c_str());
     size_t n = fieldNames->size();
     for(size_t i=0; i<n; i++) {
     String fieldName = (*fieldNames.get())[i];
-    String valueChannelName = (*valueChannelNames.get())[i];
-    printf("fieldName %s valueChannelName %s\n",
-    fieldName.c_str(),valueChannelName.c_str());
+    String pvValueName = (*pvValueNames.get())[i];
+    printf("fieldName %s pvValueName %s\n",
+    fieldName.c_str(),pvValueName.c_str());
     }
 }
 
-void MultiValueChannelProvider::destroy()
-{
-}
+void DbGroupProvider::destroy()
+{}
 
-ChannelFind::shared_pointer MultiValueChannelProvider::channelFind(
+ChannelFind::shared_pointer DbGroupProvider::channelFind(
     String const & channelName,
     ChannelFindRequester::shared_pointer const & channelFindRequester)
 {
@@ -73,7 +72,7 @@ ChannelFind::shared_pointer MultiValueChannelProvider::channelFind(
     return ChannelFind::shared_pointer();
 }
 
-Channel::shared_pointer MultiValueChannelProvider::createChannel(
+Channel::shared_pointer DbGroupProvider::createChannel(
     String const & channelName,
     ChannelRequester::shared_pointer  const & channelRequester,
     short priority,
@@ -83,10 +82,10 @@ Channel::shared_pointer MultiValueChannelProvider::createChannel(
         channelNotCreated(channelRequester);
         return noChannel;
     }
-    MultiValueChannelProviderPtr xxx =
-        static_pointer_cast<MultiValueChannelProvider>(getPtrSelf());
-    MultiValueChannel::shared_pointer channel(
-        new MultiValueChannel(xxx,channelRequester));
+    DbGroupProviderPtr xxx =
+        static_pointer_cast<DbGroupProvider>(getPtrSelf());
+    DbGroup::shared_pointer channel(
+        new DbGroup(xxx,channelRequester));
     if(!channel->create()) {
         channelNotCreated(channelRequester);
         return noChannel;

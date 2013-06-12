@@ -7,7 +7,7 @@
  * @author mrk
  */
 /* Marty Kraimer 2011.03 */
-/* This connects to a V3 record and presents the data as a PVStructure
+/* This connects to a DB record and presents the data as a PVStructure
  * It provides access to  value, alarm, display, and control.
  */
 
@@ -29,57 +29,58 @@
 using namespace epics::pvData;
 using namespace epics::pvaSrv;
 
-CAV3Data::CAV3Data()
+CaData::CaData()
 : doubleValue(0.0),
-  sevr(0),stat(0),status(0)
+  sevr(0), stat(0), status(0)
 {}
 
-CAV3Data::~CAV3Data() { }
+CaData::~CaData()
+{}
 
-class CAV3MonitorPvt {
+class CaMonitorPvt {
 public:
-    CAV3MonitorPvt(CAV3MonitorRequesterPtr const &requester,
-        String pvName,V3Type v3Type);
-    ~CAV3MonitorPvt();
-    CAV3Data & getData();
+    CaMonitorPvt(CaMonitorRequesterPtr const &requester,
+        String pvName,CaType caType);
+    ~CaMonitorPvt();
+    CaData & getData();
     void connect();
     void start();
     void stop();
 
-    CAV3MonitorRequesterPtr requester;
+    CaMonitorRequesterPtr requester;
     String pvName;
-    V3Type v3Type;
-    CAV3Data data;
+    CaType caType;
+    CaData data;
     chanId chid;
     evid myevid;
-    CAV3ContextPtr context;
+    caContextPtr context;
 };
 
 extern "C" {
 
 static void connectionCallback(struct connection_handler_args args)
 {
-    if(V3ChannelDebug::getLevel()>0) printf("connectionCallback\n");
-    CAV3MonitorPvt *pvt = static_cast<CAV3MonitorPvt *>(ca_puser(args.chid));   
+    if(DbPvDebug::getLevel()>0) printf("connectionCallback\n");
+    CaMonitorPvt *pvt = static_cast<CaMonitorPvt *>(ca_puser(args.chid));
     pvt->requester->connectionCallback();
 }
 
 static void accessRightsCallback(struct access_rights_handler_args args)
 {
-    CAV3MonitorPvt *pvt = static_cast<CAV3MonitorPvt *>(ca_puser(args.chid));   
+    CaMonitorPvt *pvt = static_cast<CaMonitorPvt *>(ca_puser(args.chid));
     pvt->requester->accessRightsCallback();
 }
 
 static void eventCallback(struct event_handler_args eha)
 {
-    if(V3ChannelDebug::getLevel()>0) printf("eventCallback\n");
-    CAV3MonitorPvt *pvt = static_cast<CAV3MonitorPvt *>(ca_puser(eha.chid));   
+    if(DbPvDebug::getLevel()>0) printf("eventCallback\n");
+    CaMonitorPvt *pvt = static_cast<CaMonitorPvt *>(ca_puser(eha.chid));
     if(eha.status!=ECA_NORMAL) {
         pvt->requester->eventCallback(ca_message(eha.status));
         return;
     }
-    switch(pvt->v3Type) {
-        case v3Enum: {
+    switch(pvt->caType) {
+        case CaEnum: {
             const struct dbr_time_enum *from =
                 static_cast<const struct dbr_time_enum*>(eha.dbr);
             pvt->data.sevr = from->severity;
@@ -89,7 +90,7 @@ static void eventCallback(struct event_handler_args eha)
             pvt->data.timeStamp = from->stamp;
             break;
         }
-        case v3Byte: {
+        case CaByte: {
             const struct dbr_time_char *from =
                 static_cast<const struct dbr_time_char*>(eha.dbr);
             pvt->data.sevr = from->severity;
@@ -99,7 +100,7 @@ static void eventCallback(struct event_handler_args eha)
             pvt->data.timeStamp = from->stamp;
             break;
         }
-        case v3UByte: {
+        case CaUByte: {
             const struct dbr_time_char *from =
                 static_cast<const struct dbr_time_char*>(eha.dbr);
             pvt->data.sevr = from->severity;
@@ -109,7 +110,7 @@ static void eventCallback(struct event_handler_args eha)
             pvt->data.timeStamp = from->stamp;
             break;
         }
-        case v3Short: {
+        case CaShort: {
             const struct dbr_time_short *from =
                 static_cast<const struct dbr_time_short*>(eha.dbr);
             pvt->data.sevr = from->severity;
@@ -119,7 +120,7 @@ static void eventCallback(struct event_handler_args eha)
             pvt->data.timeStamp = from->stamp;
             break;
         }
-        case v3UShort: {
+        case CaUShort: {
             const struct dbr_time_short *from =
                 static_cast<const struct dbr_time_short*>(eha.dbr);
             pvt->data.sevr = from->severity;
@@ -129,7 +130,7 @@ static void eventCallback(struct event_handler_args eha)
             pvt->data.timeStamp = from->stamp;
             break;
         }
-        case v3Int: {
+        case CaInt: {
             const struct dbr_time_long *from =
                 static_cast<const struct dbr_time_long*>(eha.dbr);
             pvt->data.sevr = from->severity;
@@ -139,7 +140,7 @@ static void eventCallback(struct event_handler_args eha)
             pvt->data.timeStamp = from->stamp;
             break;
         }
-        case v3UInt: {
+        case CaUInt: {
             const struct dbr_time_long *from =
                 static_cast<const struct dbr_time_long*>(eha.dbr);
             pvt->data.sevr = from->severity;
@@ -149,7 +150,7 @@ static void eventCallback(struct event_handler_args eha)
             pvt->data.timeStamp = from->stamp;
             break;
         }
-        case v3Float: {
+        case CaFloat: {
             const struct dbr_time_float *from =
                 static_cast<const struct dbr_time_float*>(eha.dbr);
             pvt->data.sevr = from->severity;
@@ -159,7 +160,7 @@ static void eventCallback(struct event_handler_args eha)
             pvt->data.timeStamp = from->stamp;
             break;
         }
-        case v3Double: {
+        case CaDouble: {
             const struct dbr_time_double *from =
                 static_cast<const struct dbr_time_double*>(eha.dbr);
             pvt->data.sevr = from->severity;
@@ -169,7 +170,7 @@ static void eventCallback(struct event_handler_args eha)
             pvt->data.timeStamp = from->stamp;
             break;
         }
-        case v3String: {
+        case CaString: {
             const struct dbr_time_string *from =
                 static_cast<const struct dbr_time_string*>(eha.dbr);
             pvt->data.sevr = from->severity;
@@ -180,25 +181,25 @@ static void eventCallback(struct event_handler_args eha)
             break;
         }
     }
-    if(V3ChannelDebug::getLevel()>0) printf("eventCallback calling requester->eventCallback\n");
+    if(DbPvDebug::getLevel()>0) printf("eventCallback calling requester->eventCallback\n");
     pvt->requester->eventCallback(0);
-    if(V3ChannelDebug::getLevel()>0) printf("eventCallback after calling requester->eventCallback\n");
+    if(DbPvDebug::getLevel()>0) printf("eventCallback after calling requester->eventCallback\n");
 }
 
 } //extern "C"
 
-CAV3MonitorPvt::CAV3MonitorPvt(
-    CAV3MonitorRequesterPtr const &requester,
-    String pvName,V3Type v3Type)
-: requester(requester),pvName(pvName),v3Type(v3Type),
-  data(),chid(0),myevid(0),context(CAV3ContextCreate::get(requester))
+CaMonitorPvt::CaMonitorPvt(
+    CaMonitorRequesterPtr const &requester,
+    String pvName, CaType caType)
+: requester(requester), pvName(pvName), caType(caType),
+  data(), chid(0), myevid(0), context(caContextCreate::get(requester))
 {
-    if(V3ChannelDebug::getLevel()>0) printf("CAV3MonitorPvt::CAV3MonitorPvt\n");
+    if(DbPvDebug::getLevel()>0) printf("caMonitorPvt::caMonitorPvt\n");
 }
 
-CAV3MonitorPvt::~CAV3MonitorPvt()
+CaMonitorPvt::~CaMonitorPvt()
 {
-    if(V3ChannelDebug::getLevel()>0) printf("CAV3MonitorPvt::~CAV3MonitorPvt\n");
+    if(DbPvDebug::getLevel()>0) printf("caMonitorPvt::~caMonitorPvt\n");
     if(chid!=0) {
         context->checkContext();
         ca_clear_channel(chid);
@@ -207,9 +208,9 @@ CAV3MonitorPvt::~CAV3MonitorPvt()
     context->release();
 }
 
-void CAV3MonitorPvt::connect()
+void CaMonitorPvt::connect()
 {
-    if(V3ChannelDebug::getLevel()>0) printf("CAV3MonitorPvt::connect\n");
+    if(DbPvDebug::getLevel()>0) printf("caMonitorPvt::connect\n");
     int status = 0;
     context->checkContext();
     status = ca_create_channel(
@@ -227,25 +228,25 @@ void CAV3MonitorPvt::connect()
     }
 }
 
-void CAV3MonitorPvt::start()
+void CaMonitorPvt::start()
 {
-    if(V3ChannelDebug::getLevel()>0) printf("CAV3MonitorPvt::start\n");
-    chtype type = DBR_STRING;
-    switch(v3Type) {
-        case v3Enum: type = DBR_TIME_ENUM; break;
-        case v3Byte: type = DBR_TIME_CHAR; break;
-        case v3UByte: type = DBR_TIME_CHAR; break;
-        case v3Short: type = DBR_TIME_SHORT; break;
-        case v3UShort: type = DBR_TIME_SHORT; break;
-        case v3Int: type = DBR_TIME_LONG; break;
-        case v3UInt: type = DBR_TIME_LONG; break;
-        case v3Float: type = DBR_TIME_FLOAT; break;
-        case v3Double: type = DBR_TIME_DOUBLE; break;
-        case v3String: type = DBR_TIME_STRING; break;
+    if(DbPvDebug::getLevel()>0) printf("caMonitorPvt::start\n");
+    chtype catype = DBR_STRING;
+    switch(caType) {
+        case CaEnum: catype = DBR_TIME_ENUM; break;
+        case CaByte: catype = DBR_TIME_CHAR; break;
+        case CaUByte: catype = DBR_TIME_CHAR; break;
+        case CaShort: catype = DBR_TIME_SHORT; break;
+        case CaUShort: catype = DBR_TIME_SHORT; break;
+        case CaInt: catype = DBR_TIME_LONG; break;
+        case CaUInt: catype = DBR_TIME_LONG; break;
+        case CaFloat: catype = DBR_TIME_FLOAT; break;
+        case CaDouble: catype = DBR_TIME_DOUBLE; break;
+        case CaString: catype = DBR_TIME_STRING; break;
     }
     context->checkContext();
     int status = ca_create_subscription(
-        type, 1, chid, DBE_VALUE|DBE_ALARM,
+        catype, 1, chid, DBE_VALUE|DBE_ALARM,
         eventCallback, this, &myevid);
     if(status!=ECA_NORMAL) {
         requester->message(String(
@@ -253,68 +254,67 @@ void CAV3MonitorPvt::start()
     }
 }
 
-void CAV3MonitorPvt::stop()
+void CaMonitorPvt::stop()
 {
-    if(V3ChannelDebug::getLevel()>0) printf("CAV3MonitorPvt::stop\n");
+    if(DbPvDebug::getLevel()>0) printf("caMonitorPvt::stop\n");
     context->checkContext();
     ca_clear_subscription(myevid);
 }
 
-CAV3Monitor::CAV3Monitor(
-    CAV3MonitorRequesterPtr const &requester,
-    String const &pvName,V3Type v3Type)
-: pImpl(new CAV3MonitorPvt(requester,pvName,v3Type))
+CaMonitor::CaMonitor(
+    CaMonitorRequesterPtr const &requester,
+    String const &pvName,CaType caType)
+: pImpl(new CaMonitorPvt(requester, pvName, caType))
 {
-    if(V3ChannelDebug::getLevel()>0) printf("CAV3Monitor::CAV3Monitor\n");
+    if(DbPvDebug::getLevel()>0) printf("caMonitor::caMonitor\n");
 }
 
-CAV3Monitor::~CAV3Monitor()
+CaMonitor::~CaMonitor()
 {
-    if(V3ChannelDebug::getLevel()>0) printf("CAV3Monitor::~CAV3Monitor\n");
+    if(DbPvDebug::getLevel()>0) printf("caMonitor::~caMonitor\n");
     delete pImpl;
 }
 
-CAV3Data & CAV3Monitor::getData()
+CaData & CaMonitor::getData()
 {
     return pImpl->data;
 }
 
-void CAV3Monitor::connect()
+void CaMonitor::connect()
 {
     pImpl->connect();
 }
 
-void CAV3Monitor::start()
+void CaMonitor::start()
 {
     pImpl->start();
 }
 
-void CAV3Monitor::stop()
+void CaMonitor::stop()
 {
     pImpl->stop();
 }
 
-const char *CAV3Monitor::getStatusString(long status)
+const char *CaMonitor::getStatusString(long status)
 {
     return ca_message(status);
 }
 
-
-bool CAV3Monitor::hasReadAccess()
+bool CaMonitor::hasReadAccess()
 {
     if(pImpl->chid==0) return false;
     if(ca_read_access(pImpl->chid)) return true;
     return false;
 }
 
-bool CAV3Monitor::hasWriteAccess()
+bool CaMonitor::hasWriteAccess()
 {
     if(pImpl->chid==0) return false;
     if(ca_write_access(pImpl->chid)) return true;
     return false;
 }
 
-bool CAV3Monitor::isConnected()
+bool CaMonitor::isConnected()
 {
     if(pImpl->chid==0) return false;
     enum channel_state state = ca_state(pImpl->chid);

@@ -21,9 +21,9 @@ using std::tr1::static_pointer_cast;
 static String getRequestString("value,alarm,timeStamp");
 
 
-ValueChannel::~ValueChannel() {}
+PvValue::~PvValue() {}
 
-ValueChannel::ValueChannel(
+PvValue::PvValue(
          RequesterPtr const &requester,
          ChannelProvider::shared_pointer const &channelProvider,
          String const &channelName)
@@ -35,26 +35,27 @@ ValueChannel::ValueChannel(
   getRequest(getCreateRequest()->createRequest(getRequestString,requester))
 {}
 
-void ValueChannel::connect()
+void PvValue::connect()
 {
     event.tryWait(); // make sure event is empty
     channel = channelProvider->createChannel(channelName,getPtrSelf());
 }
 
-void ValueChannel::destroy()
+void PvValue::destroy()
 {
    if(channel.get()!=NULL) channel->destroy();
 }
 
-Status ValueChannel::waitConnect()
+Status PvValue::waitConnect()
 {
     status = Status::Ok;
+    //TODO: remove hard-coded timeout
     if(!event.wait(2.0)) {
          status= Status(Status::STATUSTYPE_ERROR, "waitConnect timeout");
     }
     return status;
 }
-PVFieldPtr ValueChannel::getValue()
+PVFieldPtr PvValue::getValue()
 {
     if(pvGetStructure.get()==NULL) {
         PVFieldPtr pvField;
@@ -63,7 +64,7 @@ PVFieldPtr ValueChannel::getValue()
     return pvGetStructure->getSubField("value");
 }
 
-Status ValueChannel::get()
+Status PvValue::get()
 {
     if(!isConnected) return status;
     event.tryWait(); 
@@ -71,13 +72,13 @@ Status ValueChannel::get()
     return Status::Ok;
 }
 
-Status ValueChannel::waitGet()
+Status PvValue::waitGet()
 {
     event.wait();
     return status;
 }
 
-Status ValueChannel::getTimeStamp(TimeStamp &timeStamp)
+Status PvValue::getTimeStamp(TimeStamp &timeStamp)
 {
     if(pvGetStructure.get()==NULL) {
         return Status(Status::STATUSTYPE_ERROR, "no timeStamp field");
@@ -94,7 +95,7 @@ Status ValueChannel::getTimeStamp(TimeStamp &timeStamp)
     return Status::Ok;
 }
 
-Status ValueChannel::getAlarm(Alarm &alarm)
+Status PvValue::getAlarm(Alarm &alarm)
 {
     if(pvGetStructure.get()==NULL) {
         return Status(Status::STATUSTYPE_ERROR, "no alarm field");
@@ -111,19 +112,19 @@ Status ValueChannel::getAlarm(Alarm &alarm)
     return Status::Ok;
 }
 
-String ValueChannel::getRequesterName()
+String PvValue::getRequesterName()
 {
     return requester->getRequesterName();
 }
 
-void ValueChannel::message(
+void PvValue::message(
     String const & message,
     MessageType messageType)
 {
     requester->message(message,messageType);
 }
 
-void ValueChannel::channelCreated(
+void PvValue::channelCreated(
     const Status& status,
     Channel::shared_pointer const & channel)
 {
@@ -138,7 +139,7 @@ void ValueChannel::channelCreated(
     channelGet = channel->createChannelGet(getPtrSelf(),getRequest);
 }
 
-void ValueChannel::channelStateChange(
+void PvValue::channelStateChange(
     Channel::shared_pointer const & channel, 
     Channel::ConnectionState connectionState)
 {
@@ -152,7 +153,7 @@ void ValueChannel::channelStateChange(
     return;
 }
 
-void ValueChannel::channelGetConnect(
+void PvValue::channelGetConnect(
     const Status& status,
     ChannelGet::shared_pointer const & channelGet,
     PVStructure::shared_pointer const & pvStructure,
@@ -185,7 +186,7 @@ void ValueChannel::channelGetConnect(
     event.signal();
 }
 
-void ValueChannel::getDone(const Status& status)
+void PvValue::getDone(const Status& status)
 {
     if(!status.isOK()) {
          this->status = status;

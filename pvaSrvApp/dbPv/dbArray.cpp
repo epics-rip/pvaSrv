@@ -30,7 +30,7 @@ namespace epics { namespace pvaSrv {
 using namespace epics::pvData;
 
 template<typename T>
-class V3ValueArray : public epics::pvData::PVValueArray<T> {
+class dbArray : public epics::pvData::PVValueArray<T> {
 public:
     typedef T* pointer;
     typedef const T* const_pointer;
@@ -38,11 +38,11 @@ public:
     typedef const std::vector<T> const_vector;
     typedef std::tr1::shared_ptr<vector> shared_vector;
 
-    V3ValueArray(
+    dbArray(
         PVStructurePtr const & parent,
         ScalarArrayConstPtr const & scalar,
         DbAddr &dbAddr,bool shareData);
-    virtual ~V3ValueArray();
+    virtual ~dbArray();
     virtual void setCapacity(size_t capacity);
     virtual size_t get(size_t offset, size_t length, PVArrayData<T> &data);
     virtual size_t put(size_t offset,size_t length, const_pointer from, size_t fromOffset);
@@ -52,7 +52,7 @@ public:
     virtual pointer get() ;
     virtual pointer get() const ;
     virtual vector const & getVector() { return *value.get(); }
-    virtual shared_vector const & getSharedVector(){return value;};
+    virtual shared_vector const & getSharedVector() { return value; }
     // from Serializable
     virtual void serialize(
         ByteBuffer *pbuffer,
@@ -64,41 +64,41 @@ public:
          ByteBuffer *pbuffer,
          SerializableControl *pflusher,
          size_t offset, size_t count) const;
-    virtual bool operator==(PVField& pv) ;
-    virtual bool operator!=(PVField& pv) ;
+    virtual bool operator==(PVField& pv);
+    virtual bool operator!=(PVField& pv);
 private:
-    long getV3Length() const;
-    void setV3Length(long length) const;
+    long getDbLength() const;
+    void setDbLength(long length) const;
     DbAddr &dbAddr;
-    bool shareV3Data;
+    bool shareDbData;
     shared_vector value;
 };
 
-typedef V3ValueArray<int8> V3ByteArray;
-typedef V3ValueArray<uint8> V3UByteArray;
-typedef V3ValueArray<int16> V3ShortArray;
-typedef V3ValueArray<uint16> V3UShortArray;
-typedef V3ValueArray<int32> V3IntArray;
-typedef V3ValueArray<uint32> V3UIntArray;
-typedef V3ValueArray<float> V3FloatArray;
-typedef V3ValueArray<double> V3DoubleArray;
-typedef V3ValueArray<String> V3StringArray;
+typedef dbArray<int8> dbByteArray;
+typedef dbArray<uint8> dbUByteArray;
+typedef dbArray<int16> dbShortArray;
+typedef dbArray<uint16> dbUShortArray;
+typedef dbArray<int32> dbIntArray;
+typedef dbArray<uint32> dbUIntArray;
+typedef dbArray<float> dbFloatArray;
+typedef dbArray<double> dbDoubleArray;
+typedef dbArray<String> dbStringArray;
 
 template<typename T>
-V3ValueArray<T>::V3ValueArray(
+dbArray<T>::dbArray(
     PVStructurePtr const & parent,ScalarArrayConstPtr const &scalarArray,
     DbAddr &dbAddr,bool shareData)
 : PVValueArray<T>(scalarArray),
   dbAddr(dbAddr),
-  shareV3Data(false),
+  shareDbData(false),
   value(std::tr1::shared_ptr<std::vector<T> >(new std::vector<T>()))
 {
     size_t capacity = dbAddr.no_elements;
     value->resize(capacity);
-    if(shareV3Data) {
-        parent->message("shareV3Data not implemented",warningMessage);
+    if(shareDbData) {
+        parent->message("shareDbData not implemented", warningMessage);
     }
-    size_t length = getV3Length();
+    size_t length = getDbLength();
     T* v3data = static_cast<T *>(dbAddr.pfield);
     T * data = get();
     for(size_t i=0; i<capacity; i++) data[i] = v3data[i];
@@ -107,7 +107,7 @@ V3ValueArray<T>::V3ValueArray(
 }
 
 template<typename T>
-long V3ValueArray<T>::getV3Length() const
+long dbArray<T>::getDbLength() const
 {
     long rec_length = 0;
     long rec_offset = 0;
@@ -123,7 +123,7 @@ long V3ValueArray<T>::getV3Length() const
 }
 
 template<typename T>
-void V3ValueArray<T>::setV3Length(long len) const
+void dbArray<T>::setDbLength(long len) const
 {
     long length = len;
     struct rset *prset = dbGetRset(&dbAddr);
@@ -135,24 +135,24 @@ void V3ValueArray<T>::setV3Length(long len) const
 }
 
 template<typename T>
-V3ValueArray<T>::~V3ValueArray()
+dbArray<T>::~dbArray()
 {}
 
 template<typename T>
-void V3ValueArray<T>::setCapacity(size_t capacity)
+void dbArray<T>::setCapacity(size_t capacity)
 {}
 
 template<typename T>
-size_t V3ValueArray<T>::get(size_t offset, size_t len, PVArrayData<T> &data)
+size_t dbArray<T>::get(size_t offset, size_t len, PVArrayData<T> &data)
 {
     dbScanLock(dbAddr.precord);
-    // updateFromV3Record();
-    size_t length = getV3Length();
+    // updateFromDbRecord();
+    size_t length = getDbLength();
     if(length!=this->getLength()) {
         this->setLength(length);
     }
     T * pvalue = get();
-    if(!shareV3Data) {
+    if(!shareDbData) {
         T * array = static_cast<T *>(dbAddr.pfield);
         for(size_t i=0; i<length; i++) pvalue[i] = array[i];
     }
@@ -168,7 +168,7 @@ size_t V3ValueArray<T>::get(size_t offset, size_t len, PVArrayData<T> &data)
 }
 
 template<typename T>
-size_t V3ValueArray<T>::put(size_t offset,size_t len,
+size_t dbArray<T>::put(size_t offset,size_t len,
     const_pointer from,size_t fromOffset)
 {
     if(PVField::isImmutable()) {
@@ -190,9 +190,9 @@ size_t V3ValueArray<T>::put(size_t offset,size_t len,
            pvalue[i+offset] = from[i+fromOffset];
         }
     }
-    // update v4Record
-    setV3Length(length);
-    if(!shareV3Data) {
+    // update DB Record
+    setDbLength(length);
+    if(!shareDbData) {
         T * array = static_cast<T *>(dbAddr.pfield);
         for(size_t i=0; i<length; i++) array[i] = pvalue[i];
     }
@@ -202,7 +202,7 @@ size_t V3ValueArray<T>::put(size_t offset,size_t len,
 }
 
 template<typename T>
-void V3ValueArray<T>::shareData(
+void dbArray<T>::shareData(
     std::tr1::shared_ptr<std::vector<T> > const & value,
     size_t capacity,size_t length)
 {
@@ -210,14 +210,14 @@ void V3ValueArray<T>::shareData(
 }
 
 template<typename T>
-void V3ValueArray<T>::serialize(ByteBuffer *pbuffer,
+void dbArray<T>::serialize(ByteBuffer *pbuffer,
             SerializableControl *pflusher) const
 {
     serialize(pbuffer, pflusher, 0, this->getLength());
 }
 
 template<typename T>
-void V3ValueArray<T>::deserialize(ByteBuffer *pbuffer,
+void dbArray<T>::deserialize(ByteBuffer *pbuffer,
         DeserializableControl *pcontrol)
 {
     size_t length = SerializeHelper::readSize(pbuffer, pcontrol);
@@ -229,26 +229,26 @@ void V3ValueArray<T>::deserialize(ByteBuffer *pbuffer,
 		size_t i=0;
 		while(true) {
 			size_t maxIndex = std::min(length-i, (pbuffer->getRemaining()/sizeof(T)))+i;
-			if(shareV3Data) dbScanLock(dbAddr.precord);
+            if(shareDbData) dbScanLock(dbAddr.precord);
 			for(; i<maxIndex; i++) {
 				pvalue[i] = pbuffer->GET(T);
 			}
-			if(shareV3Data) dbScanUnlock(dbAddr.precord);
+            if(shareDbData) dbScanUnlock(dbAddr.precord);
 			if(i>=length) break;
 			pcontrol->ensureData(sizeof(T));
 		}
     }
     this->setLength(length);
-    // update v4Record
+    // update DB Record
     dbScanLock(dbAddr.precord);
-    setV3Length(length);
+    setDbLength(length);
     T * array = static_cast<T *>(dbAddr.pfield);
     for(size_t i=0; i<length; i++) array[i] = pvalue[i];
     dbScanUnlock(dbAddr.precord);
 }
 
 template<typename T>
-void V3ValueArray<T>::serialize(ByteBuffer *pbuffer,
+void dbArray<T>::serialize(ByteBuffer *pbuffer,
         SerializableControl *pflusher, size_t offset, size_t count) const
 {
     size_t length = this->getLength();
@@ -271,32 +271,32 @@ void V3ValueArray<T>::serialize(ByteBuffer *pbuffer,
 }
 
 template<typename T>
-bool V3ValueArray<T>::operator==(PVField& pv)
+bool dbArray<T>::operator==(PVField& pv)
 {
     return getConvert()->equals(*this, pv);
 }
 
 template<typename T>
-bool V3ValueArray<T>::operator!=(PVField& pv)
+bool dbArray<T>::operator!=(PVField& pv)
 {
     return !(getConvert()->equals(*this, pv));
 }
 
 template<>
-V3ValueArray<String>::V3ValueArray(
+dbArray<String>::dbArray(
     PVStructurePtr const & parent,ScalarArrayConstPtr const &scalarArray,
     DbAddr &dbAddr,bool shareData)
 : PVValueArray<String>(scalarArray),
   dbAddr(dbAddr),
-  shareV3Data(false),
+  shareDbData(false),
   value(std::tr1::shared_ptr<std::vector<String> >(new std::vector<String>()))
 {
     size_t capacity = dbAddr.no_elements;
     value->resize(capacity);
-    if(shareV3Data) {
+    if(shareDbData) {
         parent->message("shareV3Data not implemented",warningMessage);
     }
-    size_t length = getV3Length();
+    size_t length = getDbLength();
     char *pchar = static_cast<char *>(dbAddr.pfield);
     String *pvalue = get();
     for(size_t i=0; i<length; i++) {
@@ -311,11 +311,11 @@ V3ValueArray<String>::V3ValueArray(
 
 
 template<>
-size_t V3ValueArray<String>::get(size_t offset, size_t len, PVArrayData<String> &data)
+size_t dbArray<String>::get(size_t offset, size_t len, PVArrayData<String> &data)
 {
     dbScanLock(dbAddr.precord);
-    //updateFromV3Record
-    size_t length = getV3Length();
+    // update from DB Record
+    size_t length = getDbLength();
         if(length!=this->getLength()) {
         setLength(length);
     }
@@ -339,7 +339,7 @@ size_t V3ValueArray<String>::get(size_t offset, size_t len, PVArrayData<String> 
 }
 
 template<>
-size_t V3ValueArray<String>::put(size_t offset,size_t len,
+size_t dbArray<String>::put(size_t offset,size_t len,
     const_pointer from,size_t fromOffset)
 {
     if(PVField::isImmutable()) {
@@ -363,9 +363,9 @@ size_t V3ValueArray<String>::put(size_t offset,size_t len,
         if(val.length()>=field_size) val = val.substr(0,field_size-1);
         pvalue[i] = val;
     }
-    //update V3 record
+    // update DB record
     dbScanLock(dbAddr.precord);
-    setV3Length(length);
+    setDbLength(length);
     char *pchar = static_cast<char *>(dbAddr.pfield);
     for(size_t i=0; i<length; i++) {
         strcpy(pchar,pvalue[i].c_str());
@@ -377,7 +377,7 @@ size_t V3ValueArray<String>::put(size_t offset,size_t len,
 }
 
 template<typename T>
-T *V3ValueArray<T>::get()
+T *dbArray<T>::get()
 {
      std::vector<T> *vec = value.get();
      T *praw = &((*vec)[0]);
@@ -385,7 +385,7 @@ T *V3ValueArray<T>::get()
 }
 
 template<typename T>
-T *V3ValueArray<T>::get() const
+T *dbArray<T>::get() const
 {
      std::vector<T> *vec = value.get();
      T *praw = &((*vec)[0]);
@@ -393,7 +393,7 @@ T *V3ValueArray<T>::get() const
 }
 
 template<>
-void V3ValueArray<String>::serialize(ByteBuffer *pbuffer,
+void dbArray<String>::serialize(ByteBuffer *pbuffer,
         SerializableControl *pflusher, size_t offset, size_t count) const
 {
     size_t length = this->getLength();
@@ -411,7 +411,7 @@ void V3ValueArray<String>::serialize(ByteBuffer *pbuffer,
 }
 
 template<>
-void V3ValueArray<String>::deserialize(ByteBuffer *pbuffer,
+void dbArray<String>::deserialize(ByteBuffer *pbuffer,
         DeserializableControl *pcontrol) {
     size_t length = SerializeHelper::readSize(pbuffer, pcontrol);
     if(length<=0) return;
@@ -428,9 +428,9 @@ void V3ValueArray<String>::deserialize(ByteBuffer *pbuffer,
         }
     }
     this->setLength(length);
-    //update V3 record
+    // update DB record
     dbScanLock(dbAddr.precord);
-    setV3Length(length);
+    setDbLength(length);
     char *pchar = static_cast<char *>(dbAddr.pfield);
     for(size_t i=0; i<length; i++) {
         strcpy(pchar,pvalue[i].c_str());
@@ -439,97 +439,97 @@ void V3ValueArray<String>::deserialize(ByteBuffer *pbuffer,
     dbScanUnlock(dbAddr.precord);
 }
 
-PVByteArrayPtr V3ValueArrayCreate::createByteArray(
+PVByteArrayPtr dbArrayCreate::createByteArray(
     PVStructurePtr const & parent,
     ScalarArrayConstPtr const & scalar,
     DbAddr &dbAddr,
     bool shareData)
 {
-    return PVByteArrayPtr(new V3ByteArray(parent,scalar,dbAddr,shareData));
+    return PVByteArrayPtr(new dbByteArray(parent,scalar,dbAddr,shareData));
 }
 
-PVUByteArrayPtr V3ValueArrayCreate::createUByteArray(
+PVUByteArrayPtr dbArrayCreate::createUByteArray(
     PVStructurePtr const & parent,
     ScalarArrayConstPtr const & scalar,
     DbAddr &dbAddr,
     bool shareData)
 {
-    return PVUByteArrayPtr(new V3UByteArray(parent,scalar,dbAddr,shareData));
+    return PVUByteArrayPtr(new dbUByteArray(parent,scalar,dbAddr,shareData));
 }
 
 
-PVShortArrayPtr V3ValueArrayCreate::createShortArray(
+PVShortArrayPtr dbArrayCreate::createShortArray(
     PVStructurePtr const & parent,
     ScalarArrayConstPtr const & scalar,
     DbAddr &dbAddr,
     bool shareData)
 {
-    return PVShortArrayPtr(new V3ShortArray(parent,scalar,dbAddr,shareData));
+    return PVShortArrayPtr(new dbShortArray(parent,scalar,dbAddr,shareData));
 }
 
-PVUShortArrayPtr V3ValueArrayCreate::createUShortArray(
+PVUShortArrayPtr dbArrayCreate::createUShortArray(
     PVStructurePtr const & parent,
     ScalarArrayConstPtr const & scalar,
     DbAddr &dbAddr,
     bool shareData)
 {
-    return PVUShortArrayPtr(new V3UShortArray(parent,scalar,dbAddr,shareData));
+    return PVUShortArrayPtr(new dbUShortArray(parent,scalar,dbAddr,shareData));
 }
 
-PVIntArrayPtr V3ValueArrayCreate::createIntArray(
+PVIntArrayPtr dbArrayCreate::createIntArray(
     PVStructurePtr const & parent,
     ScalarArrayConstPtr const & scalar,
     DbAddr &dbAddr,
     bool shareData)
 {
-    return PVIntArrayPtr(new V3IntArray(parent,scalar,dbAddr,shareData));
+    return PVIntArrayPtr(new dbIntArray(parent,scalar,dbAddr,shareData));
 }
 
-PVUIntArrayPtr V3ValueArrayCreate::createUIntArray(
+PVUIntArrayPtr dbArrayCreate::createUIntArray(
     PVStructurePtr const & parent,
     ScalarArrayConstPtr const & scalar,
     DbAddr &dbAddr,
     bool shareData)
 {
-    return PVUIntArrayPtr(new V3UIntArray(parent,scalar,dbAddr,shareData));
+    return PVUIntArrayPtr(new dbUIntArray(parent,scalar,dbAddr,shareData));
 }
 
-PVFloatArrayPtr V3ValueArrayCreate::createFloatArray(
+PVFloatArrayPtr dbArrayCreate::createFloatArray(
     PVStructurePtr const & parent,
     ScalarArrayConstPtr const & scalar,
     DbAddr &dbAddr,
     bool shareData)
 {
-    return PVFloatArrayPtr(new V3FloatArray(parent,scalar,dbAddr,shareData));
+    return PVFloatArrayPtr(new dbFloatArray(parent,scalar,dbAddr,shareData));
 }
 
-PVDoubleArrayPtr V3ValueArrayCreate::createDoubleArray(
+PVDoubleArrayPtr dbArrayCreate::createDoubleArray(
     PVStructurePtr const & parent,
     ScalarArrayConstPtr const & scalar,
     DbAddr &dbAddr,
     bool shareData)
 {
-    return PVDoubleArrayPtr(new V3DoubleArray(parent,scalar,dbAddr,shareData));
+    return PVDoubleArrayPtr(new dbDoubleArray(parent,scalar,dbAddr,shareData));
 }
 
-PVStringArrayPtr V3ValueArrayCreate::createStringArray(
+PVStringArrayPtr dbArrayCreate::createStringArray(
     PVStructurePtr const & parent,
     ScalarArrayConstPtr const & scalar,
     DbAddr &dbAddr)
 {
-    return PVStringArrayPtr(new V3StringArray(parent,scalar,dbAddr,false));
+    return PVStringArrayPtr(new dbStringArray(parent,scalar,dbAddr,false));
 }
  
-V3ValueArrayCreatePtr getV3ValueArrayCreate()
+dbArrayCreatePtr getDbValueArrayCreate()
 {
      static Mutex mutex;
-     static V3ValueArrayCreatePtr v3ValueArrayCreate;
+     static dbArrayCreatePtr dbValueArrayCreate;
      Lock xx(mutex);
 
-     if(v3ValueArrayCreate.get()==0){
-          v3ValueArrayCreate = V3ValueArrayCreatePtr(new V3ValueArrayCreate());
+     if(dbValueArrayCreate.get()==0){
+          dbValueArrayCreate = dbArrayCreatePtr(new dbArrayCreate());
      }
-     return v3ValueArrayCreate;
+     return dbValueArrayCreate;
 
 }
 

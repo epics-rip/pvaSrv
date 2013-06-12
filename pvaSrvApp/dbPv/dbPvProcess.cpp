@@ -7,7 +7,7 @@
  * @author mrk
  */
 /* Marty Kraimer 2011.03 */
-/* This connects to a V3 record and presents the data as a PVStructure
+/* This connects to a DB record and presents the data as a PVStructure
  * It provides access to  value, alarm, display, and control.
  */
 
@@ -29,11 +29,11 @@ namespace epics { namespace pvaSrv {
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
-V3ChannelProcess::V3ChannelProcess(
-    ChannelBase::shared_pointer const &v3Channel,
+DbPvProcess::DbPvProcess(
+    ChannelBase::shared_pointer const &dbPv,
     ChannelProcessRequester::shared_pointer const &channelProcessRequester,
     DbAddr &dbAddr)
-: v3Channel(v3Channel),
+: dbPv(dbPv),
   channelProcessRequester(channelProcessRequester),
   dbAddr(dbAddr),
   recordString("record"),
@@ -43,15 +43,15 @@ V3ChannelProcess::V3ChannelProcess(
   valueString("value"),
   beingDestroyed(false)
 {
-    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelProcess::V3ChannelProcess\n");
+    if(DbPvDebug::getLevel()>0) printf("dbPvProcess::dbPvProcess\n");
 }
 
-V3ChannelProcess::~V3ChannelProcess()
+DbPvProcess::~DbPvProcess()
 {
-    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelProcess::~V3ChannelProcess\n");
+    if(DbPvDebug::getLevel()>0) printf("dbPvProcess::~dbPvProcess\n");
 }
 
-bool V3ChannelProcess::init()
+bool DbPvProcess::init()
 {
    pNotify.reset(new (struct putNotify)());
    notifyAddr.reset(new DbAddr());
@@ -74,27 +74,27 @@ bool V3ChannelProcess::init()
    return true;
 }
 
-String V3ChannelProcess::getRequesterName() {
+String DbPvProcess::getRequesterName() {
     return channelProcessRequester->getRequesterName();
 }
 
-void V3ChannelProcess::message(String const &message,MessageType messageType)
+void DbPvProcess::message(String const &message,MessageType messageType)
 {
     channelProcessRequester->message(message,messageType);
 }
 
-void V3ChannelProcess::destroy() {
-    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelProcess::destroy beingDestroyed %s\n",
+void DbPvProcess::destroy() {
+    if(DbPvDebug::getLevel()>0) printf("dbPvProcess::destroy beingDestroyed %s\n",
          (beingDestroyed ? "true" : "false"));
     {
         Lock xx(mutex);
         if(beingDestroyed) return;
         beingDestroyed = true;
     }
-    v3Channel->removeChannelProcess(getPtrSelf());
+    dbPv->removeChannelProcess(getPtrSelf());
 }
 
-void V3ChannelProcess::process(bool lastRequest)
+void DbPvProcess::process(bool lastRequest)
 {
     epicsUInt8 value = 1;
     pNotify.get()->pbuffer = &value;
@@ -104,16 +104,16 @@ void V3ChannelProcess::process(bool lastRequest)
     
 }
 
-void V3ChannelProcess::notifyCallback(struct putNotify *pn)
+void DbPvProcess::notifyCallback(struct putNotify *pn)
 {
-    V3ChannelProcess * cp = static_cast<V3ChannelProcess *>(pn->usrPvt);
+    DbPvProcess * cp = static_cast<DbPvProcess *>(pn->usrPvt);
     cp->event.signal();
 }
 
-void V3ChannelProcess::lock()
+void DbPvProcess::lock()
 {}
 
-void V3ChannelProcess::unlock()
+void DbPvProcess::unlock()
 {}
 
 }}

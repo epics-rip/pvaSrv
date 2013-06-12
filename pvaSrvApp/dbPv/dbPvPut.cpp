@@ -7,7 +7,7 @@
  * @author mrk
  */
 /* Marty Kraimer 2011.03 */
-/* This connects to a V3 record and presents the data as a PVStructure
+/* This connects to a DB record and presents the data as a PVStructure
  * It provides access to  value, alarm, display, and control.
  */
 
@@ -36,12 +36,12 @@ namespace epics { namespace pvaSrv {
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
-V3ChannelPut::V3ChannelPut(
-    ChannelBase::shared_pointer const &v3Channel,
+DbPvPut::DbPvPut(
+    ChannelBase::shared_pointer const &dbPv,
     ChannelPutRequester::shared_pointer const &channelPutRequester,
     DbAddr &dbAddr)
-: v3Util(V3Util::getV3Util()),
-  v3Channel(v3Channel),
+: dbUtil(DbUtil::getDbUtil()),
+  dbPv(dbPv),
   channelPutRequester(channelPutRequester),
   dbAddr(dbAddr),
   propertyMask(0),
@@ -49,39 +49,39 @@ V3ChannelPut::V3ChannelPut(
   firstTime(true),
   beingDestroyed(false)
 {
-    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelPut::V3ChannelPut()\n");
+    if(DbPvDebug::getLevel()>0) printf("dbPvPut::dbPvPut()\n");
 }
 
-V3ChannelPut::~V3ChannelPut()
+DbPvPut::~DbPvPut()
 {
-    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelPut::~V3ChannelPut()\n");
+    if(DbPvDebug::getLevel()>0) printf("dbPvPut::~dbPvPut()\n");
 }
 
-bool V3ChannelPut::init(PVStructure::shared_pointer const &pvRequest)
+bool DbPvPut::init(PVStructure::shared_pointer const &pvRequest)
 {
-    propertyMask = v3Util->getProperties(
+    propertyMask = dbUtil->getProperties(
         channelPutRequester,
         pvRequest,
         dbAddr,
         true);
-    if(propertyMask==v3Util->noAccessBit) return false;
-    if(propertyMask==v3Util->noModBit) {
+    if(propertyMask==dbUtil->noAccessBit) return false;
+    if(propertyMask==dbUtil->noModBit) {
         channelPutRequester->message(
              String("field not allowed to be changed"),errorMessage);
         return 0;
     }
     pvStructure = PVStructure::shared_pointer(
-        v3Util->createPVStructure(
+        dbUtil->createPVStructure(
             channelPutRequester,
             propertyMask,
             dbAddr));
     if(pvStructure.get()==0) return 0;
-    if((propertyMask&v3Util->dbPutBit)!=0) {
-        if((propertyMask&v3Util->processBit)!=0) {
+    if((propertyMask&dbUtil->dbPutBit)!=0) {
+        if((propertyMask&dbUtil->processBit)!=0) {
             channelPutRequester->message(
              String("process determined by dbPutField"),errorMessage);
         }
-    } else if((propertyMask&v3Util->processBit)!=0) {
+    } else if((propertyMask&dbUtil->processBit)!=0) {
        process = true;
        pNotify.reset(new (struct putNotify)());
        notifyAddr.reset(new DbAddr());
@@ -111,33 +111,33 @@ bool V3ChannelPut::init(PVStructure::shared_pointer const &pvRequest)
     return true;
 }
 
-String V3ChannelPut::getRequesterName() {
+String DbPvPut::getRequesterName() {
     return channelPutRequester->getRequesterName();
 }
 
-void V3ChannelPut::message(String const &message,MessageType messageType)
+void DbPvPut::message(String const &message,MessageType messageType)
 {
     channelPutRequester->message(message,messageType);
 }
 
-void V3ChannelPut::destroy() {
-    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelPut::destroy beingDestroyed %s\n",
+void DbPvPut::destroy() {
+    if(DbPvDebug::getLevel()>0) printf("dbPvPut::destroy beingDestroyed %s\n",
          (beingDestroyed ? "true" : "false"));
     {
         Lock xx(mutex);
         if(beingDestroyed) return;
         beingDestroyed = true;
     }
-    v3Channel->removeChannelPut(getPtrSelf());
+    dbPv->removeChannelPut(getPtrSelf());
 }
 
-void V3ChannelPut::put(bool lastRequest)
+void DbPvPut::put(bool lastRequest)
 {
-    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelPut::put()\n");
+    if(DbPvDebug::getLevel()>0) printf("dbPvPut::put()\n");
     Lock lock(dataMutex);
     PVFieldPtr pvField = pvStructure.get()->getPVFields()[0];
-    if(propertyMask&v3Util->dbPutBit) {
-        Status status = v3Util->putField(
+    if(propertyMask&dbUtil->dbPutBit) {
+        Status status = dbUtil->putField(
             channelPutRequester,propertyMask,dbAddr,pvField);
         lock.unlock();
         channelPutRequester->putDone(status);
@@ -145,7 +145,7 @@ void V3ChannelPut::put(bool lastRequest)
         return;
     }
     dbScanLock(dbAddr.precord);
-    Status status = v3Util->put(
+    Status status = dbUtil->put(
         channelPutRequester,propertyMask,dbAddr,pvField);
     dbScanUnlock(dbAddr.precord);
     lock.unlock();
@@ -159,20 +159,20 @@ void V3ChannelPut::put(bool lastRequest)
     if(lastRequest) destroy();
 }
 
-void V3ChannelPut::notifyCallback(struct putNotify *pn)
+void DbPvPut::notifyCallback(struct putNotify *pn)
 {
-    V3ChannelPut * cput = static_cast<V3ChannelPut *>(pn->usrPvt);
+    DbPvPut * cput = static_cast<DbPvPut *>(pn->usrPvt);
     cput->event.signal();
 }
 
-void V3ChannelPut::get()
+void DbPvPut::get()
 {
-    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelPut::get()\n");
+    if(DbPvDebug::getLevel()>0) printf("dbPvPut::get()\n");
     {
     Lock lock(dataMutex);
     bitSet->clear();
     dbScanLock(dbAddr.precord);
-    Status status = v3Util->get(
+    Status status = dbUtil->get(
         channelPutRequester,
         propertyMask,dbAddr,
         pvStructure,
@@ -187,12 +187,12 @@ void V3ChannelPut::get()
     channelPutRequester->getDone(Status::Ok);
 }
 
-void V3ChannelPut::lock()
+void DbPvPut::lock()
 {
     dataMutex.lock();
 }
 
-void V3ChannelPut::unlock()
+void DbPvPut::unlock()
 {
     dataMutex.unlock();
 }

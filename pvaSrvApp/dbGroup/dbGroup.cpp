@@ -28,33 +28,33 @@ static StandardFieldPtr standardField = getStandardField();
 static PVDataCreatePtr pvDataCreate = getPVDataCreate();
 static StandardPVFieldPtr standardPVField = getStandardPVField();
 
-MultiValueChannel::MultiValueChannel(
-    MultiValueChannelProviderPtr const & channelProvider,
+DbGroup::DbGroup(
+    DbGroupProviderPtr const & provider,
     ChannelRequester::shared_pointer const & requester)
-: ChannelBase(channelProvider,requester,channelProvider->channelName),
-  multiValueProvider(channelProvider),
+: ChannelBase(provider,requester,provider->channelName),
+  provider(provider),
   requester(requester),
-  arrayValueChannel(new ValueChannelPtrArray())
+  arrayPvValue(new pvValuePtrArray())
 {}
 
-bool MultiValueChannel::create()
+bool DbGroup::create()
 {
-    size_t n = multiValueProvider->fieldNames->size();
-    arrayValueChannel->reserve(n);
+    size_t n = provider->fieldNames->size();
+    arrayPvValue->reserve(n);
     for(size_t i=0; i<n; i++) {
         ValueChannelPtr valueChannel(
-            new ValueChannel(
+            new PvValue(
                  requester,
-                 multiValueProvider->valueChannelProvider,
-                 (*multiValueProvider->valueChannelNames)[i]));
-        arrayValueChannel->push_back(valueChannel);
+                 provider->pvValueProvider,
+                 (*provider->pvValueNames)[i]));
+        arrayPvValue->push_back(valueChannel);
     }
     for(size_t i=0; i<n; i++) {
-        (*arrayValueChannel)[i]->connect();
+        (*arrayPvValue)[i]->connect();
     }
     bool allOK = true;
     for(size_t i=0; i<n; i++) {
-        Status status = (*arrayValueChannel)[i]->waitConnect();
+        Status status = (*arrayPvValue)[i]->waitConnect();
         if(!status.isOK()) {
              allOK = false;
         }
@@ -73,24 +73,24 @@ bool MultiValueChannel::create()
     fieldNames.push_back("timeStamp");
     for(size_t i=0; i<n; i++) {
         FieldConstPtr valueField =
-            (*arrayValueChannel)[i]->getValue()->getField();
+            (*arrayPvValue)[i]->getValue()->getField();
         fields.push_back(valueField);
-        fieldNames.push_back((*multiValueProvider->fieldNames)[i]);
+        fieldNames.push_back((*provider->fieldNames)[i]);
     }
     structure = fieldCreate->createStructure(fieldNames,fields);
     return allOK;
 }
 
-void MultiValueChannel::destroy()
+void DbGroup::destroy()
 {
-    size_t n = arrayValueChannel->size();
+    size_t n = arrayPvValue->size();
     for(size_t i=0; i<n; i++) {
-       (*arrayValueChannel)[i]->destroy();
+       (*arrayPvValue)[i]->destroy();
     }
-    arrayValueChannel.reset();
+    arrayPvValue.reset();
 }
 
-void MultiValueChannel::getField(
+void DbGroup::getField(
     GetFieldRequester::shared_pointer const &requester,
     String const &subField)
 {
@@ -98,14 +98,14 @@ void MultiValueChannel::getField(
     requester->getDone(Status::Ok,structure);
 }
 
-ChannelGet::shared_pointer MultiValueChannel::createChannelGet(
+ChannelGet::shared_pointer DbGroup::createChannelGet(
     ChannelGetRequester::shared_pointer const &channelGetRequester,
     PVStructure::shared_pointer const &pvRequest)
 {
-    MultiValueChannelPtr xxx =
-        static_pointer_cast<MultiValueChannel>(getPtrSelf());
-    MultiValueChannelGetPtr channelGet(
-        new MultiValueChannelGet(xxx,channelGetRequester));
+    DbGroupPtr xxx =
+        static_pointer_cast<DbGroup>(getPtrSelf());
+    DbGroupGetPtr channelGet(
+        new DbGroupGet(xxx,channelGetRequester));
     bool result = channelGet->init(pvRequest);
     if(!result) channelGet.reset();
     return channelGet;

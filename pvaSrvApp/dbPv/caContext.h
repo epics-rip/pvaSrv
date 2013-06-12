@@ -7,10 +7,10 @@
  * @author mrk
  */
 /* Marty Kraimer 2011.03 
- * This creates a CAV3 context the first time a thread calls 
- * CAV3ContextCreate::create and then calls ca_attach_context
+ * This creates a CA context the first time a thread calls
+ * caContextCreate::create and then calls ca_attach_context
  * from checkContext if the caller is a thread that is not the
- * thread that called CAV3ContextCreate,create.
+ * thread that called caContextCreate,create.
  */
 
 #ifndef CACONTEXT_H
@@ -24,14 +24,14 @@
 #include <pv/lock.h>
 #include <pv/requester.h>
 
-class CAV3Context;
-typedef std::tr1::shared_ptr<CAV3Context> CAV3ContextPtr;
-class CAV3ContextCreate;
+class caContext;
+typedef std::tr1::shared_ptr<caContext> caContextPtr;
+class caContextCreate;
 
-class CAV3Context {
+class caContext {
 public:
-    POINTER_DEFINITIONS(CAV3Context);
-    ~CAV3Context();
+    POINTER_DEFINITIONS(caContext);
+    ~caContext();
     void release();
     void stop();
     void exception(epics::pvData::String const &message);
@@ -39,23 +39,23 @@ public:
 private:
     std::list<epicsThreadId> auxThreadList ;
     epics::pvData::Mutex mutex;
-    CAV3Context(
+    caContext(
        epics::pvData::RequesterPtr const & requester);
     epics::pvData::RequesterPtr requester;
     epicsThreadId threadId;
     struct ca_client_context *context;
     int referenceCount;
-    friend class CAV3ContextCreate;
+    friend class caContextCreate;
 };
 
-class CAV3ContextCreate {
+class caContextCreate {
 public:
-    static CAV3ContextPtr get(epics::pvData::RequesterPtr const & requester);
+    static caContextPtr get(epics::pvData::RequesterPtr const & requester);
 private:
     static void erase(epicsThreadId id);
-    static std::map<epicsThreadId,CAV3ContextPtr> contextMap;
+    static std::map<epicsThreadId,caContextPtr> contextMap;
     static epics::pvData::Mutex mutex;
-    friend class CAV3Context;
+    friend class caContext;
 };
 
 #endif  /* CACONTEXT_H */

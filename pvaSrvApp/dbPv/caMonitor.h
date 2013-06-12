@@ -7,7 +7,7 @@
  * @author mrk
  */
 /* Marty Kraimer 2011.03 */
-/* This connects to a V3 record and calls V3CA to monitor data.
+/* This connects to a V3 DB record and calls CA to monitor data.
  * Only numeric scalar, timeStamp, and alarm are provided.
  */
 
@@ -20,22 +20,22 @@
 #include <pv/requester.h>
 #include <pv/lock.h>
 
-enum V3Type {
-    v3Enum,
-    v3Byte,
-    v3UByte,
-    v3Short,
-    v3UShort,
-    v3Int,
-    v3UInt,
-    v3Float,
-    v3Double,
-    v3String
+enum CaType {
+    CaEnum,
+    CaByte,
+    CaUByte,
+    CaShort,
+    CaUShort,
+    CaInt,
+    CaUInt,
+    CaFloat,
+    CaDouble,
+    CaString
 };
 
-struct CAV3Data {
-    CAV3Data();
-    ~CAV3Data();
+struct CaData {
+    CaData();
+    ~CaData();
     /* The following have new values after each data event*/
     union { //only used for scalar values
         epics::pvData::int8   byteValue;
@@ -53,26 +53,26 @@ struct CAV3Data {
     const char *    status;
 };
 
-class CAV3MonitorRequester : public virtual epics::pvData::Requester {
+class CaMonitorRequester : public virtual epics::pvData::Requester {
 public:
-    POINTER_DEFINITIONS(CAV3MonitorRequester);
-    virtual ~CAV3MonitorRequester(){}
+    POINTER_DEFINITIONS(CaMonitorRequester);
+    virtual ~CaMonitorRequester(){}
     virtual void exceptionCallback(long status,long op) = 0;
     virtual void connectionCallback() = 0;
     virtual void accessRightsCallback() = 0;
     virtual void eventCallback(const char *status) = 0;
 };
 
-typedef std::tr1::shared_ptr<CAV3MonitorRequester> CAV3MonitorRequesterPtr;
+typedef std::tr1::shared_ptr<CaMonitorRequester> CaMonitorRequesterPtr;
 
-class CAV3Monitor : private epics::pvData::NoDefaultMethods {
+class CaMonitor : private epics::pvData::NoDefaultMethods {
 public:
-    CAV3Monitor(
-        CAV3MonitorRequesterPtr const &requester,
+    CaMonitor(
+        CaMonitorRequesterPtr const &requester,
         epics::pvData::String const &pvName,
-        V3Type v3Type);
-    ~CAV3Monitor();
-    CAV3Data & getData();
+        CaType caType);
+    ~CaMonitor();
+    CaData & getData();
     void connect();
     void start();
     void stop();
@@ -81,7 +81,7 @@ public:
     bool hasWriteAccess();
     bool isConnected();
 private:
-    class CAV3MonitorPvt *pImpl;
+    class CaMonitorPvt *pImpl;
 };
 
 #endif  /* CAMONITOR_H */

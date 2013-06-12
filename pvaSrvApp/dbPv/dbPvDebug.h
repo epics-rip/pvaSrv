@@ -11,7 +11,7 @@
 
 namespace epics { namespace pvaSrv { 
 
-class V3ChannelDebug {
+class DbPvDebug {
 public:
     static void setLevel(int level);
     static int getLevel();

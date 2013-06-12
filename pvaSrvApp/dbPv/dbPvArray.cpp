@@ -7,7 +7,7 @@
  * @author mrk
  */
 /* Marty Kraimer 2011.03 */
-/* This connects to a V3 record and presents the data as a PVStructure
+/* This connects to a DB record and presents the data as a PVStructure
  * It provides access to  value, alarm, display, and control.
  */
 
@@ -61,24 +61,24 @@ typedef long (*get_array_info) (DBADDR *,long *,long *);
 typedef long (*put_array_info) (DBADDR *,long );
 }
 
-V3ChannelArray::V3ChannelArray(
-    ChannelBase::shared_pointer const &v3Channel,
+DbPvArray::DbPvArray(
+    ChannelBase::shared_pointer const &dbPv,
     ChannelArrayRequester::shared_pointer const &channelArrayRequester,
     DbAddr &dbAddr)
-: v3Channel(v3Channel),
+: dbPv(dbPv),
   channelArrayRequester(channelArrayRequester),
   dbAddr(dbAddr),
   beingDestroyed(false)
 {
-    if(V3ChannelDebug::getLevel()>0)printf("V3ChannelArray::V3ChannelArray\n");
+    if(DbPvDebug::getLevel()>0)printf("dbPvArray::dbPvArray\n");
 }
 
-V3ChannelArray::~V3ChannelArray()
+DbPvArray::~DbPvArray()
 {
-    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelArray::~V3ChannelArray\n");
+    if(DbPvDebug::getLevel()>0) printf("dbPvArray::~dbPvArray\n");
 }
 
-bool V3ChannelArray::init(PVStructure::shared_pointer const &pvRequest)
+bool DbPvArray::init(PVStructure::shared_pointer const &pvRequest)
 {
     if(!dbAddr.no_elements>1) {
         channelArrayRequester.get()->message("field in V3 record is not an array",errorMessage);
@@ -109,7 +109,7 @@ bool V3ChannelArray::init(PVStructure::shared_pointer const &pvRequest)
       break;
     }
     if(scalarType==pvBoolean) {
-        channelArrayRequester.get()->message("unsupported field in V3 record",errorMessage);
+        channelArrayRequester.get()->message("unsupported field in DB record",errorMessage);
         return false;
     }
     pvScalarArray = getPVDataCreate()->createPVScalarArray(scalarType);
@@ -120,18 +120,18 @@ bool V3ChannelArray::init(PVStructure::shared_pointer const &pvRequest)
     return true;
 }
 
-void V3ChannelArray::destroy() {
-    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelArray::destroy beingDestroyed %s\n",
+void DbPvArray::destroy() {
+    if(DbPvDebug::getLevel()>0) printf("dbPvArray::destroy beingDestroyed %s\n",
          (beingDestroyed ? "true" : "false"));
      {
         Lock xx(mutex);
         if(beingDestroyed) return;
         beingDestroyed = true;
     }
-    v3Channel->removeChannelArray(getPtrSelf());
+    dbPv->removeChannelArray(getPtrSelf());
 }
 
-void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
+void DbPvArray::getArray(bool lastRequest,int offset,int count)
 {
     dbScanLock(dbAddr.precord);
     long length = 0;
@@ -232,7 +232,7 @@ void V3ChannelArray::getArray(bool lastRequest,int offset,int count)
     if(lastRequest) destroy();
 }
 
-void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
+void DbPvArray::putArray(bool lastRequest,int offset,int count)
 {
     dbScanLock(dbAddr.precord);
     long no_elements = dbAddr.no_elements;
@@ -394,7 +394,7 @@ void V3ChannelArray::putArray(bool lastRequest,int offset,int count)
     if(lastRequest) destroy();
 }
 
-void V3ChannelArray::setLength(bool lastRequest,int length,int capacity)
+void DbPvArray::setLength(bool lastRequest,int length,int capacity)
 {
     dbScanLock(dbAddr.precord);
     long no_elements = dbAddr.no_elements;
@@ -410,12 +410,12 @@ void V3ChannelArray::setLength(bool lastRequest,int length,int capacity)
     if(lastRequest) destroy();
 }
 
-void V3ChannelArray::lock()
+void DbPvArray::lock()
 {
     dataMutex.lock();
 }
 
-void V3ChannelArray::unlock()
+void DbPvArray::unlock()
 {
     dataMutex.unlock();
 }

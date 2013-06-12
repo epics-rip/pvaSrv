@@ -32,17 +32,17 @@ using namespace epics::pvaSrv;
 using std::tr1::static_pointer_cast;
 
 
-static String requesterName("configureMultiValue");
+static String requesterName("dbGroupCreate");
 
-class MultiChannelConfig;
-typedef std::tr1::shared_ptr<MultiChannelConfig> MultiChannelConfigPtr;
+class DbGroupConfig;
+typedef std::tr1::shared_ptr<DbGroupConfig> DbGroupConfigPtr;
 
-class MultiChannelConfig : public Requester 
+class DbGroupConfig : public Requester
 {
 public:
-    POINTER_DEFINITIONS(MultiChannelConfig);
-    std::vector<MultiValueChannelProviderPtr> providerArray;
-    virtual ~MultiChannelConfig() {}
+    POINTER_DEFINITIONS(DbGroupConfig);
+    std::vector<DbGroupProviderPtr> providerArray;
+    virtual ~DbGroupConfig() {}
     virtual String getRequesterName() {return requesterName;}
     virtual void message(String const & message,MessageType messageType)
     {
@@ -50,7 +50,7 @@ public:
     }
 };
 
-static MultiChannelConfigPtr multiChannelConfig(new MultiChannelConfig());     
+static DbGroupConfigPtr dbGroupConfig(new DbGroupConfig());
 
 static const iocshArg dbGroupCreateArg0 = {"configFileName", iocshArgString};
 static const iocshArg *dbGroupCreateArgs[] = {&dbGroupCreateArg0};
@@ -148,19 +148,19 @@ extern "C" void dbGroupCreate(const iocshArgBuf *args)
     ChannelProvider::shared_pointer channelProvider =
         channelAccess->getProvider(valueProvider);
     if(channelProvider.get()==NULL) {
-        printf("channelProvider dbPv not found\n");
+        printf("channelProvider %s not found\n", valueProvider.c_str());
         return;
     }
-    MultiValueChannelProviderPtr provider(
-        new MultiValueChannelProvider(
-             multiChannelConfig,
+    DbGroupProviderPtr provider(
+        new DbGroupProvider(
+             dbGroupConfig,
              channelProvider,
              channelName,
              fieldNames,
              valueChannelNames));
-    size_t oldSize = multiChannelConfig->providerArray.size();
-    multiChannelConfig->providerArray.reserve(oldSize+1);
-    multiChannelConfig->providerArray.push_back(provider);
+    size_t oldSize = dbGroupConfig->providerArray.size();
+    dbGroupConfig->providerArray.reserve(oldSize+1);
+    dbGroupConfig->providerArray.push_back(provider);
     channelProvider = channelAccess->getProvider("local");
     if(channelProvider.get()==NULL) {
         printf("channelProvider local not found\n");

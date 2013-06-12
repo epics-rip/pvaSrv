@@ -29,18 +29,19 @@ static PVDataCreatePtr pvDataCreate = getPVDataCreate();
 static StandardPVFieldPtr standardPVField = getStandardPVField();
 static ConvertPtr convert = getConvert();
 
-MultiValueChannelGet::MultiValueChannelGet(
-    MultiValueChannelPtr const & channel,
+DbGroupGet::DbGroupGet(
+    DbGroupPtr const & channel,
     ChannelGetRequester::shared_pointer const &channelGetRequester)
-: multiValueChannel(channel),
+: dbGroup(channel),
   channelGetRequester(channelGetRequester)
-  {}
+{}
 
-MultiValueChannelGet::~MultiValueChannelGet() {}
+DbGroupGet::~DbGroupGet()
+{}
 
-bool MultiValueChannelGet::init(PVStructure::shared_pointer const & pvRequest)
+bool DbGroupGet::init(PVStructure::shared_pointer const & pvRequest)
 {
-    pvTop = pvDataCreate->createPVStructure(multiValueChannel->structure);
+    pvTop = pvDataCreate->createPVStructure(dbGroup->structure);
     size_t n = pvTop->getStructure()->getNumberFields();
     bitSet.reset(new BitSet(n));
     channelGetRequester->channelGetConnect(
@@ -51,26 +52,26 @@ bool MultiValueChannelGet::init(PVStructure::shared_pointer const & pvRequest)
     return true;
 }
 
-String MultiValueChannelGet::getRequesterName()
+String DbGroupGet::getRequesterName()
 {
    return channelGetRequester->getRequesterName();
 }
 
-void MultiValueChannelGet::message(String const &message,MessageType messageType)
+void DbGroupGet::message(String const &message,MessageType messageType)
 {
     channelGetRequester->message(message,messageType);
 }
 
-void MultiValueChannelGet::destroy()
+void DbGroupGet::destroy()
 {
-    multiValueChannel->removeChannelGet(getPtrSelf());
+    dbGroup->removeChannelGet(getPtrSelf());
 }
 
-void MultiValueChannelGet::get(bool lastRequest)
+void DbGroupGet::get(bool lastRequest)
 {
     Alarm maxAlarm;
-    ValueChannelPtrArray *valueChannels =
-         multiValueChannel->arrayValueChannel.get();
+    pvValuePtrArray *valueChannels =
+         dbGroup->arrayPvValue.get();
     const PVFieldPtrArray & pvFields = pvTop->getPVFields();
     size_t n = pvFields.size();
     for(size_t i=0; i<n-2; i++) {
@@ -95,11 +96,11 @@ void MultiValueChannelGet::get(bool lastRequest)
     channelGetRequester->getDone(Status::Ok);
 }
 
-void MultiValueChannelGet::lock()
+void DbGroupGet::lock()
 {
 }
 
-void MultiValueChannelGet::unlock()
+void DbGroupGet::unlock()
 {
 }
 

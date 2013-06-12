@@ -7,7 +7,7 @@
  * @author mrk
  */
 /* Marty Kraimer 2011.03 */
-/* This connects to a V3 record and presents the data as a PVStructure
+/* This connects to a DB record and presents the data as a PVStructure
  * It provides access to  value, alarm, display, and control.
  */
 
@@ -30,12 +30,12 @@ namespace epics { namespace pvaSrv {
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
-V3ChannelGet::V3ChannelGet(
-    ChannelBase::shared_pointer const &v3Channel,
+DbPvGet::DbPvGet(
+    ChannelBase::shared_pointer const &dbPv,
     ChannelGetRequester::shared_pointer const &channelGetRequester,
     DbAddr &dbAddr)
-: v3Util(V3Util::getV3Util()),
-  v3Channel(v3Channel),
+: dbUtil(DbUtil::getDbUtil()),
+  dbPv(dbPv),
   channelGetRequester(channelGetRequester),
   dbAddr(dbAddr),
   process(false),
@@ -43,30 +43,30 @@ V3ChannelGet::V3ChannelGet(
   propertyMask(0),
   beingDestroyed(false)
 {
-    if(V3ChannelDebug::getLevel()>0)printf("V3ChannelGet::V3ChannelGet\n");
+    if(DbPvDebug::getLevel()>0)printf("dbPvGet::dbPvGet\n");
 }
 
-V3ChannelGet::~V3ChannelGet()
+DbPvGet::~DbPvGet()
 {
-    if(V3ChannelDebug::getLevel()>0)printf("V3ChannelGet::~V3ChannelGet\n");
+    if(DbPvDebug::getLevel()>0)printf("dbPvGet::~dbPvGet\n");
 }
 
-bool V3ChannelGet::init(PVStructure::shared_pointer const &pvRequest)
+bool DbPvGet::init(PVStructure::shared_pointer const &pvRequest)
 {
-    propertyMask = v3Util->getProperties(
+    propertyMask = dbUtil->getProperties(
         channelGetRequester,
         pvRequest,
         dbAddr,
         false);
-    if(propertyMask==v3Util->noAccessBit) return false;
+    if(propertyMask==dbUtil->noAccessBit) return false;
     pvStructure =  PVStructure::shared_pointer(
-        v3Util->createPVStructure(
+        dbUtil->createPVStructure(
              channelGetRequester, propertyMask, dbAddr));
     if(pvStructure.get()==0) return false;
-    v3Util->getPropertyData(channelGetRequester,propertyMask,dbAddr,pvStructure);
+    dbUtil->getPropertyData(channelGetRequester,propertyMask,dbAddr,pvStructure);
     int numFields = pvStructure->getNumberFields();
     bitSet.reset(new BitSet(numFields));
-    if((propertyMask&v3Util->processBit)!=0) {
+    if((propertyMask&dbUtil->processBit)!=0) {
        process = true;
        pNotify.reset(new (struct putNotify)());
        notifyAddr.reset(new DbAddr());
@@ -94,27 +94,27 @@ bool V3ChannelGet::init(PVStructure::shared_pointer const &pvRequest)
     return true;
 }
 
-String V3ChannelGet::getRequesterName() {
+String DbPvGet::getRequesterName() {
     return channelGetRequester->getRequesterName();
 }
 
-void V3ChannelGet::message(String const &message,MessageType messageType)
+void DbPvGet::message(String const &message,MessageType messageType)
 {
     channelGetRequester->message(message,messageType);
 }
 
-void V3ChannelGet::destroy() {
-    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelGet::destroy beingDestroyed %s\n",
+void DbPvGet::destroy() {
+    if(DbPvDebug::getLevel()>0) printf("dbPvGet::destroy beingDestroyed %s\n",
          (beingDestroyed ? "true" : "false"));
     {
         Lock xx(mutex);
         if(beingDestroyed) return;
         beingDestroyed = true;
     }
-    v3Channel->removeChannelGet(getPtrSelf());
+    dbPv->removeChannelGet(getPtrSelf());
 }
 
-void V3ChannelGet::get(bool lastRequest)
+void DbPvGet::get(bool lastRequest)
 {
     if(process) {
         epicsUInt8 value = 1;
@@ -127,7 +127,7 @@ void V3ChannelGet::get(bool lastRequest)
 
     bitSet->clear();
     dbScanLock(dbAddr.precord);
-    Status status = v3Util->get(
+    Status status = dbUtil->get(
         channelGetRequester,
         propertyMask,dbAddr,
         pvStructure,
@@ -145,18 +145,18 @@ void V3ChannelGet::get(bool lastRequest)
     if(lastRequest) destroy();
 }
 
-void V3ChannelGet::notifyCallback(struct putNotify *pn)
+void DbPvGet::notifyCallback(struct putNotify *pn)
 {
-    V3ChannelGet * cget = static_cast<V3ChannelGet *>(pn->usrPvt);
+    DbPvGet * cget = static_cast<DbPvGet *>(pn->usrPvt);
     cget->event.signal();
 }
 
-void V3ChannelGet::lock()
+void DbPvGet::lock()
 {
     dataMutex.lock();
 }
 
-void V3ChannelGet::unlock()
+void DbPvGet::unlock()
 {
     dataMutex.unlock();
 }

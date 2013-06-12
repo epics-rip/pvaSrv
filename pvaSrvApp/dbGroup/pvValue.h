@@ -18,23 +18,23 @@
 
 namespace epics { namespace pvaSrv { 
 
-class ValueChannel;
-typedef std::tr1::shared_ptr<ValueChannel> ValueChannelPtr;
-typedef std::vector<ValueChannelPtr> ValueChannelPtrArray;
-typedef std::tr1::shared_ptr<ValueChannelPtrArray> ValueChannelPtrArrayPtr;
+class PvValue;
+typedef std::tr1::shared_ptr<PvValue> ValueChannelPtr;
+typedef std::vector<ValueChannelPtr> pvValuePtrArray;
+typedef std::tr1::shared_ptr<pvValuePtrArray> pvValuePtrArrayPtr;
 
-class ValueChannel :
+class PvValue :
     public epics::pvAccess::ChannelRequester,
     public epics::pvAccess::ChannelGetRequester,
-    public std::tr1::enable_shared_from_this<ValueChannel>
+    public std::tr1::enable_shared_from_this<PvValue>
 {
 public:
-    POINTER_DEFINITIONS(ValueChannel);
-    ValueChannel(
+    POINTER_DEFINITIONS(PvValue);
+    PvValue(
          epics::pvData::RequesterPtr const &requester,
          epics::pvAccess::ChannelProvider::shared_pointer const &channelProvider,
          epics::pvData::String const &channelName);
-    virtual ~ValueChannel();
+    virtual ~PvValue();
     void connect();
     virtual void destroy();
     epics::pvData::Status waitConnect();

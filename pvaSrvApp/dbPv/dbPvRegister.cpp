@@ -36,54 +36,54 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 using namespace epics::pvaSrv;
 
-class V3ChannelCTX;
-typedef std::tr1::shared_ptr<V3ChannelCTX> V3ChannelCTXPtr;
+class DbPvCTX;
+typedef std::tr1::shared_ptr<DbPvCTX> DbPvCTXPtr;
 
-class V3ChannelCTX :
+class DbPvCTX :
     public Runnable,
-    public std::tr1::enable_shared_from_this<V3ChannelCTX>
+    public std::tr1::enable_shared_from_this<DbPvCTX>
 {
 public:
-    POINTER_DEFINITIONS(V3ChannelCTX);
-    static V3ChannelCTXPtr getV3ChannelCTX();
-    V3ChannelProviderPtr getV3ChannelProvider() {return v3ChannelProvider;}
+    POINTER_DEFINITIONS(DbPvCTX);
+    static DbPvCTXPtr getDbPvCTX();
+    DbPvProviderPtr getDbPvProvider() {return dbPvProvider;}
     ChannelBaseProviderFactory::shared_pointer getChannelProviderFactory() {return factory;}
-    virtual ~V3ChannelCTX();
+    virtual ~DbPvCTX();
     virtual void run();
 private:
-    V3ChannelCTX();
+    DbPvCTX();
     shared_pointer getPtrSelf()
     {
         return shared_from_this();
     }
-    V3ChannelProviderPtr v3ChannelProvider;
+    DbPvProviderPtr dbPvProvider;
     ChannelBaseProviderFactory::shared_pointer factory;
     Event event;
     ServerContextImpl::shared_pointer ctx;
     Thread *thread;
 };
 
-V3ChannelCTXPtr V3ChannelCTX::getV3ChannelCTX()
+DbPvCTXPtr DbPvCTX::getDbPvCTX()
 {
-    static V3ChannelCTXPtr pvV3ChannelCTX;
+    static DbPvCTXPtr dbPvCTX;
     static Mutex mutex;
     Lock xx(mutex);
 
-   if(pvV3ChannelCTX.get()==0) {
-      pvV3ChannelCTX = V3ChannelCTXPtr(new V3ChannelCTX());
+   if(dbPvCTX.get()==0) {
+      dbPvCTX = DbPvCTXPtr(new DbPvCTX());
    }
-   return pvV3ChannelCTX;
+   return dbPvCTX;
 }
 
-V3ChannelCTX::V3ChannelCTX()
-: v3ChannelProvider(V3ChannelProvider::getV3ChannelProvider()),
-  factory(new ChannelBaseProviderFactory(v3ChannelProvider)),
+DbPvCTX::DbPvCTX()
+: dbPvProvider(DbPvProvider::getDbPvProvider()),
+  factory(new ChannelBaseProviderFactory(dbPvProvider)),
   event(),
   ctx(ServerContextImpl::create()),
-  thread(new Thread(String("v3ChannelServer"),lowerPriority,this,epicsThreadStackBig))
+  thread(new Thread(String("dbPvServer"),lowerPriority,this,epicsThreadStackBig))
 {}
 
-V3ChannelCTX::~V3ChannelCTX()
+DbPvCTX::~DbPvCTX()
 {
     ctx->shutdown();
     // we need thead.waitForCompletion()
@@ -92,10 +92,10 @@ V3ChannelCTX::~V3ChannelCTX()
     delete thread;
 }
 
-void V3ChannelCTX::run()
+void DbPvCTX::run()
 {
     factory->registerSelf();
-    String providerName = v3ChannelProvider->getProviderName();
+    String providerName = dbPvProvider->getProviderName();
     ctx->setChannelProviderName(providerName);
     ctx->initialize(getChannelAccess());
     ctx->printInfo();
@@ -104,66 +104,49 @@ void V3ChannelCTX::run()
     event.signal();
 }
 
-static const iocshArg setV3ChannelDebugLevelArg0 = { "level",iocshArgInt};
-static const iocshArg *setV3ChannelDebugLevelArgs[] =
-     {&setV3ChannelDebugLevelArg0};
-static const iocshFuncDef setV3ChannelDebugLevelFuncDef = {
-    "pvaSrvSetDebugLevel", 1, setV3ChannelDebugLevelArgs };
-extern "C" void setV3ChannelDebugLevel(const iocshArgBuf *args)
+static const iocshArg setDbPvDebugLevelArg0 = { "level", iocshArgInt };
+static const iocshArg *setDbPvDebugLevelArgs[] =
+     {&setDbPvDebugLevelArg0};
+static const iocshFuncDef setDbPvDebugLevelFuncDef = {
+    "pvaSrvSetDebugLevel", 1, setDbPvDebugLevelArgs };
+
+extern "C" void setDbPvDebugLevel(const iocshArgBuf *args)
 {
     int level = args[0].ival;
-    V3ChannelDebug::setLevel(level);
+    DbPvDebug::setLevel(level);
     printf("new level %d\n",level);
 }
 
-static const iocshFuncDef startV3ChannelFuncDef = {
+static const iocshFuncDef pvaSrvStartFuncDef = {
     "pvaSrvStart", 0, 0
 };
 
-extern "C" void startV3Channel(const iocshArgBuf *args)
+extern "C" void pvaSrvStart(const iocshArgBuf *args)
 {
-    V3ChannelCTXPtr v3ChannelCTX = V3ChannelCTX::getV3ChannelCTX();
+    DbPvCTXPtr dbPvCTX = DbPvCTX::getDbPvCTX();
     epicsThreadSleep(.1);
-    v3ChannelCTX->getChannelProviderFactory()->registerSelf();
+    dbPvCTX->getChannelProviderFactory()->registerSelf();
 }
 
-static const iocshFuncDef stopV3ChannelFuncDef = {
+static const iocshFuncDef pvaSrvStopFuncDef = {
     "pvaSrvStop", 0, 0
 };
 
-extern "C" void stopV3Channel(const iocshArgBuf *args)
+extern "C" void pvaSrvStop(const iocshArgBuf *args)
 {
-    V3ChannelCTXPtr v3ChannelCTX = V3ChannelCTX::getV3ChannelCTX();
-    v3ChannelCTX->getChannelProviderFactory()->unregisterSelf();
+    DbPvCTXPtr dbPvCTX = DbPvCTX::getDbPvCTX();
+    dbPvCTX->getChannelProviderFactory()->unregisterSelf();
 }
 
-static void setV3ChannelDebugLevelRegister(void)
-{
-    static int firstTime = 1;
-    if (firstTime) {
-        firstTime = 0;
-        iocshRegister(&setV3ChannelDebugLevelFuncDef, setV3ChannelDebugLevel);
-    }
-}
-
-static void startV3ChannelRegister(void)
+static void dbPvRegister(void)
 {
     static int firstTime = 1;
     if (firstTime) {
         firstTime = 0;
-        iocshRegister(&startV3ChannelFuncDef, startV3Channel);
+        iocshRegister(&setDbPvDebugLevelFuncDef, setDbPvDebugLevel);
+        iocshRegister(&pvaSrvStartFuncDef, pvaSrvStart);
+        iocshRegister(&pvaSrvStopFuncDef, pvaSrvStop);
     }
 }
 
-static void stopV3ChannelRegister(void)
-{
-    static int firstTime = 1;
-    if (firstTime) {
-        firstTime = 0;
-        iocshRegister(&stopV3ChannelFuncDef, stopV3Channel);
-    }
-}
-
-epicsExportRegistrar(setV3ChannelDebugLevelRegister);
-epicsExportRegistrar(startV3ChannelRegister);
-epicsExportRegistrar(stopV3ChannelRegister);
+epicsExportRegistrar(dbPvRegister);

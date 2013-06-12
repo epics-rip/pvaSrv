@@ -39,14 +39,14 @@ typedef long (*get_control_double) (DBADDR *, struct dbr_ctrlDouble  *);
 typedef long (*get_alarm_double) (DBADDR *, struct dbr_alDouble  *);
 }
 
-class V3Util;
-typedef std::tr1::shared_ptr<V3Util> V3UtilPtr;
+class DbUtil;
+typedef std::tr1::shared_ptr<DbUtil> DbUtilPtr;
 
-class V3Util {
+class DbUtil {
 public:
-    POINTER_DEFINITIONS(V3Util);
-    virtual ~V3Util() {}
-    static V3UtilPtr getV3Util();
+    POINTER_DEFINITIONS(DbUtil);
+    virtual ~DbUtil() {}
+    static DbUtilPtr getDbUtil();
     // client request bits
     int processBit;       // is processing requested
     int shareArrayBit;    // share V3array instead of copy
@@ -55,7 +55,7 @@ public:
     int displayBit;       // get display info
     int controlBit;       // get control info
     int valueAlarmBit;    // get value alarm info
-    // V3 data characteristics
+    // DB data characteristics
     int getValueBit;      // client requested value
     int scalarValueBit;   // value is a scalar
     int arrayValueBit;    // value is an array
@@ -83,7 +83,7 @@ public:
         int mask,DbAddr &dbAddr,
         epics::pvData::PVStructurePtr const &pvStructure,
         epics::pvData::BitSet::shared_pointer const &bitSet,
-        CAV3Data *caV3Data);
+        CaData *caV3Data);
     epics::pvData::Status put(
         epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr,
@@ -96,7 +96,7 @@ public:
         epics::pvData::Requester::shared_pointer const &requester,
         DbAddr &dbAddr);
 private:
-    V3Util();
+    DbUtil();
     epics::pvData::PVStructurePtr  nullPVStructure;
     epics::pvData::String recordString;
     epics::pvData::String processString;

@@ -7,7 +7,7 @@
  * @author mrk
  */
 /* Marty Kraimer 2011.03 */
-/* This connects to a V3 record and presents the data as a PVStructure
+/* This connects to a DB record and presents the data as a PVStructure
  * It provides access to  value, alarm, display, and control.
  */
 
@@ -38,12 +38,12 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 using std::tr1::static_pointer_cast;
 
-V3ChannelMultiGet::V3ChannelMultiGet(
-    ChannelBase::shared_pointer const &v3Channel,
+DbPvMultiGet::DbPvMultiGet(
+    ChannelBase::shared_pointer const &dbPv,
     ChannelGetRequester::shared_pointer const &channelGetRequester,
     DbAddr &dbAddr)
-: v3Util(V3Util::getV3Util()),
-  v3Channel(v3Channel),
+: dbUtil(DbUtil::getDbUtil()),
+  dbPv(dbPv),
   channelGetRequester(channelGetRequester),
   dbAddr(dbAddr),
   propertyMask(0),
@@ -51,40 +51,40 @@ V3ChannelMultiGet::V3ChannelMultiGet(
   firstTime(true),
   beingDestroyed(false)
 {
-    if(V3ChannelDebug::getLevel()>0)
-        printf("V3ChannelMultiGet::V3ChannelMultiGet()\n");
+    if(DbPvDebug::getLevel()>0)
+        printf("dbPvMultiGet::dbPvMultiGet()\n");
 }
 
-V3ChannelMultiGet::~V3ChannelMultiGet()
+DbPvMultiGet::~DbPvMultiGet()
 {
-    if(V3ChannelDebug::getLevel()>0)
-        printf("V3ChannelMultiGet::~V3ChannelMultiGet()\n");
+    if(DbPvDebug::getLevel()>0)
+        printf("dbPvMultiGet::~dbPvMultiGet()\n");
 }
 
 
-bool V3ChannelMultiGet::init(PVStructurePtr const &pvRequest)
+bool DbPvMultiGet::init(PVStructurePtr const &pvRequest)
 {
-    if(V3ChannelDebug::getLevel()>0)
-        printf("V3ChannelMultiGet::init()\n");
-    propertyMask = v3Util->getProperties(
+    if(DbPvDebug::getLevel()>0)
+        printf("dbPvMultiGet::init()\n");
+    propertyMask = dbUtil->getProperties(
         channelGetRequester,
         pvRequest,
         dbAddr,
         true);
-    if(propertyMask==v3Util->noAccessBit) return false;
-    if(propertyMask==v3Util->noModBit) {
+    if(propertyMask==dbUtil->noAccessBit) return false;
+    if(propertyMask==dbUtil->noModBit) {
         channelGetRequester->message(
              String("field not allowed to be changed"),errorMessage);
         return 0;
     }
-    String channelName(v3Channel->getChannelName());
+    String channelName(dbPv->getChannelName());
     if(channelName.find('.') != String::npos) {
         String message(channelName);
         message += " field of a record not allowed";
         channelGetRequester->message(message,errorMessage);
         return 0;
     }
-    if((propertyMask&v3Util->processBit)!=0) process = true;
+    if((propertyMask&dbUtil->processBit)!=0) process = true;
     PVStructurePtr pvPutField = pvRequest->getStructureField("getField");
     StringArray const & extraNames = pvPutField->getStructure()->getFieldNames();
     size_t n = extraNames.size() + 1;
@@ -100,7 +100,7 @@ bool V3ChannelMultiGet::init(PVStructurePtr const &pvRequest)
             return 0;
         }
         if(dbNameToAddr(extraNames[i-1].c_str(),&dbAddrArray[i])!=0) {
-            if(V3ChannelDebug::getLevel()>0) {
+            if(DbPvDebug::getLevel()>0) {
                 printf("dbNameToAddr failed for %s\n",extraNames[i-1].c_str());
             }
             String message("record not found ");
@@ -109,7 +109,7 @@ bool V3ChannelMultiGet::init(PVStructurePtr const &pvRequest)
             return 0;
         }
         if(dbAddrArray[i].field_type!=fieldType) {
-            if(V3ChannelDebug::getLevel()>0) {
+            if(DbPvDebug::getLevel()>0) {
                 printf("scalarType not the same failed %s\n",extraNames[i-1].c_str());
             }
             String message("scalarType not the same for ");
@@ -154,35 +154,35 @@ bool V3ChannelMultiGet::init(PVStructurePtr const &pvRequest)
        getPtrSelf(),
        pvStructure,
        bitSet);
-    if(V3ChannelDebug::getLevel()>0)
-        printf("V3ChannelMultiGet::init() returning true\n");
+    if(DbPvDebug::getLevel()>0)
+        printf("dbPvMultiGet::init() returning true\n");
     return true;
 }
 
-String V3ChannelMultiGet::getRequesterName() {
+String DbPvMultiGet::getRequesterName() {
     return channelGetRequester->getRequesterName();
 }
 
-void V3ChannelMultiGet::message(String const &message,MessageType messageType)
+void DbPvMultiGet::message(String const &message,MessageType messageType)
 {
     channelGetRequester->message(message,messageType);
 }
 
-void V3ChannelMultiGet::destroy() {
-    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelMultiGet::destroy beingDestroyed %s\n",
+void DbPvMultiGet::destroy() {
+    if(DbPvDebug::getLevel()>0) printf("dbPvMultiGet::destroy beingDestroyed %s\n",
          (beingDestroyed ? "true" : "false"));
     {
         Lock xx(mutex);
         if(beingDestroyed) return;
         beingDestroyed = true;
     }
-    v3Channel->removeChannelGet(getPtrSelf());
+    dbPv->removeChannelGet(getPtrSelf());
 }
 
-void V3ChannelMultiGet::get(bool lastRequest)
+void DbPvMultiGet::get(bool lastRequest)
 {
-    if(V3ChannelDebug::getLevel()>0)
-        printf("V3ChannelMultiGet::get()\n");
+    if(DbPvDebug::getLevel()>0)
+        printf("dbPvMultiGet::get()\n");
     Lock lock(dataMutex);
     bool isSameLockSet = true;
     size_t n = dbAddrArray.size();
@@ -278,12 +278,12 @@ void V3ChannelMultiGet::get(bool lastRequest)
     if(lastRequest) destroy();
 }
 
-void V3ChannelMultiGet::lock()
+void DbPvMultiGet::lock()
 {
     dataMutex.lock();
 }
 
-void V3ChannelMultiGet::unlock()
+void DbPvMultiGet::unlock()
 {
     dataMutex.unlock();
 }

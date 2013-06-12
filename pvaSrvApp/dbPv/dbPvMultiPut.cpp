@@ -7,7 +7,7 @@
  * @author mrk
  */
 /* Marty Kraimer 2011.03 */
-/* This connects to a V3 record and presents the data as a PVStructure
+/* This connects to a DB record and presents the data as a PVStructure
  * It provides access to  value, alarm, display, and control.
  */
 
@@ -38,12 +38,12 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 using std::tr1::static_pointer_cast;
 
-V3ChannelMultiPut::V3ChannelMultiPut(
-    ChannelBase::shared_pointer const &v3Channel,
+DbPvMultiPut::DbPvMultiPut(
+    ChannelBase::shared_pointer const &dbPv,
     ChannelPutRequester::shared_pointer const &channelPutRequester,
     DbAddr &dbAddr)
-: v3Util(V3Util::getV3Util()),
-  v3Channel(v3Channel),
+: dbUtil(DbUtil::getDbUtil()),
+  dbPv(dbPv),
   channelPutRequester(channelPutRequester),
   dbAddr(dbAddr),
   propertyMask(0),
@@ -51,39 +51,39 @@ V3ChannelMultiPut::V3ChannelMultiPut(
   firstTime(true),
   beingDestroyed(false)
 {
-    if(V3ChannelDebug::getLevel()>0)
-        printf("V3ChannelMultiPut::V3ChannelMultiPut()\n");
+    if(DbPvDebug::getLevel()>0)
+        printf("dbPvMultiPut::dbPvMultiPut()\n");
 }
 
-V3ChannelMultiPut::~V3ChannelMultiPut()
+DbPvMultiPut::~DbPvMultiPut()
 {
-    if(V3ChannelDebug::getLevel()>0)
-        printf("V3ChannelMultiPut::~V3ChannelMultiPut()\n");
+    if(DbPvDebug::getLevel()>0)
+        printf("dbPvMultiPut::~dbPvMultiPut()\n");
 }
 
-bool V3ChannelMultiPut::init(PVStructurePtr const &pvRequest)
+bool DbPvMultiPut::init(PVStructurePtr const &pvRequest)
 {
-    if(V3ChannelDebug::getLevel()>0)
-        printf("V3ChannelMultiPut::init()\n");
-    propertyMask = v3Util->getProperties(
+    if(DbPvDebug::getLevel()>0)
+        printf("dbPvMultiPut::init()\n");
+    propertyMask = dbUtil->getProperties(
         channelPutRequester,
         pvRequest,
         dbAddr,
         true);
-    if(propertyMask==v3Util->noAccessBit) return false;
-    if(propertyMask==v3Util->noModBit) {
+    if(propertyMask==dbUtil->noAccessBit) return false;
+    if(propertyMask==dbUtil->noModBit) {
         channelPutRequester->message(
              String("field not allowed to be changed"),errorMessage);
         return 0;
     }
-    String channelName(v3Channel->getChannelName());
+    String channelName(dbPv->getChannelName());
     if(channelName.find('.') != String::npos) {
         String message(channelName);
         message += " field of a record not allowed";
         channelPutRequester->message(message,errorMessage);
         return 0;
     }
-    if((propertyMask&v3Util->processBit)!=0) process = true;
+    if((propertyMask&dbUtil->processBit)!=0) process = true;
     PVStructurePtr pvPutField = pvRequest->getStructureField("putField");
     StringArray const & extraNames = pvPutField->getStructure()->getFieldNames();
     size_t n = extraNames.size() + 1;
@@ -99,7 +99,7 @@ bool V3ChannelMultiPut::init(PVStructurePtr const &pvRequest)
             return 0;
         }
         if(dbNameToAddr(extraNames[i-1].c_str(),&dbAddrArray[i])!=0) {
-            if(V3ChannelDebug::getLevel()>0) {
+            if(DbPvDebug::getLevel()>0) {
                 printf("dbNameToAddr failed for %s\n",extraNames[i-1].c_str());
             }
             String message("record not found ");
@@ -108,7 +108,7 @@ bool V3ChannelMultiPut::init(PVStructurePtr const &pvRequest)
             return 0;
         }
         if(dbAddrArray[i].field_type!=fieldType) {
-            if(V3ChannelDebug::getLevel()>0) {
+            if(DbPvDebug::getLevel()>0) {
                 printf("scalarType not the same failed %s\n",extraNames[i-1].c_str());
             }
             String message("scalarType not the same for ");
@@ -153,35 +153,35 @@ bool V3ChannelMultiPut::init(PVStructurePtr const &pvRequest)
        getPtrSelf(),
        pvStructure,
        bitSet);
-    if(V3ChannelDebug::getLevel()>0)
-        printf("V3ChannelMultiPut::init() returning true\n");
+    if(DbPvDebug::getLevel()>0)
+        printf("dbPvMultiPut::init() returning true\n");
     return true;
 }
 
-String V3ChannelMultiPut::getRequesterName() {
+String DbPvMultiPut::getRequesterName() {
     return channelPutRequester->getRequesterName();
 }
 
-void V3ChannelMultiPut::message(String const &message,MessageType messageType)
+void DbPvMultiPut::message(String const &message,MessageType messageType)
 {
     channelPutRequester->message(message,messageType);
 }
 
-void V3ChannelMultiPut::destroy() {
-    if(V3ChannelDebug::getLevel()>0) printf("V3ChannelMultiPut::destroy beingDestroyed %s\n",
+void DbPvMultiPut::destroy() {
+    if(DbPvDebug::getLevel()>0) printf("dbPvMultiPut::destroy beingDestroyed %s\n",
          (beingDestroyed ? "true" : "false"));
     {
         Lock xx(mutex);
         if(beingDestroyed) return;
         beingDestroyed = true;
     }
-    v3Channel->removeChannelPut(getPtrSelf());
+    dbPv->removeChannelPut(getPtrSelf());
 }
 
-void V3ChannelMultiPut::put(bool lastRequest)
+void DbPvMultiPut::put(bool lastRequest)
 {
-    if(V3ChannelDebug::getLevel()>0)
-        printf("V3ChannelMultiPut::put()\n");
+    if(DbPvDebug::getLevel()>0)
+        printf("dbPvMultiPut::put()\n");
     Lock lock(dataMutex);
     bool isSameLockSet = true;
     size_t n = dbAddrArray.size();
@@ -275,10 +275,10 @@ void V3ChannelMultiPut::put(bool lastRequest)
     if(lastRequest) destroy();
 }
 
-void V3ChannelMultiPut::get()
+void DbPvMultiPut::get()
 {
-    if(V3ChannelDebug::getLevel()>0)
-        printf("V3ChannelMultiPut::get()\n");
+    if(DbPvDebug::getLevel()>0)
+        printf("dbPvMultiPut::get()\n");
     Lock lock(dataMutex);
     bool isSameLockSet = true;
     size_t n = dbAddrArray.size();
@@ -367,12 +367,12 @@ void V3ChannelMultiPut::get()
     channelPutRequester->getDone(Status::Ok);
 }
 
-void V3ChannelMultiPut::lock()
+void DbPvMultiPut::lock()
 {
     dataMutex.lock();
 }
 
-void V3ChannelMultiPut::unlock()
+void DbPvMultiPut::unlock()
 {
     dataMutex.unlock();
 }

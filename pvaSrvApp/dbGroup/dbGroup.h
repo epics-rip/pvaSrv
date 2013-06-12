@@ -20,22 +20,22 @@
 
 namespace epics { namespace pvaSrv { 
 
-class MultiValueChannel;
-class MultiValueChannelProvider;
-class MultiValueChannelGet;
-typedef std::tr1::shared_ptr<MultiValueChannel> MultiValueChannelPtr;
-typedef std::tr1::shared_ptr<MultiValueChannelProvider> MultiValueChannelProviderPtr;
-typedef std::tr1::shared_ptr<MultiValueChannelGet> MultiValueChannelGetPtr;
+class DbGroup;
+class DbGroupProvider;
+class DbGroupGet;
+typedef std::tr1::shared_ptr<DbGroup> DbGroupPtr;
+typedef std::tr1::shared_ptr<DbGroupProvider> DbGroupProviderPtr;
+typedef std::tr1::shared_ptr<DbGroupGet> DbGroupGetPtr;
 
-class MultiValueChannel :
+class DbGroup :
     public epics::pvAccess::ChannelBase
 {
 public:
-    POINTER_DEFINITIONS(MultiValueChannel);
-    MultiValueChannel(MultiValueChannelProviderPtr const & channelProvider,
+    POINTER_DEFINITIONS(DbGroup);
+    DbGroup(DbGroupProviderPtr const & provider,
         epics::pvAccess::ChannelRequester::shared_pointer const & requester);
     bool create();
-    virtual ~MultiValueChannel() {}
+    virtual ~DbGroup() {}
     virtual void destroy();
     virtual void getField(
         epics::pvAccess::GetFieldRequester::shared_pointer const &requester,
@@ -44,25 +44,25 @@ public:
         epics::pvAccess::ChannelGetRequester::shared_pointer const &channelGetRequester,
         epics::pvData::PVStructure::shared_pointer const &pvRequest);
 private:
-    MultiValueChannelProviderPtr multiValueProvider;
+    DbGroupProviderPtr provider;
     epics::pvAccess::ChannelRequester::shared_pointer const & requester;
-    ValueChannelPtrArrayPtr arrayValueChannel;
+    pvValuePtrArrayPtr arrayPvValue;
     epics::pvData::StructureConstPtr structure;
     epics::pvData::Mutex mutex;
     epics::pvData::Event event;
-    friend class MultiValueChannelGet;
+    friend class DbGroupGet;
 };
 
-class MultiValueChannelGet :
+class DbGroupGet :
   public virtual epics::pvAccess::ChannelGet,
-  public std::tr1::enable_shared_from_this<MultiValueChannelGet>
+  public std::tr1::enable_shared_from_this<DbGroupGet>
 {
 public:
-    POINTER_DEFINITIONS(MultiValueChannelGet);
-    MultiValueChannelGet(
-        MultiValueChannelPtr const & channel,
+    POINTER_DEFINITIONS(DbGroupGet);
+    DbGroupGet(
+        DbGroupPtr const & channel,
         epics::pvAccess::ChannelGetRequester::shared_pointer const &channelGetRequester);
-    virtual ~MultiValueChannelGet();
+    virtual ~DbGroupGet();
     bool init(epics::pvData::PVStructure::shared_pointer const & pvRequest);
     virtual epics::pvData::String getRequesterName();
     virtual void message(
@@ -77,9 +77,9 @@ private:
     {
         return shared_from_this();
     }
-    MultiValueChannelPtr multiValueChannel;
+    DbGroupPtr dbGroup;
     epics::pvAccess::ChannelGetRequester::shared_pointer  channelGetRequester;
-    ValueChannelPtrArrayPtr arrayValueChannel;
+    pvValuePtrArrayPtr arrayPvValue;
     epics::pvData::PVStructurePtr pvTop;
     epics::pvData::BitSetPtr bitSet;
     epics::pvData::Alarm alarm;
@@ -89,26 +89,26 @@ private:
 };
 
 
-class MultiValueChannelProvider :
+class DbGroupProvider :
    public epics::pvAccess::ChannelBaseProvider
 {
 public:
-    POINTER_DEFINITIONS(MultiValueChannelProvider);
+    POINTER_DEFINITIONS(DbGroupProvider);
     /**
      * Create a PVStructure and add to channelProviderLocal.
      * @param requester The requester.
-     * @param valueChannelProvider Provider for value channels.
+     * @param pvValueProvider Provider for value PVs.
      * @param channelName The channelName.
      * @param fieldNames An array of fieldNames for the top level PVStructure.
-     * @param valueChannelNames An array of V3 record names.
+     * @param pvValueNames An array of DB record names.
      */
-    MultiValueChannelProvider(
+    DbGroupProvider(
          epics::pvData::RequesterPtr const & requester,
-         epics::pvAccess::ChannelProvider::shared_pointer const &valueChannelProvider,
+         epics::pvAccess::ChannelProvider::shared_pointer const &pvValueProvider,
          epics::pvData::String const & channelName,
          epics::pvData::StringArrayPtr const & fieldNames,
-         epics::pvData::StringArrayPtr const & valueChannelNames);
-    virtual ~MultiValueChannelProvider();
+         epics::pvData::StringArrayPtr const & pvValueNames);
+    virtual ~DbGroupProvider();
     virtual void destroy();
     virtual epics::pvAccess::ChannelFind::shared_pointer channelFind(
         epics::pvData::String const & channelName,
@@ -124,13 +124,13 @@ public:
     void dump();
 private:
     epics::pvData::RequesterPtr requester;
-    epics::pvAccess::ChannelProvider::shared_pointer valueChannelProvider;
+    epics::pvAccess::ChannelProvider::shared_pointer pvValueProvider;
     epics::pvData::String channelName;
     epics::pvData::StringArrayPtr fieldNames;
-    epics::pvData::StringArrayPtr valueChannelNames;
+    epics::pvData::StringArrayPtr pvValueNames;
     epics::pvData::Mutex mutex;
     epics::pvData::Event event;
-    friend class MultiValueChannel;
+    friend class DbGroup;
 };
 
 }}

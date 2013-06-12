@@ -26,30 +26,30 @@ namespace epics { namespace pvaSrv {
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
-V3ChannelProvider::V3ChannelProvider()
+DbPvProvider::DbPvProvider()
 : ChannelBaseProvider("dbPv")
 {
-//printf("V3ChannelProvider::V3ChannelProvider\n");
+//printf("dbPvProvider::dbPvProvider\n");
 }
 
-V3ChannelProviderPtr V3ChannelProvider::getV3ChannelProvider()
+DbPvProviderPtr DbPvProvider::getDbPvProvider()
 {
-    static V3ChannelProviderPtr v3ChannelProvider;
+    static DbPvProviderPtr dbPvProvider;
     static Mutex mutex;
     Lock xx(mutex);
 
-    if(v3ChannelProvider.get()==0) {
-        v3ChannelProvider = V3ChannelProviderPtr(new V3ChannelProvider());
+    if(dbPvProvider.get()==0) {
+        dbPvProvider = DbPvProviderPtr(new DbPvProvider());
     }
-    return v3ChannelProvider;
+    return dbPvProvider;
 }
 
-V3ChannelProvider::~V3ChannelProvider()
+DbPvProvider::~DbPvProvider()
 {
-//printf("V3ChannelProvider::~V3ChannelProvider\n");
+//printf("dbPvProvider::~dbPvProvider\n");
 }
 
-ChannelFind::shared_pointer V3ChannelProvider::channelFind(
+ChannelFind::shared_pointer DbPvProvider::channelFind(
     String const & channelName,
     ChannelFindRequester::shared_pointer const &channelFindRequester)
 {
@@ -59,7 +59,7 @@ ChannelFind::shared_pointer V3ChannelProvider::channelFind(
     return ChannelFind::shared_pointer();
 }
 
-Channel::shared_pointer V3ChannelProvider::createChannel(
+Channel::shared_pointer DbPvProvider::createChannel(
     String const & channelName,
     ChannelRequester::shared_pointer  const &channelRequester,
     short priority,
@@ -73,7 +73,7 @@ Channel::shared_pointer V3ChannelProvider::createChannel(
     }
     std::tr1::shared_ptr<DbAddr> addr(new DbAddr());
     memcpy(addr.get(),&dbAddr,sizeof(dbAddr));
-    V3Channel *v3Channel = new V3Channel(
+    DbPv *v3Channel = new DbPv(
             getPtrSelf(),
             channelRequester,channelName,addr);
     ChannelBase::shared_pointer channel(v3Channel);

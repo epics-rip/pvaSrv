@@ -41,19 +41,19 @@ namespace epics { namespace pvaSrv {
 using namespace epics::pvData;
 using std::tr1::static_pointer_cast;
 
-V3UtilPtr V3Util::getV3Util()
+DbUtilPtr DbUtil::getDbUtil()
 {
-    static V3UtilPtr v3Util;
+    static DbUtilPtr util;
     static Mutex mutex;
     Lock xx(mutex);
 
-    if(v3Util.get()==NULL) {
-        v3Util = V3UtilPtr(new V3Util());
+    if(util.get()==NULL) {
+        util = DbUtilPtr(new DbUtil());
     }
-    return v3Util;
+    return util;
 }
 
-V3Util::V3Util()
+DbUtil::DbUtil()
 : 
   processBit(    0x0001),
   shareArrayBit( 0x0002),
@@ -62,7 +62,7 @@ V3Util::V3Util()
   displayBit(    0x0010),
   controlBit(    0x0020),
   valueAlarmBit( 0x0040),
-  // V3 data characteristics
+  // DB data characteristics
   getValueBit(   0x0080),
   scalarValueBit(0x0100),
   arrayValueBit( 0x0200),
@@ -93,7 +93,7 @@ V3Util::V3Util()
   indexString("index")
 {}
 
-int V3Util::getProperties(
+int DbUtil::getProperties(
     Requester::shared_pointer const &requester,
     PVStructure::shared_pointer const &pvr,
     DbAddr &dbAddr,
@@ -272,7 +272,7 @@ int V3Util::getProperties(
     return propertyMask;
 }
 
-PVStructurePtr V3Util::createPVStructure(
+PVStructurePtr DbUtil::createPVStructure(
     Requester::shared_pointer const &requester,int propertyMask,DbAddr &dbAddr)
 {
     StandardPVFieldPtr standardPVField = getStandardPVField();
@@ -400,42 +400,42 @@ PVStructurePtr V3Util::createPVStructure(
     PVFieldPtr pvValue;
     ScalarArrayConstPtr scalarArray = getFieldCreate()->createScalarArray(
          scalarType);
-    V3ValueArrayCreatePtr v3ValueArrayCreate = getV3ValueArrayCreate();
+    dbArrayCreatePtr dbValueArrayCreate = getDbValueArrayCreate();
     switch(scalarType) {
     case pvByte:
-       pvValue = v3ValueArrayCreate->createByteArray(
+       pvValue = dbValueArrayCreate->createByteArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
     case pvUByte:
-       pvValue = v3ValueArrayCreate->createUByteArray(
+       pvValue = dbValueArrayCreate->createUByteArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
     case pvShort:
-       pvValue = v3ValueArrayCreate->createShortArray(
+       pvValue = dbValueArrayCreate->createShortArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
     case pvUShort:
-       pvValue = v3ValueArrayCreate->createUShortArray(
+       pvValue = dbValueArrayCreate->createUShortArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
     case pvInt:
-       pvValue = v3ValueArrayCreate->createIntArray(
+       pvValue = dbValueArrayCreate->createIntArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
     case pvUInt:
-       pvValue = v3ValueArrayCreate->createUIntArray(
+       pvValue = dbValueArrayCreate->createUIntArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
     case pvFloat:
-       pvValue = v3ValueArrayCreate->createFloatArray(
+       pvValue = dbValueArrayCreate->createFloatArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
     case pvDouble:
-       pvValue = v3ValueArrayCreate->createDoubleArray(
+       pvValue = dbValueArrayCreate->createDoubleArray(
            nullPVStructure,scalarArray,dbAddr,share);
        break;
     case pvString:
-       pvValue = v3ValueArrayCreate->createStringArray(
+       pvValue = dbValueArrayCreate->createStringArray(
            nullPVStructure,scalarArray,dbAddr);
        break;
     default:
@@ -517,7 +517,7 @@ PVStructurePtr V3Util::createPVStructure(
     return pvParent;
 }
 
-void  V3Util::getPropertyData(
+void  DbUtil::getPropertyData(
         Requester::shared_pointer const &requester,
         int propertyMask,DbAddr &dbAddr,
         PVStructurePtr const &pvStructure)
@@ -609,12 +609,12 @@ void  V3Util::getPropertyData(
     }
 }
 
-Status  V3Util::get(
+Status  DbUtil::get(
         Requester::shared_pointer const &requester,
         int propertyMask,DbAddr &dbAddr,
         PVStructurePtr const &pvStructure,
         BitSet::shared_pointer const &bitSet,
-        CAV3Data *caV3Data)
+        CaData *caData)
 {
     PVFieldPtrArray pvFields = pvStructure->getPVFields();
     PVFieldPtr pvField = pvFields[0];
@@ -625,8 +625,8 @@ Status  V3Util::get(
         switch(scalarType) {
         case pvByte: {
             int8 val = 0;
-            if(caV3Data) {
-                val = caV3Data->byteValue;
+            if(caData) {
+                val = caData->byteValue;
             } else {
                 val = *static_cast<int8 *>(dbAddr.pfield);
             }
@@ -639,8 +639,8 @@ Status  V3Util::get(
         }
         case pvUByte: {
             uint8 val = 0;
-            if(caV3Data) {
-                val = caV3Data->ubyteValue;
+            if(caData) {
+                val = caData->ubyteValue;
             } else {
                 val = *static_cast<uint8 *>(dbAddr.pfield);
             }
@@ -653,8 +653,8 @@ Status  V3Util::get(
         }
         case pvShort: {
             int16 val = 0;
-            if(caV3Data) {
-                val = caV3Data->shortValue;
+            if(caData) {
+                val = caData->shortValue;
             } else {
                 val = *static_cast<int16 *>(dbAddr.pfield);
             }
@@ -667,8 +667,8 @@ Status  V3Util::get(
         }
         case pvUShort: {
             uint16 val = 0;
-            if(caV3Data) {
-                val = caV3Data->ushortValue;
+            if(caData) {
+                val = caData->ushortValue;
             } else {
                 val = *static_cast<uint16 *>(dbAddr.pfield);
             }
@@ -681,8 +681,8 @@ Status  V3Util::get(
         }
         case pvInt: {
             int32 val = 0;
-            if(caV3Data) {
-                val = caV3Data->intValue;
+            if(caData) {
+                val = caData->intValue;
             } else {
                 val = *static_cast<int32 *>(dbAddr.pfield);
             }
@@ -695,8 +695,8 @@ Status  V3Util::get(
         }
         case pvUInt: {
             uint32 val = 0;
-            if(caV3Data) {
-                val = caV3Data->uintValue;
+            if(caData) {
+                val = caData->uintValue;
             } else {
                 val = *static_cast<uint32 *>(dbAddr.pfield);
             }
@@ -709,8 +709,8 @@ Status  V3Util::get(
         }
         case pvFloat: {
             float val = 0;
-            if(caV3Data) {
-                val = caV3Data->floatValue;
+            if(caData) {
+                val = caData->floatValue;
             } else {
                 val = *static_cast<float *>(dbAddr.pfield);
             }
@@ -723,8 +723,8 @@ Status  V3Util::get(
         }
         case pvDouble: {
             double val = 0;
-            if(caV3Data) {
-                val = caV3Data->doubleValue;
+            if(caData) {
+                val = caData->doubleValue;
             } else {
                 val = *static_cast<double *>(dbAddr.pfield);
             }
@@ -839,8 +839,8 @@ Status  V3Util::get(
         bitSet->set(pvField->getFieldOffset());
     } else if((propertyMask&enumValueBit)!=0) {
         int32 val = 0;
-        if(caV3Data) {
-            val = caV3Data->intValue;
+        if(caData) {
+            val = caData->intValue;
         } else {
             if(dbAddr.field_type==DBF_DEVICE) {
                 val = static_cast<epicsEnum16>(dbAddr.precord->dtyp);
@@ -872,8 +872,8 @@ Status  V3Util::get(
         }
         epicsTimeStamp *epicsTimeStamp;
         struct dbCommon *precord = dbAddr.precord;
-        if(caV3Data) {
-            epicsTimeStamp = &caV3Data->timeStamp;
+        if(caData) {
+            epicsTimeStamp = &caData->timeStamp;
         } else {
             epicsTimeStamp = &precord->time;     
         }
@@ -902,10 +902,10 @@ Status  V3Util::get(
         const char * status = "";
         epicsEnum16 stat;
         epicsEnum16 sevr;
-        if(caV3Data) {
-            status = caV3Data->status;
-            stat = caV3Data->stat;
-            sevr = caV3Data->sevr;
+        if(caData) {
+            status = caData->status;
+            stat = caData->stat;
+            sevr = caData->sevr;
         } else {
             status = epicsAlarmConditionStrings[precord->stat];
             stat = precord->stat;
@@ -928,7 +928,7 @@ Status  V3Util::get(
     return Status::Ok;
 }
 
-Status  V3Util::put(
+Status  DbUtil::put(
         Requester::shared_pointer const &requester,
         int propertyMask,DbAddr &dbAddr,
         PVFieldPtr const &pvField)
@@ -1043,7 +1043,7 @@ Status  V3Util::put(
     return Status::Ok;
 }
 
-Status  V3Util::putField(
+Status  DbUtil::putField(
         Requester::shared_pointer const &requester,
         int propertyMask,DbAddr &dbAddr,
         PVFieldPtr const &pvField)
@@ -1148,7 +1148,7 @@ Status  V3Util::putField(
     return Status::Ok;
 }
 
-ScalarType V3Util::getScalarType(Requester::shared_pointer const &requester, DbAddr &dbAddr)
+ScalarType DbUtil::getScalarType(Requester::shared_pointer const &requester, DbAddr &dbAddr)
 {
     switch(dbAddr.field_type) {
         case DBF_CHAR:

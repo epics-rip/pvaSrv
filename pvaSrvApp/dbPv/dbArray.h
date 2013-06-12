@@ -23,9 +23,9 @@
 
 namespace epics { namespace pvaSrv { 
 
-class V3ValueArrayCreate {
+class dbArrayCreate {
 public:
-    POINTER_DEFINITIONS(V3ValueArrayCreate);
+    POINTER_DEFINITIONS(dbArrayCreate);
     epics::pvData::PVByteArrayPtr createByteArray(
         epics::pvData::PVStructurePtr const & parent,
         epics::pvData::ScalarArrayConstPtr const & scalar,
@@ -65,9 +65,9 @@ public:
         DbAddr &dbAddr);
 };
 
-typedef std::tr1::shared_ptr<V3ValueArrayCreate> V3ValueArrayCreatePtr;
+typedef std::tr1::shared_ptr<dbArrayCreate> dbArrayCreatePtr;
 
-extern V3ValueArrayCreatePtr getV3ValueArrayCreate();
+extern dbArrayCreatePtr getDbValueArrayCreate();
 
 }}
 
