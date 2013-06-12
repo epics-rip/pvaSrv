@@ -6,7 +6,7 @@ pvput  ushortArray01 5 1 2 3 4 5
 pvput  uintArray01 5 1 2 3 4 5
 pvput  floatArray01 5 1 2 3 4 5
 pvput  doubleArray01 5 1 2 3 4 5
-pvget  -r "value,alarm,timeStamp" \
+pvget  -r "field(value,alarm,timeStamp)" \
     byteArray01 shortArray01 intArray01 \
     ubyteArray01 ushortArray01 uintArray01 \
     floatArray01 doubleArray01
