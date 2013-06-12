@@ -1,4 +1,4 @@
 TOP = ..
 include $(TOP)/configure/CONFIG
-DIRS += simpleV3Channel
+DIRS += simpleDbPv
 include $(TOP)/configure/RULES_DIRS

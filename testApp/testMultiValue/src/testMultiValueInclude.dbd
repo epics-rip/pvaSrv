@@ -1,5 +1,0 @@
-include "base.dbd"
-include "ulongRecord.dbd"
-include "v3Channel.dbd"
-include "channelProviderLocal.dbd"
-include "multiValue.dbd"
