@@ -17,4 +17,4 @@ hg clone -U http://hg.code.sf.net/p/epics-pvdata/pvaSrv hgweb
 ###########################################
 # Sync into SF webspace
 
-rsync -aP --delete -e ssh hgweb/.hg epics-jenkins@web.sourceforge.net:/home/project-web/epics-pvdata/repos/pvaSrv
+rsync -aqP --delete -e ssh hgweb/.hg epics-jenkins@web.sourceforge.net:/home/project-web/epics-pvdata/repos/pvaSrv
