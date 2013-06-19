@@ -1,4 +1,3 @@
-/*testV3Channel.cpp */
 /**
  * Copyright - See the COPYRIGHT that is included with this distribution.
  * EPICS pvData is distributed subject to a Software License Agreement found
@@ -7,7 +6,6 @@
 /**
  * @author mrk
  */
-
 
 /* Author: Marty Kraimer */
 
@@ -66,7 +64,7 @@ class MyRequester :
 public:
     POINTER_DEFINITIONS(MyRequester);
     MyRequester()
-    : name(String("testV3Channel")),
+    : name(String("testDbPv")),
       channelPtr(Channel::shared_pointer()),
       channelGetPtr(ChannelGet::shared_pointer()),
       pvStructurePtr(PVStructure::shared_pointer()),
@@ -143,12 +141,12 @@ static void testDbPvCallFunc(const iocshArgBuf *args)
     String channelName(pvName);
     printf("channelName %s\n",channelName.c_str());
     ChannelProvider::shared_pointer channelProvider =
-        getChannelAccess()->getProvider("v3wChannel");
+        getChannelAccess()->getProvider("dbPv");
     String providerName = channelProvider->getProviderName();
     printf("providerName %s\n",providerName.c_str());
     FindRequester::shared_pointer findRequester
         = FindRequester::shared_pointer(new FindRequester());
-printf("findRequester %p %p\n",&findRequester,findRequester.get());
+    printf("findRequester %p %p\n",&findRequester,findRequester.get());
     channelProvider->channelFind(
         channelName,
         findRequester);
@@ -171,7 +169,6 @@ printf("findRequester %p %p\n",&findRequester,findRequester.get());
     }
 }
 
-
 static void testDbPvRegister(void)
 {
     static int firstTime = 1;
@@ -180,4 +177,5 @@ static void testDbPvRegister(void)
         iocshRegister(&testDbPvFuncDef, testDbPvCallFunc);
     }
 }
+
 epicsExportRegistrar(testDbPvRegister);
