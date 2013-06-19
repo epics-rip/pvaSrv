@@ -9,4 +9,5 @@ include "bigstringinRecord.dbd"
 include "dbPv.dbd"
 include "exampleServiceRegister.dbd"
 include "pvServiceChannelRegister.dbd"
+
 registrar("testDbPvRegister")
