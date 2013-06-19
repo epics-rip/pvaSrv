@@ -70,7 +70,7 @@ cd ${TOP}/iocBoot/${IOC}
 iocInit()
 epicsThreadSleep(2.0)
 casr
-setDbPvDebugLevel 0
+pvaSrvSetDebugLevel 0
 setChannelBaseDebugLevel 0
 pvaSrvStart
 startExampleService serviceRPC
