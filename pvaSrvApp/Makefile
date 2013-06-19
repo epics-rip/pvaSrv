@@ -1,6 +1,8 @@
 TOP = ..
 include $(TOP)/configure/CONFIG
 
+PVASRV_VERSION = 0.9
+
 LIBRARY_IOC = pvaSrv
 
 pvaSrv_LIBS += pvIOC pvAccess pvData
@@ -35,5 +37,7 @@ LIBSRCS += dbGroupRegister.cpp
 LIBSRCS += dbGroupProvider.cpp
 LIBSRCS += dbGroup.cpp
 LIBSRCS += dbGroupGet.cpp
+
+USR_CPPFLAGS = -DPVASRV_VERSION=\"$(PVASRV_VERSION)\"
 
 include $(TOP)/configure/RULES

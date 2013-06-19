@@ -21,6 +21,7 @@
 #include <epicsMutex.h>
 #include <epicsEvent.h>
 #include <epicsThread.h>
+#include <errlog.h>
 #include <iocsh.h>
 #include <epicsExport.h>
 
@@ -124,6 +125,7 @@ static const iocshFuncDef pvaSrvStartFuncDef = {
 extern "C" void pvaSrvStart(const iocshArgBuf *args)
 {
     DbPvCTXPtr dbPvCTX = DbPvCTX::getDbPvCTX();
+    errlogPrintf("pvaSrv v%s starting\n", PVASRV_VERSION);
     epicsThreadSleep(.1);
     dbPvCTX->getChannelProviderFactory()->registerSelf();
 }
