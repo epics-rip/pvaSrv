@@ -10,6 +10,9 @@ define DIR_template
 endef
 $(foreach dir, $(filter-out configure,$(DIRS)),$(eval $(call DIR_template,$(dir))))
 
+EMBEDDED_TOPS += exampleApp
+EMBEDDED_TOPS += testApp
+
 iocBoot_DEPEND_DIRS += $(filter %App,$(DIRS))
 
 exampleApp_DEPEND_DIRS += pvaSrvApp

@@ -1,3 +1,15 @@
 #RULES_TOP
 include $(CONFIG)/RULES_TOP
 
+distclean: emtop_distclean
+
+emtopDistcleanTargets += $(foreach dir, $(EMBEDDED_TOPS), \
+                         emtop_distclean,\
+                         $(dir)$(DIVIDER)distclean)
+
+$(emtopDistcleanTargets) :
+	$(MAKE) -C $(dirPart) $(actionArchPart)
+
+emtop_distclean : $(foreach dir, $(EMBEDDED_TOPS), $(dir)$(DIVIDER)distclean)
+
+.PHONY : $(emtopDistcleanTargets)

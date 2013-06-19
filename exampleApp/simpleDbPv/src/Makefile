@@ -4,7 +4,7 @@
 # 2) include v3Channel.dbd
 # 3) call startV3Channel in st.cmd
 
-TOP=../../..
+TOP=../..
 
 include $(TOP)/configure/CONFIG
 

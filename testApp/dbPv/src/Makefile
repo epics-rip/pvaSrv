@@ -1,4 +1,4 @@
-TOP=../../..
+TOP=../..
 
 include $(TOP)/configure/CONFIG
 #----------------------------------------
@@ -38,7 +38,6 @@ PROD_IOC += testDbPv
 testDbPv_SRCS += testDbPv_registerRecordDeviceDriver.cpp
 testDbPv_SRCS_DEFAULT += testDbPvMain.cpp
 testDbPv_SRCS_vxWorks += -nil-
-
 
 # The following adds support from base/src/vxWorks
 testDbPv_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary
