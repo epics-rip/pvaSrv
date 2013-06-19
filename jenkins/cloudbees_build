@@ -55,7 +55,7 @@ doxygen
 ###########################################
 # Create distribution
 
-tar -czf pvaSrv.CB-dist.tar.gz bin lib include db dbd COPYRIGHT LICENSE
+tar -czf pvaSrv.CB-dist.tar.gz lib include dbd COPYRIGHT LICENSE
 
 ###########################################
 # Publish documentation
