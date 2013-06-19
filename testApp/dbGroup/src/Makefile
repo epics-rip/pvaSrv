@@ -18,7 +18,6 @@ DBD += testDbGroup.dbd
 
 PROD_IOC += testDbGroup
 
-
 # <name>_registerRecordDeviceDriver.cpp will be created from <name>.dbd
 testDbGroup_SRCS += testDbGroup_registerRecordDeviceDriver.cpp
 testDbGroup_SRCS_DEFAULT += testDbGroupMain.cpp
