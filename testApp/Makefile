@@ -6,7 +6,7 @@ DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard *App))
 DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard iocBoot))
 
 DIRS += dbPv
-DIRS += dbGroup
+#DIRS += dbGroup
 
 define DIR_template
  $(1)_DEPEND_DIRS = configure

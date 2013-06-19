@@ -28,15 +28,15 @@ LIBSRCS += dbPvArray.cpp
 LIBSRCS += dbPvRegister.cpp
 LIBSRCS += dbPvMonitor.cpp
 
-SRC_DIRS += ../dbGroup
-DBD += dbGroup.dbd
-INC += dbGroup.h
-INC += pvValue.h
-LIBSRCS += pvValue.cpp
-LIBSRCS += dbGroupRegister.cpp
-LIBSRCS += dbGroupProvider.cpp
-LIBSRCS += dbGroup.cpp
-LIBSRCS += dbGroupGet.cpp
+#SRC_DIRS += ../dbGroup
+#DBD += dbGroup.dbd
+#INC += dbGroup.h
+#INC += pvValue.h
+#LIBSRCS += pvValue.cpp
+#LIBSRCS += dbGroupRegister.cpp
+#LIBSRCS += dbGroupProvider.cpp
+#LIBSRCS += dbGroup.cpp
+#LIBSRCS += dbGroupGet.cpp
 
 USR_CPPFLAGS = -DPVASRV_VERSION=\"$(PVASRV_VERSION)\"
 
