@@ -22,7 +22,7 @@ PVCOMMON=${HOME}/jobs/epics-pvCommon/workspace
 EPICS_BASE=${EPICS_BASE}
 EOF
 
-make distclean all
+make
 
 ###########################################
 # Test
