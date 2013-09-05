@@ -61,7 +61,7 @@ private:
     ChannelBaseProviderFactory::shared_pointer factory;
     Event event;
     ServerContextImpl::shared_pointer ctx;
-    Thread *thread;
+    epics::pvData::Thread *thread;
 };
 
 DbPvCTXPtr DbPvCTX::getDbPvCTX()
@@ -81,7 +81,7 @@ DbPvCTX::DbPvCTX()
   factory(new ChannelBaseProviderFactory(dbPvProvider)),
   event(),
   ctx(ServerContextImpl::create()),
-  thread(new Thread(String("dbPvServer"),lowerPriority,this,epicsThreadStackBig))
+  thread(new epics::pvData::Thread(String("dbPvServer"),lowerPriority,this,epicsThreadStackBig))
 {}
 
 DbPvCTX::~DbPvCTX()
