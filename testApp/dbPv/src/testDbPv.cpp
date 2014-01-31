@@ -157,9 +157,10 @@ static void testDbPvCallFunc(const iocshArgBuf *args)
          myRequester,
          0,
          String(""));
-    CreateRequest::shared_pointer createRequest = getCreateRequest();
+    
+    CreateRequest::shared_pointer createRequest = CreateRequest::create();
     PVStructure::shared_pointer pvRequest = createRequest->createRequest(
-        "record[process=true]field(value,timeStamp,alarm)",myRequester);
+        "record[process=true]field(value,timeStamp,alarm)");
     ChannelGet::shared_pointer channelGet = channel->createChannelGet(
         myRequester,pvRequest);
     channelGet->get(false);

@@ -161,68 +161,90 @@ void DbPvArray::getArray(bool lastRequest,int offset,int count)
     }
     {
     Lock lock(dataMutex);
-    pvScalarArray->setLength(count);
     switch(dbAddr.field_type) {
     case DBF_CHAR: {
-        PVByteArrayPtr pv = static_pointer_cast<PVByteArray>(pvScalarArray);
+        shared_vector<int8> xxx(count);
         int8 *from = static_cast<int8 *>(dbAddr.pfield);
-        pv->put(0,count,from,offset);
+        for(long i= 0;i< count; i++) xxx[i] = from[i+offset];
+        shared_vector<const int8> data(freeze(xxx));
+        PVByteArrayPtr pva = static_pointer_cast<PVByteArray>(pvScalarArray);
+        pva->replace(data);
         break;
    }
     case DBF_UCHAR: {
-        PVUByteArrayPtr pv = static_pointer_cast<PVUByteArray>(pvScalarArray);
+        shared_vector<uint8> xxx(count);
         uint8 *from = static_cast<uint8 *>(dbAddr.pfield);
-        pv->put(0,count,from,offset);
+        for(long i= 0;i< count; i++) xxx[i] = from[i+offset];
+        shared_vector<const uint8> data(freeze(xxx));
+        PVUByteArrayPtr pva = static_pointer_cast<PVUByteArray>(pvScalarArray);
+        pva->replace(data);
         break;
     }
     case DBF_SHORT: {
-        PVShortArrayPtr pv = static_pointer_cast<PVShortArray>(pvScalarArray);
+        shared_vector<int16> xxx(count);
         int16 *from = static_cast<int16 *>(dbAddr.pfield);
-        pv->put(0,count,from,offset);
+        for(long i= 0;i< count; i++) xxx[i] = from[i+offset];
+        shared_vector<const int16> data(freeze(xxx));
+        PVShortArrayPtr pva = static_pointer_cast<PVShortArray>(pvScalarArray);
+        pva->replace(data);
         break;
     }
     case DBF_USHORT: {
-        PVUShortArrayPtr pv = static_pointer_cast<PVUShortArray>(pvScalarArray);
+        shared_vector<uint16> xxx(count);
         uint16 *from = static_cast<uint16 *>(dbAddr.pfield);
-        pv->put(0,count,from,offset);
+        for(long i= 0;i< count; i++) xxx[i] = from[i+offset];
+        shared_vector<const uint16> data(freeze(xxx));
+        PVUShortArrayPtr pva = static_pointer_cast<PVUShortArray>(pvScalarArray);
+        pva->replace(data);
         break;
     }
     case DBF_LONG: {
-        PVIntArrayPtr pv = static_pointer_cast<PVIntArray>(pvScalarArray);
+        shared_vector<int32> xxx(count);
         int32 *from = static_cast<int32 *>(dbAddr.pfield);
-        pv->put(0,count,from,offset);
+        for(long i= 0;i< count; i++) xxx[i] = from[i+offset];
+        shared_vector<const int32> data(freeze(xxx));
+        PVIntArrayPtr pva = static_pointer_cast<PVIntArray>(pvScalarArray);
+        pva->replace(data);
         break;
     }
     case DBF_ULONG: {
-        PVUIntArrayPtr pv = static_pointer_cast<PVUIntArray>(pvScalarArray);
+        shared_vector<uint32> xxx(count);
         uint32 *from = static_cast<uint32 *>(dbAddr.pfield);
-        pv->put(0,count,from,offset);
+        for(long i= 0;i< count; i++) xxx[i] = from[i+offset];
+        shared_vector<const uint32> data(freeze(xxx));
+        PVUIntArrayPtr pva = static_pointer_cast<PVUIntArray>(pvScalarArray);
+        pva->replace(data);
         break;
     }
     case DBF_FLOAT: {
-        PVFloatArrayPtr pv = static_pointer_cast<PVFloatArray>(pvScalarArray);
+        shared_vector<float> xxx(count);
         float *from = static_cast<float *>(dbAddr.pfield);
-        pv->put(0,count,from,offset);
+        for(long i= 0;i< count; i++) xxx[i] = from[i+offset];
+        shared_vector<const float> data(freeze(xxx));
+        PVFloatArrayPtr pva = static_pointer_cast<PVFloatArray>(pvScalarArray);
+        pva->replace(data);
         break;
     }
     case DBF_DOUBLE: {
-        PVDoubleArrayPtr pv = static_pointer_cast<PVDoubleArray>(pvScalarArray);
+        shared_vector<double> xxx(count);
         double *from = static_cast<double *>(dbAddr.pfield);
-        pv->put(0,count,from,offset);
+        for(long i= 0;i< count; i++) xxx[i] = from[i+offset];
+        shared_vector<const double> data(freeze(xxx));
+        PVDoubleArrayPtr pva = static_pointer_cast<PVDoubleArray>(pvScalarArray);
+        pva->replace(data);
         break;
     }
     case DBF_STRING: {
-        PVStringArrayPtr pv = static_pointer_cast<PVStringArray>(pvScalarArray);
-        StringArrayData data;
-        pv->get(0,length,data);
-        int index = 0;
-        char *pchar = static_cast<char *>(dbAddr.pfield);
-        pchar += dbAddr.field_size*offset;
-        while(index<count) {
-            data.data[index] = String(pchar);
-            index++;
-            pchar += dbAddr.field_size;
+        shared_vector<String> xxx(count);
+        char *from = static_cast<char *>(dbAddr.pfield);
+        from += offset*dbAddr.field_size;
+        for(long i= 0;i< count; i++) {
+             xxx[i] = String(from);
+             from += dbAddr.field_size;
         }
+        shared_vector<const String> data(freeze(xxx));
+        PVStringArrayPtr pva = static_pointer_cast<PVStringArray>(pvScalarArray);
+        pva->replace(data);
         break;
     }
     }
@@ -236,7 +258,7 @@ void DbPvArray::putArray(bool lastRequest,int offset,int count)
 {
     dbScanLock(dbAddr.precord);
     long no_elements = dbAddr.no_elements;
-    if((offset+count)>no_elements) count = no_elements - count;
+    if((offset+count)>no_elements) count = no_elements - offset;
     if(count<=0) {
         dbScanUnlock(dbAddr.precord);
         channelArrayRequester->getArrayDone(Status::Ok);
@@ -263,126 +285,73 @@ void DbPvArray::putArray(bool lastRequest,int offset,int count)
     Lock lock(dataMutex);
     switch(dbAddr.field_type) {
     case DBF_CHAR: {
-        PVByteArrayPtr pv = static_pointer_cast<PVByteArray>(pvScalarArray);
-        ByteArrayData data;
-        pv->get(0,count,data);
+        PVByteArrayPtr pva = static_pointer_cast<PVByteArray>(pvScalarArray);
+        shared_vector<const int8> xxx(pva->view());
         int8 *to = static_cast<int8 *>(dbAddr.pfield);
-        ByteArray_iterator iter = data.data.begin();
-        int ind = 0;
-        for(iter=data.data.begin();iter!=data.data.end();++iter) {
-            to[offset+ind] = *iter;
-            ind++;
-        }
+        for(long i= 0;i< count; i++) to[i + offset] = xxx[i];
         break;
     }
     case DBF_UCHAR: {
-        PVUByteArrayPtr pv = static_pointer_cast<PVUByteArray>(pvScalarArray);
-        UByteArrayData data;
-        pv->get(0,count,data);
+        PVUByteArrayPtr pva = static_pointer_cast<PVUByteArray>(pvScalarArray);
+        shared_vector<const uint8> xxx(pva->view());
         uint8 *to = static_cast<uint8 *>(dbAddr.pfield);
-        UByteArray_iterator iter = data.data.begin();
-        int ind = 0;
-        for(iter=data.data.begin();iter!=data.data.end();++iter) {
-            to[offset+ind] = *iter;
-            ind++;
-        }
+        for(long i= 0;i< count; i++) to[i + offset] = xxx[i];
         break;
     }
     case DBF_SHORT: {
-        PVShortArrayPtr pv = static_pointer_cast<PVShortArray>(pvScalarArray);
-        ShortArrayData data;
-        pv->get(0,count,data);
+        PVShortArrayPtr pva = static_pointer_cast<PVShortArray>(pvScalarArray);
+        shared_vector<const int16> xxx(pva->view());
         int16 *to = static_cast<int16 *>(dbAddr.pfield);
-        ShortArray_iterator iter = data.data.begin();
-        int ind = 0;
-        for(iter=data.data.begin();iter!=data.data.end();++iter) {
-            to[offset+ind] = *iter;
-            ind++;
-        }
+        for(long i= 0;i< count; i++) to[i + offset] = xxx[i];
         break;
     }
     case DBF_USHORT: {
-        PVUShortArrayPtr pv = static_pointer_cast<PVUShortArray>(pvScalarArray);
-        UShortArrayData data;
-        pv->get(0,count,data);
+        PVUShortArrayPtr pva = static_pointer_cast<PVUShortArray>(pvScalarArray);
+        shared_vector<const uint16> xxx(pva->view());
         uint16 *to = static_cast<uint16 *>(dbAddr.pfield);
-        UShortArray_iterator iter = data.data.begin();
-        int ind = 0;
-        for(iter=data.data.begin();iter!=data.data.end();++iter) {
-            to[offset+ind] = *iter;
-            ind++;
-        }
+        for(long i= 0;i< count; i++) to[i + offset] = xxx[i];
         break;
     }
     case DBF_LONG: {
-        PVIntArrayPtr pv = static_pointer_cast<PVIntArray>(pvScalarArray);
-        IntArrayData data;
-        pv->get(0,count,data);
+        PVIntArrayPtr pva = static_pointer_cast<PVIntArray>(pvScalarArray);
+        shared_vector<const int32> xxx(pva->view());
         int32 *to = static_cast<int32 *>(dbAddr.pfield);
-        IntArray_iterator iter = data.data.begin();
-        int ind = 0;
-        for(iter=data.data.begin();iter!=data.data.end();++iter) {
-            to[offset+ind] = *iter;
-            ind++;
-        }
+        for(long i= 0;i< count; i++) to[i + offset] = xxx[i];
         break;
     }
     case DBF_ULONG: {
-        PVUIntArrayPtr pv = static_pointer_cast<PVUIntArray>(pvScalarArray);
-        UIntArrayData data;
-        pv->get(0,count,data);
+        PVUIntArrayPtr pva = static_pointer_cast<PVUIntArray>(pvScalarArray);
+        shared_vector<const uint32> xxx(pva->view());
         uint32 *to = static_cast<uint32 *>(dbAddr.pfield);
-        UIntArray_iterator iter = data.data.begin();
-        int ind = 0;
-        for(iter=data.data.begin();iter!=data.data.end();++iter) {
-            to[offset+ind] = *iter;
-            ind++;
-        }
+        for(long i= 0;i< count; i++) to[i + offset] = xxx[i];
         break;
     }
     case DBF_FLOAT: {
-        PVFloatArrayPtr pv = static_pointer_cast<PVFloatArray>(pvScalarArray);
-        FloatArrayData data;
-        pv->get(0,count,data);
+        PVFloatArrayPtr pva = static_pointer_cast<PVFloatArray>(pvScalarArray);
+        shared_vector<const float> xxx(pva->view());
         float *to = static_cast<float *>(dbAddr.pfield);
-        FloatArray_iterator iter = data.data.begin();
-        int ind = 0;
-        for(iter=data.data.begin();iter!=data.data.end();++iter) {
-            to[offset+ind] = *iter;
-            ind++;
-        }
+        for(long i= 0;i< count; i++) to[i + offset] = xxx[i];
         break;
     }
     case DBF_DOUBLE: {
-        PVDoubleArrayPtr pv = static_pointer_cast<PVDoubleArray>(pvScalarArray);
-        DoubleArrayData data;
-        pv->get(0,count,data);
+        PVDoubleArrayPtr pva = static_pointer_cast<PVDoubleArray>(pvScalarArray);
+        shared_vector<const double> xxx(pva->view());
         double *to = static_cast<double *>(dbAddr.pfield);
-        DoubleArray_iterator iter = data.data.begin();
-        int ind = 0;
-        for(iter=data.data.begin();iter!=data.data.end();++iter) {
-            to[offset+ind] = *iter;
-            ind++;
-        }
+        for(long i= 0;i< count; i++) to[i + offset] = xxx[i];
         break;
     }
     case DBF_STRING: {
-        PVStringArrayPtr pv = static_pointer_cast<PVStringArray>(pvScalarArray);
-        StringArrayData data;
-        pv->get(0,length,data);
-        int index = 0;
+        PVStringArrayPtr pva = static_pointer_cast<PVStringArray>(pvScalarArray);
+        shared_vector<const String> xxx(pva->view());
         char *to = static_cast<char *>(dbAddr.pfield);
-        int len = dbAddr.field_size;
-        StringArray_iterator iter = data.data.begin();
-        for(iter=data.data.begin();iter!=data.data.end();++iter) {
-            String val = *iter;
-            const char * from = val.c_str();
-            if(from!=NULL) {
-                strncpy(to,from,len-1);
-            }
-            *(to + len -1) = 0;
-            to += len;
-            index++;
+        to += offset*dbAddr.field_size;
+        for(long i= 0;i< count; i++) {
+             const char *from = xxx[i].c_str();
+             long nchar = xxx[i].size();
+             if(nchar>dbAddr.field_size) nchar = dbAddr.field_size;
+             for(long j=0; j< nchar; j++) to[j] = from[j];
+             to[nchar] = 0;
+             to += dbAddr.field_size;
         }
         break;
     }

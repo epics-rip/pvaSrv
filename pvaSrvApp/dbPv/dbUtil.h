@@ -49,7 +49,6 @@ public:
     static DbUtilPtr getDbUtil();
     // client request bits
     int processBit;       // is processing requested
-    int shareArrayBit;    // share V3array instead of copy
     int timeStampBit;     // get timeStamp;
     int alarmBit;         // get alarm
     int displayBit;       // get display info
@@ -101,11 +100,9 @@ private:
     epics::pvData::String recordString;
     epics::pvData::String processString;
     epics::pvData::String queueSizeString;
-    epics::pvData::String recordShareString;
     epics::pvData::String fieldString;
     epics::pvData::String valueString;
     epics::pvData::String valueIndexString;
-    epics::pvData::String valueShareArrayString;
     epics::pvData::String timeStampString;
     epics::pvData::String alarmString;
     epics::pvData::String displayString;
