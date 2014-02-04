@@ -13,9 +13,9 @@
 #include <dbAccess.h>
 #include <dbNotify.h>
 
-#include <pv/channelBase.h>
 #include <pv/thread.h>
 #include <pv/event.h>
+#include <pv/pvAccess.h>
 
 #include "caMonitor.h"
 #include "dbPvDebug.h"
@@ -28,6 +28,7 @@ typedef std::tr1::shared_ptr<DbUtil> DbUtilPtr;
 class DbPvProvider;
 typedef std::tr1::shared_ptr<DbPvProvider> DbPvProviderPtr;
 class DbPv;
+typedef std::tr1::shared_ptr<DbPv> DbPvPtr;
 class DbPvProcess;
 class DbPvGet;
 class DbPvPut;
@@ -37,41 +38,80 @@ class DbPvArray;
 typedef struct dbAddr DbAddr;
 typedef std::vector<DbAddr> DbAddrArray;
 
+extern DbPvProviderPtr getDbPvProvider();
+
 class DbPvProvider :
-    public epics::pvAccess::ChannelBaseProvider
+    public epics::pvAccess::ChannelProvider,
+    public std::tr1::enable_shared_from_this<DbPvProvider>
 {
 public:
      POINTER_DEFINITIONS(DbPvProvider);
-    static DbPvProviderPtr getDbPvProvider();
     virtual ~DbPvProvider();
+    virtual  epics::pvData::String getProviderName();
+    virtual void destroy() {}
     virtual epics::pvAccess::ChannelFind::shared_pointer channelFind(
         epics::pvData::String const &channelName,
         epics::pvAccess::ChannelFindRequester::shared_pointer const & channelFindRequester);
+    virtual epics::pvAccess::Channel::shared_pointer createChannel(
+        epics::pvData::String const &channelName,
+        epics::pvAccess::ChannelRequester::shared_pointer const &channelRequester,
+        short priority)
+    { return createChannel(channelName,channelRequester,priority,"");}
+
     virtual epics::pvAccess::Channel::shared_pointer createChannel(
         epics::pvData::String const &channelName,
         epics::pvAccess::ChannelRequester::shared_pointer  const &channelRequester,
         short priority,
         epics::pvData::String const &address);
 private:
+    shared_pointer getPtrSelf()
+    {
+        return shared_from_this();
+    }
     DbPvProvider();
+    epics::pvAccess::ChannelFind::shared_pointer channelFinder;
+    friend DbPvProviderPtr getDbPvProvider();
 };
 
 class DbPv :
-  public virtual epics::pvAccess::ChannelBase
+    public virtual epics::pvAccess::Channel,
+    public std::tr1::enable_shared_from_this<DbPv>
 {
 public:
     POINTER_DEFINITIONS(DbPv);
     DbPv(
-        epics::pvAccess::ChannelBaseProvider::shared_pointer const & provider,
+        DbPvProviderPtr const & provider,
         epics::pvAccess::ChannelRequester::shared_pointer const & requester,
         epics::pvData::String const & name,
         std::tr1::shared_ptr<DbAddr> addr
         );
     virtual ~DbPv();
     void init();
+    virtual void destroy(){}
+    virtual epics::pvData::String getRequesterName()
+       {return requester->getRequesterName();}
+    virtual void message(
+        epics::pvData::String const & message,
+        epics::pvData::MessageType messageType)
+       {requester->message(message,messageType);}
+    virtual epics::pvAccess::ChannelProvider::shared_pointer getProvider()
+       { return provider;}
+    virtual epics::pvData::String getRemoteAddress()
+       { return "local";}
+    virtual epics::pvAccess::Channel::ConnectionState getConnectionState()
+       { return epics::pvAccess::Channel::CONNECTED;}
+    virtual epics::pvData::String getChannelName()
+       { return name; }
+    virtual epics::pvAccess::ChannelRequester::shared_pointer getChannelRequester()
+       { return requester;}
+    virtual bool isConnected()
+       { return true;}
     virtual void getField(
         epics::pvAccess::GetFieldRequester::shared_pointer const &requester,
         epics::pvData::String const &subField);
+    virtual epics::pvAccess::AccessRights getAccessRights(
+        epics::pvData::PVField::shared_pointer const &pvField)
+        {throw std::logic_error("Not Implemented");}
     virtual epics::pvAccess::ChannelProcess::shared_pointer createChannelProcess(
         epics::pvAccess::ChannelProcessRequester::shared_pointer const &channelProcessRequester,
         epics::pvData::PVStructurePtr const &pvRequest);
@@ -81,6 +121,28 @@ public:
     virtual epics::pvAccess::ChannelPut::shared_pointer createChannelPut(
         epics::pvAccess::ChannelPutRequester::shared_pointer const &channelPutRequester,
         epics::pvData::PVStructurePtr const &pvRequest);
+    virtual epics::pvAccess::ChannelPutGet::shared_pointer createChannelPutGet(
+        epics::pvAccess::ChannelPutGetRequester::shared_pointer const &requester,
+        epics::pvData::PVStructure::shared_pointer const &pvRequest)
+        {
+           epics::pvData::Status status(epics::pvData::Status::STATUSTYPE_ERROR,
+           epics::pvData::String("ChannelPutGet not supported"));
+           requester->channelPutGetConnect(
+               status,
+               epics::pvAccess::ChannelPutGet::shared_pointer(),
+               epics::pvData::PVStructure::shared_pointer(),
+               epics::pvData::PVStructure::shared_pointer());
+               return epics::pvAccess::ChannelPutGet::shared_pointer();
+        }
+    virtual epics::pvAccess::ChannelRPC::shared_pointer createChannelRPC(
+        epics::pvAccess::ChannelRPCRequester::shared_pointer const &requester,
+        epics::pvData::PVStructure::shared_pointer const &pvRequest)
+        {
+            epics::pvData::Status status(epics::pvData::Status::STATUSTYPE_ERROR,
+            epics::pvData::String("ChannelRPC not supported"));
+            requester->channelRPCConnect(status,epics::pvAccess::ChannelRPC::shared_pointer());
+            return epics::pvAccess::ChannelRPC::shared_pointer();
+        }
     virtual epics::pvData::Monitor::shared_pointer createMonitor(
         epics::pvData::MonitorRequester::shared_pointer const &monitorRequester,
         epics::pvData::PVStructurePtr const &pvRequest);
@@ -90,6 +152,13 @@ public:
     virtual void printInfo();
     virtual void printInfo(epics::pvData::StringBuilder out);
 private:
+    shared_pointer getPtrSelf()
+    {
+        return shared_from_this();
+    }
+    DbPvProviderPtr  provider;
+    epics::pvAccess::ChannelRequester::shared_pointer requester;
+    epics::pvData::String name;
     std::tr1::shared_ptr<DbAddr> dbAddr;
     epics::pvData::FieldConstPtr recordField; 
     epics::pvData::PVStructurePtr pvNullStructure;
@@ -103,7 +172,7 @@ class DbPvProcess :
 public:
     POINTER_DEFINITIONS(DbPvProcess);
     DbPvProcess(
-        epics::pvAccess::ChannelBase::shared_pointer const & dbPv,
+        DbPvPtr const & dbPv,
         epics::pvAccess::ChannelProcessRequester::shared_pointer const & channelProcessRequester,
         DbAddr &dbAddr);
     virtual ~DbPvProcess();
@@ -122,7 +191,7 @@ private:
         return shared_from_this();
     }
     static void notifyCallback(struct putNotify *);
-    epics::pvAccess::ChannelBase::shared_pointer dbPv;
+    DbPvPtr dbPv;
     epics::pvAccess::ChannelProcessRequester::shared_pointer channelProcessRequester;
     DbAddr &dbAddr;
     epics::pvData::String recordString;
@@ -144,7 +213,7 @@ class DbPvGet :
 public:
     POINTER_DEFINITIONS(DbPvGet);
     DbPvGet(
-        epics::pvAccess::ChannelBase::shared_pointer const & dbPv,
+        DbPvPtr const & dbPv,
         epics::pvAccess::ChannelGetRequester::shared_pointer const &channelGetRequester,
         DbAddr &dbAddr);
     virtual ~DbPvGet();
@@ -164,7 +233,7 @@ private:
     }
     static void notifyCallback(struct putNotify *);
     DbUtilPtr dbUtil;
-    epics::pvAccess::ChannelBase::shared_pointer dbPv;
+    DbPvPtr dbPv;
     epics::pvAccess::ChannelGetRequester::shared_pointer channelGetRequester;
     epics::pvData::PVStructurePtr pvStructure;
     epics::pvData::BitSet::shared_pointer bitSet;
@@ -187,7 +256,7 @@ class DbPvMultiGet :
 public:
     POINTER_DEFINITIONS(DbPvMultiGet);
     DbPvMultiGet(
-        epics::pvAccess::ChannelBase::shared_pointer const & dbPv,
+        DbPvPtr const & dbPv,
         epics::pvAccess::ChannelGetRequester::shared_pointer const &channelGetRequester,
         DbAddr &dbAddr);
     virtual ~DbPvMultiGet();
@@ -207,7 +276,7 @@ private:
     }
     static void notifyCallback(struct putNotify *);
     DbUtilPtr dbUtil;
-    epics::pvAccess::ChannelBase::shared_pointer dbPv;
+    DbPvPtr dbPv;
     epics::pvAccess::ChannelGetRequester::shared_pointer channelGetRequester;
     epics::pvData::PVStructurePtr pvStructure;
     epics::pvData::PVScalarArrayPtr pvScalarArray;
@@ -230,7 +299,7 @@ class DbPvPut :
 public:
     POINTER_DEFINITIONS(DbPvPut);
     DbPvPut(
-        epics::pvAccess::ChannelBase::shared_pointer const & dbPv,
+        DbPvPtr const & dbPv,
         epics::pvAccess::ChannelPutRequester::shared_pointer const &channelPutRequester,
         DbAddr &dbAddr);
     virtual ~DbPvPut();
@@ -251,7 +320,7 @@ private:
     }
     static void notifyCallback(struct putNotify *);
     DbUtilPtr dbUtil;
-    epics::pvAccess::ChannelBase::shared_pointer dbPv;
+    DbPvPtr dbPv;
     epics::pvAccess::ChannelPutRequester::shared_pointer channelPutRequester;
     epics::pvData::PVStructurePtr pvStructure;
     epics::pvData::BitSet::shared_pointer bitSet;
@@ -274,7 +343,7 @@ class DbPvMultiPut :
 public:
     POINTER_DEFINITIONS(DbPvMultiPut);
     DbPvMultiPut(
-        epics::pvAccess::ChannelBase::shared_pointer const & dbPv,
+        DbPvPtr const & dbPv,
         epics::pvAccess::ChannelPutRequester::shared_pointer const &channelPutRequester,
         DbAddr &dbAddr);
     virtual ~DbPvMultiPut();
@@ -294,7 +363,7 @@ private:
         return shared_from_this();
     }
     DbUtilPtr dbUtil;
-    epics::pvAccess::ChannelBase::shared_pointer dbPv;
+    DbPvPtr dbPv;
     epics::pvAccess::ChannelPutRequester::shared_pointer channelPutRequester;
     epics::pvData::PVStructurePtr pvStructure;
     epics::pvData::PVScalarArrayPtr pvScalarArray;
@@ -318,7 +387,7 @@ class DbPvMonitor
 public:
     POINTER_DEFINITIONS(DbPvMonitor);
     DbPvMonitor(
-        epics::pvAccess::ChannelBase::shared_pointer const & dbPv,
+        DbPvPtr const & dbPv,
         epics::pvData::MonitorRequester::shared_pointer const & monitorRequester,
         DbAddr &dbAddr
     );
@@ -347,7 +416,7 @@ private:
     }
     DbUtilPtr dbUtil;
     epics::pvData::MonitorElementPtr &getFree();
-    epics::pvAccess::ChannelBase::shared_pointer dbPv;
+    DbPvPtr dbPv;
     epics::pvData::MonitorRequester::shared_pointer  monitorRequester;
     DbAddr &dbAddr;
     epics::pvData::Event event;
@@ -380,7 +449,7 @@ class DbPvArray :
 public:
     POINTER_DEFINITIONS(DbPvArray);
     DbPvArray(
-        epics::pvAccess::ChannelBase::shared_pointer const & dbPv,
+        DbPvPtr const & dbPv,
         epics::pvAccess::ChannelArrayRequester::shared_pointer const &channelArrayRequester,
         DbAddr &dbAddr);
     virtual ~DbPvArray();
@@ -396,7 +465,7 @@ private:
     {
         return shared_from_this();
     }
-    epics::pvAccess::ChannelBase::shared_pointer dbPv;
+    DbPvPtr dbPv;
     epics::pvAccess::ChannelArrayRequester::shared_pointer channelArrayRequester;
     epics::pvData::PVScalarArray::shared_pointer pvScalarArray;
     DbAddr &dbAddr;

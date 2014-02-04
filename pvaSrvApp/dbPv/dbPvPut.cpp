@@ -37,7 +37,7 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 
 DbPvPut::DbPvPut(
-    ChannelBase::shared_pointer const &dbPv,
+    DbPvPtr const &dbPv,
     ChannelPutRequester::shared_pointer const &channelPutRequester,
     DbAddr &dbAddr)
 : dbUtil(DbUtil::getDbUtil()),
@@ -128,7 +128,6 @@ void DbPvPut::destroy() {
         if(beingDestroyed) return;
         beingDestroyed = true;
     }
-    dbPv->removeChannelPut(getPtrSelf());
 }
 
 void DbPvPut::put(bool lastRequest)

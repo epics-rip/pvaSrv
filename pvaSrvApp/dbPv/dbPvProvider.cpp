@@ -14,6 +14,8 @@
 #include <epicsExit.h>
 #include <dbAccess.h>
 
+#include <pv/serverContext.h>
+#include <pv/syncChannelFind.h>
 #include <pv/pvIntrospect.h>
 #include <pv/pvData.h>
 #include <pv/noDefaultMethods.h>
@@ -25,14 +27,55 @@ namespace epics { namespace pvaSrv {
 
 using namespace epics::pvData;
 using namespace epics::pvAccess;
+using std::tr1::dynamic_pointer_cast;
+
+static String providerName("dbPv");
 
 DbPvProvider::DbPvProvider()
-: ChannelBaseProvider("dbPv")
 {
 //printf("dbPvProvider::dbPvProvider\n");
 }
 
-DbPvProviderPtr DbPvProvider::getDbPvProvider()
+String DbPvProvider::DbPvProvider::getProviderName()
+{
+    return providerName;
+}
+
+class DbPvProviderFactory;
+typedef std::tr1::shared_ptr<DbPvProviderFactory> DbPvProviderFactoryPtr;
+
+class DbPvProviderFactory : public ChannelProviderFactory
+{
+
+public:
+    POINTER_DEFINITIONS(DbPvProviderFactory);
+    virtual String getFactoryName() { return providerName;}
+    static DbPvProviderFactoryPtr create(
+        DbPvProviderPtr const &channelProvider)
+    {
+        DbPvProviderFactoryPtr xxx(
+            new DbPvProviderFactory(channelProvider));
+        registerChannelProviderFactory(xxx);
+        return xxx;
+    }
+    virtual  ChannelProvider::shared_pointer sharedInstance()
+    {
+        return channelProvider;
+    }
+    virtual  ChannelProvider::shared_pointer newInstance()
+    {
+        return channelProvider;
+    }
+private:
+    DbPvProviderFactory(
+        DbPvProviderPtr const &channelProvider)
+    : channelProvider(channelProvider)
+    {}
+    DbPvProviderPtr channelProvider;
+};
+
+
+DbPvProviderPtr getDbPvProvider()
 {
     static DbPvProviderPtr dbPvProvider;
     static Mutex mutex;
@@ -40,6 +83,9 @@ DbPvProviderPtr DbPvProvider::getDbPvProvider()
 
     if(dbPvProvider.get()==0) {
         dbPvProvider = DbPvProviderPtr(new DbPvProvider());
+        ChannelProvider::shared_pointer xxx = dynamic_pointer_cast<ChannelProvider>(dbPvProvider);
+        dbPvProvider->channelFinder = SyncChannelFind::shared_pointer(new SyncChannelFind(xxx));
+        DbPvProviderFactory::create(dbPvProvider);
     }
     return dbPvProvider;
 }
@@ -55,8 +101,19 @@ ChannelFind::shared_pointer DbPvProvider::channelFind(
 {
     struct dbAddr dbAddr;
     long result = dbNameToAddr(channelName.c_str(),&dbAddr);
-    channelFound(((result==0) ? true: false),channelFindRequester);
-    return ChannelFind::shared_pointer();
+    if(result==0) {
+        channelFindRequester->channelFindResult(
+            Status::Ok,
+            channelFinder,
+            true);
+    } else {
+        Status notFoundStatus(Status::STATUSTYPE_ERROR,String("pv not found"));
+        channelFindRequester.get()->channelFindResult(
+            notFoundStatus,
+            channelFinder,
+            false);
+    }
+    return channelFinder;
 }
 
 Channel::shared_pointer DbPvProvider::createChannel(
@@ -68,18 +125,20 @@ Channel::shared_pointer DbPvProvider::createChannel(
     struct dbAddr dbAddr;
     long result = dbNameToAddr(channelName.c_str(),&dbAddr);
     if(result!=0) {
-        channelNotCreated(channelRequester);
+        Status notFoundStatus(Status::STATUSTYPE_ERROR,String("pv not found"));
+        channelRequester->channelCreated(
+            notFoundStatus,
+            Channel::shared_pointer());
         return Channel::shared_pointer();
     }
     std::tr1::shared_ptr<DbAddr> addr(new DbAddr());
     memcpy(addr.get(),&dbAddr,sizeof(dbAddr));
-    DbPv *v3Channel = new DbPv(
+    DbPvPtr v3Channel(new DbPv(
             getPtrSelf(),
-            channelRequester,channelName,addr);
-    ChannelBase::shared_pointer channel(v3Channel);
+            channelRequester,channelName,addr));
     v3Channel->init();
-    channelCreated(channel);
-    return channel;
+    channelRequester->channelCreated(Status::Ok,v3Channel);
+    return v3Channel;
 }
 
 }}

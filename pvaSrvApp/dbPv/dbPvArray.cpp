@@ -62,7 +62,7 @@ typedef long (*put_array_info) (DBADDR *,long );
 }
 
 DbPvArray::DbPvArray(
-    ChannelBase::shared_pointer const &dbPv,
+    DbPvPtr const &dbPv,
     ChannelArrayRequester::shared_pointer const &channelArrayRequester,
     DbAddr &dbAddr)
 : dbPv(dbPv),
@@ -128,7 +128,6 @@ void DbPvArray::destroy() {
         if(beingDestroyed) return;
         beingDestroyed = true;
     }
-    dbPv->removeChannelArray(getPtrSelf());
 }
 
 void DbPvArray::getArray(bool lastRequest,int offset,int count)

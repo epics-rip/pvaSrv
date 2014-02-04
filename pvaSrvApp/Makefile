@@ -5,7 +5,7 @@ PVASRV_VERSION = 0.9.1
 
 LIBRARY_IOC = pvaSrv
 
-pvaSrv_LIBS += pvIOC pvAccess pvData
+pvaSrv_LIBS += pvAccess pvData
 pvaSrv_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 SRC_DIRS += ../dbPv

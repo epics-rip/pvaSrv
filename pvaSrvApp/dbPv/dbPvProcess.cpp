@@ -30,7 +30,7 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 
 DbPvProcess::DbPvProcess(
-    ChannelBase::shared_pointer const &dbPv,
+    DbPvPtr const &dbPv,
     ChannelProcessRequester::shared_pointer const &channelProcessRequester,
     DbAddr &dbAddr)
 : dbPv(dbPv),
@@ -91,7 +91,6 @@ void DbPvProcess::destroy() {
         if(beingDestroyed) return;
         beingDestroyed = true;
     }
-    dbPv->removeChannelProcess(getPtrSelf());
 }
 
 void DbPvProcess::process(bool lastRequest)

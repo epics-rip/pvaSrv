@@ -38,14 +38,16 @@ int DbPvDebug::getLevel()
 }
 
 DbPv::DbPv(
-    ChannelBaseProvider::shared_pointer const & provider,
-        ChannelRequester::shared_pointer const & requester,
-        String const &name,
-        std::tr1::shared_ptr<DbAddr> dbAddr
+    DbPvProviderPtr const &provider,
+    ChannelRequester::shared_pointer const & requester,
+    String const &name,
+    std::tr1::shared_ptr<DbAddr> dbAddr
 )
-:  ChannelBase(provider,requester,name),
-    dbAddr(dbAddr),
-    recordField()
+:  provider(provider),
+   requester(requester),
+   name(name),
+   dbAddr(dbAddr),
+   recordField()
 {
 //printf("dbPv::dbPv\n");
 }
@@ -124,7 +126,6 @@ ChannelProcess::shared_pointer DbPv::createChannelProcess(
     DbPvProcess::shared_pointer dbPvProcess(
           new DbPvProcess(getPtrSelf(),channelProcessRequester,*(dbAddr.get())));
     dbPvProcess->init();
-    addChannelProcess(dbPvProcess);
     return dbPvProcess;
 }
 
@@ -137,9 +138,7 @@ ChannelGet::shared_pointer DbPv::createChannelGet(
         DbPvMultiGet::shared_pointer dbPvMultiGet(
             new DbPvMultiGet(
                 getPtrSelf(),channelGetRequester,*(dbAddr.get())));
-        if(dbPvMultiGet->init(pvRequest)) {
-            addChannelGet(dbPvMultiGet);
-        } else {
+        if(!dbPvMultiGet->init(pvRequest)) {
             Status createFailed(Status::STATUSTYPE_ERROR, "create dbPvMultiGet failed");
             channelGetRequester->channelGetConnect(
                 createFailed,
@@ -151,9 +150,7 @@ ChannelGet::shared_pointer DbPv::createChannelGet(
     }
     DbPvGet::shared_pointer dbPvGet(
         new DbPvGet(getPtrSelf(),channelGetRequester,*(dbAddr.get())));
-    if(dbPvGet->init(pvRequest)) {
-        addChannelGet(dbPvGet);
-    } else {
+    if(!dbPvGet->init(pvRequest)) {
         Status createFailed(Status::STATUSTYPE_ERROR, "create dbPvGet failed");
         channelGetRequester->channelGetConnect(
             createFailed,
@@ -173,9 +170,7 @@ ChannelPut::shared_pointer DbPv::createChannelPut(
         DbPvMultiPut::shared_pointer dbPvMultiPut(
             new DbPvMultiPut(
                 getPtrSelf(),channelPutRequester,*(dbAddr.get())));
-        if(dbPvMultiPut->init(pvRequest)) {
-            addChannelPut(dbPvMultiPut);
-        } else {
+        if(!dbPvMultiPut->init(pvRequest)) {
             Status createFailed(Status::STATUSTYPE_ERROR, "create dbPvMultiPut failed");
             channelPutRequester->channelPutConnect(
                 createFailed,
@@ -187,9 +182,7 @@ ChannelPut::shared_pointer DbPv::createChannelPut(
     }
     DbPvPut::shared_pointer dbPvPut(
           new DbPvPut(getPtrSelf(),channelPutRequester,*(dbAddr.get())));
-    if(dbPvPut->init(pvRequest)) {
-        addChannelPut(dbPvPut);
-    } else {
+    if(!dbPvPut->init(pvRequest)) {
         Status createFailed(Status::STATUSTYPE_ERROR, "create dbPvPut failed");
         channelPutRequester->channelPutConnect(
             createFailed,
@@ -206,9 +199,7 @@ Monitor::shared_pointer DbPv::createMonitor(
 {
     DbPvMonitor::shared_pointer dbPvMonitor(
          new DbPvMonitor(getPtrSelf(),monitorRequester,*(dbAddr.get())));
-    if(dbPvMonitor->init(pvRequest)) {
-        addChannelMonitor(dbPvMonitor);
-    } else {
+    if(!dbPvMonitor->init(pvRequest)) {
         Status createFailed(Status::STATUSTYPE_ERROR, "create dbPvMonitor failed");
         StructureConstPtr xxx;
         monitorRequester->monitorConnect(
@@ -225,9 +216,7 @@ ChannelArray::shared_pointer DbPv::createChannelArray(
 {
     DbPvArray::shared_pointer dbPvArray(
          new DbPvArray(getPtrSelf(),channelArrayRequester,*(dbAddr.get())));
-    if(dbPvArray->init(pvRequest)) {
-        addChannelArray(dbPvArray);
-    } else {
+    if(!dbPvArray->init(pvRequest)) {
         Status createFailed(Status::STATUSTYPE_ERROR, "create dbPvArray failed");
         PVScalarArrayPtr xxx;
         channelArrayRequester->channelArrayConnect(

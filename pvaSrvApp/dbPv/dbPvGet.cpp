@@ -31,7 +31,7 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 
 DbPvGet::DbPvGet(
-    ChannelBase::shared_pointer const &dbPv,
+    DbPvPtr const &dbPv,
     ChannelGetRequester::shared_pointer const &channelGetRequester,
     DbAddr &dbAddr)
 : dbUtil(DbUtil::getDbUtil()),
@@ -111,7 +111,6 @@ void DbPvGet::destroy() {
         if(beingDestroyed) return;
         beingDestroyed = true;
     }
-    dbPv->removeChannelGet(getPtrSelf());
 }
 
 void DbPvGet::get(bool lastRequest)

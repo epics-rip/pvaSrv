@@ -41,7 +41,7 @@ using namespace epics::pvAccess;
 using std::tr1::dynamic_pointer_cast;
 
 DbPvMonitor::DbPvMonitor(
-    ChannelBase::shared_pointer const &dbPv,
+    DbPvPtr const &dbPv,
     MonitorRequester::shared_pointer const &monitorRequester,
     DbAddr &dbAddr)
 : dbUtil(DbUtil::getDbUtil()),
@@ -157,7 +157,6 @@ void DbPvMonitor::destroy() {
     }
     stop();
     caMonitor.reset();
-    dbPv->removeChannelMonitor(getPtrSelf());
     dbPv.reset();
 }
 

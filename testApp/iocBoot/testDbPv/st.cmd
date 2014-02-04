@@ -70,9 +70,5 @@ cd ${TOP}/iocBoot/${IOC}
 iocInit()
 epicsThreadSleep(2.0)
 casr
-pvaSrvSetDebugLevel 0
-setChannelBaseDebugLevel 0
-pvaSrvStart
-startExampleService serviceRPC
-startPVServiceChannel
+startPVAServer
 dbpf string01 10.1

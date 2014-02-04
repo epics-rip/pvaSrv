@@ -39,7 +39,7 @@ using namespace epics::pvAccess;
 using std::tr1::static_pointer_cast;
 
 DbPvMultiPut::DbPvMultiPut(
-    ChannelBase::shared_pointer const &dbPv,
+    DbPvPtr const &dbPv,
     ChannelPutRequester::shared_pointer const &channelPutRequester,
     DbAddr &dbAddr)
 : dbUtil(DbUtil::getDbUtil()),
@@ -175,7 +175,6 @@ void DbPvMultiPut::destroy() {
         if(beingDestroyed) return;
         beingDestroyed = true;
     }
-    dbPv->removeChannelPut(getPtrSelf());
 }
 
 void DbPvMultiPut::put(bool lastRequest)
@@ -195,76 +194,109 @@ void DbPvMultiPut::put(bool lastRequest)
             isSameLockSet = false;
         }
     }
-    if(!isSameLockSet) dbScanUnlock(dbAddr.precord);
-    for(size_t i=0; i<n; i++) {
-        precord = dbAddrArray[i].precord;
-        if(!isSameLockSet) dbScanLock(precord);
-        ScalarType scalarType = pvScalarArray->getScalarArray()->getElementType();
-        switch(scalarType) {
-        case pvByte: {
+    precord = dbAddr.precord;
+    if(!isSameLockSet) dbScanUnlock(precord);
+    ScalarType scalarType = pvScalarArray->getScalarArray()->getElementType();
+    switch(scalarType) {
+    case pvByte: {
+        PVByteArrayPtr pva = static_pointer_cast<PVByteArray>(pvScalarArray);
+        PVByteArray::const_svector xxx = pva->view();
+        for(size_t i=0; i<n; i++) {
+            precord = dbAddrArray[i].precord;
             int8 * val = static_cast<int8 *>(dbAddrArray[i].pfield);
-            PVByteArrayPtr pv = static_pointer_cast<PVByteArray>(pvScalarArray);
-            int8 * array = pv->get();
-            *val = array[i];
-            break;
+            if(!isSameLockSet) dbScanLock(precord);
+            *val = xxx[i];
+            if(!isSameLockSet) dbScanUnlock(precord);
         }
-        case pvUByte: {
+        break;
+    }
+    case pvUByte: {
+        PVUByteArrayPtr pva = static_pointer_cast<PVUByteArray>(pvScalarArray);
+        PVUByteArray::const_svector xxx = pva->view();
+        for(size_t i=0; i<n; i++) {
+            precord = dbAddrArray[i].precord;
             uint8 * val = static_cast<uint8 *>(dbAddrArray[i].pfield);
-            PVUByteArrayPtr pv = static_pointer_cast<PVUByteArray>(pvScalarArray);
-            uint8 * array = pv->get();
-            *val = array[i];
-            break;
+            if(!isSameLockSet) dbScanLock(precord);
+            *val = xxx[i];
+            if(!isSameLockSet) dbScanUnlock(precord);
         }
-        case pvShort: {
+        break;
+    }
+    case pvShort: {
+        PVShortArrayPtr pva = static_pointer_cast<PVShortArray>(pvScalarArray);
+        PVShortArray::const_svector xxx = pva->view();
+        for(size_t i=0; i<n; i++) {
+            precord = dbAddrArray[i].precord;
             int16 * val = static_cast<int16 *>(dbAddrArray[i].pfield);
-            PVShortArrayPtr pv = static_pointer_cast<PVShortArray>(pvScalarArray);
-            int16 * array = pv->get();
-            *val = array[i];
-            break;
+            if(!isSameLockSet) dbScanLock(precord);
+            *val = xxx[i];
+            if(!isSameLockSet) dbScanUnlock(precord);
         }
-        case pvUShort: {
+        break;
+    }
+    case pvUShort: {
+        PVUShortArrayPtr pva = static_pointer_cast<PVUShortArray>(pvScalarArray);
+        PVUShortArray::const_svector xxx = pva->view();
+        for(size_t i=0; i<n; i++) {
+            precord = dbAddrArray[i].precord;
             uint16 * val = static_cast<uint16 *>(dbAddrArray[i].pfield);
-            PVUShortArrayPtr pv = static_pointer_cast<PVUShortArray>(pvScalarArray);
-            uint16 * array = pv->get();
-            *val = array[i];
-            break;
+            if(!isSameLockSet) dbScanLock(precord);
+            *val = xxx[i];
+            if(!isSameLockSet) dbScanUnlock(precord);
         }
-        case pvInt: {
-            int32 * val = static_cast<int32 *>(dbAddrArray[i].pfield);
-            PVIntArrayPtr pv = static_pointer_cast<PVIntArray>(pvScalarArray);
-            int32 * array = pv->get();
-            *val = array[i];
-            break;
-        }
-        case pvUInt: {
+        break;
+    }
+    case pvInt: {
+        PVIntArrayPtr pva = static_pointer_cast<PVIntArray>(pvScalarArray);
+        PVIntArray::const_svector xxx = pva->view();
+        for(size_t i=0; i<n; i++) {
+            precord = dbAddrArray[i].precord;
             uint32 * val = static_cast<uint32 *>(dbAddrArray[i].pfield);
-            PVUIntArrayPtr pv = static_pointer_cast<PVUIntArray>(pvScalarArray);
-            uint32 * array = pv->get();
-            *val = array[i];
-            break;
+            if(!isSameLockSet) dbScanLock(precord);
+            *val = xxx[i];
+            if(!isSameLockSet) dbScanUnlock(precord);
         }
-        case pvFloat: {
+        break;
+    }
+    case pvUInt: {
+        PVUIntArrayPtr pva = static_pointer_cast<PVUIntArray>(pvScalarArray);
+        PVUIntArray::const_svector xxx = pva->view();
+        for(size_t i=0; i<n; i++) {
+            precord = dbAddrArray[i].precord;
+            uint32 * val = static_cast<uint32 *>(dbAddrArray[i].pfield);
+            if(!isSameLockSet) dbScanLock(precord);
+            *val = xxx[i];
+            if(!isSameLockSet) dbScanUnlock(precord);
+        }
+        break;
+    }
+    case pvFloat: {
+        PVFloatArrayPtr pva = static_pointer_cast<PVFloatArray>(pvScalarArray);
+        PVFloatArray::const_svector xxx = pva->view();
+        for(size_t i=0; i<n; i++) {
+            precord = dbAddrArray[i].precord;
             float * val = static_cast<float *>(dbAddrArray[i].pfield);
-            PVFloatArrayPtr pv = static_pointer_cast<PVFloatArray>(pvScalarArray);
-            float * array = pv->get();
-            *val = array[i];
-            break;
+            if(!isSameLockSet) dbScanLock(precord);
+            *val = xxx[i];
+            if(!isSameLockSet) dbScanUnlock(precord);
         }
-        case pvDouble: {
+        break;
+    }
+    case pvDouble: {
+        PVDoubleArrayPtr pva = static_pointer_cast<PVDoubleArray>(pvScalarArray);
+        PVDoubleArray::const_svector xxx = pva->view();
+        for(size_t i=0; i<n; i++) {
+            precord = dbAddrArray[i].precord;
             double * val = static_cast<double *>(dbAddrArray[i].pfield);
-            PVDoubleArrayPtr pv = static_pointer_cast<PVDoubleArray>(pvScalarArray);
-            double * array = pv->get();
-            *val = array[i];
-            break;
+            if(!isSameLockSet) dbScanLock(precord);
+            *val = xxx[i];
+            if(!isSameLockSet) dbScanUnlock(precord);
         }
-        default:
-            channelPutRequester->message(
-                String("Logic Error did not handle scalarType"),errorMessage);
-        }
-        if(process) {
-            if(!precord->disp) dbProcess(precord);
-        }
-        if(!isSameLockSet) dbScanUnlock(precord);
+        break;
+    }
+    default:
+        channelPutRequester->message(
+            String("Logic Error did not handle scalarType"),errorMessage);
     }
     if(isSameLockSet) dbScanUnlock(dbAddr.precord);
     String message("atomic ");
@@ -293,72 +325,123 @@ void DbPvMultiPut::get()
         }
     }
     if(!isSameLockSet) dbScanUnlock(dbAddr.precord);
-    for(size_t i=0; i<n; i++) {
-        precord = dbAddrArray[i].precord;
-        if(!isSameLockSet) dbScanLock(precord);
-        ScalarType scalarType = pvScalarArray->getScalarArray()->getElementType();
-        switch(scalarType) {
-        case pvByte: {
+    ScalarType scalarType = pvScalarArray->getScalarArray()->getElementType();
+    switch(scalarType) {
+    case pvByte: {
+        shared_vector<int8> xxx(n);
+        for(size_t i=0; i<n; i++) {
+            precord = dbAddrArray[i].precord;
+            if(!isSameLockSet) dbScanLock(precord);
             int8 * val = static_cast<int8 *>(dbAddrArray[i].pfield);
-            PVByteArrayPtr pv = static_pointer_cast<PVByteArray>(pvScalarArray);
-            int8 * array = pv->get();
-            array[i] = *val;
-            break;
+            xxx[i] = *val;
+            if(!isSameLockSet) dbScanUnlock(precord);
         }
-        case pvUByte: {
+        shared_vector<const int8> data(freeze(xxx));
+        PVByteArrayPtr pv = static_pointer_cast<PVByteArray>(pvScalarArray);
+        pv->replace(data);
+        break;
+    }
+    case pvUByte: {
+        shared_vector<uint8> xxx(n);
+        for(size_t i=0; i<n; i++) {
+            precord = dbAddrArray[i].precord;
+            if(!isSameLockSet) dbScanLock(precord);
             uint8 * val = static_cast<uint8 *>(dbAddrArray[i].pfield);
-            PVUByteArrayPtr pv = static_pointer_cast<PVUByteArray>(pvScalarArray);
-            uint8 * array = pv->get();
-            array[i] = *val;
-            break;
+            xxx[i] = *val;
+            if(!isSameLockSet) dbScanUnlock(precord);
         }
-        case pvShort: {
+        shared_vector<const uint8> data(freeze(xxx));
+        PVUByteArrayPtr pv = static_pointer_cast<PVUByteArray>(pvScalarArray);
+        pv->replace(data);
+        break;
+    }
+    case pvShort: {
+        shared_vector<int16> xxx(n);
+        for(size_t i=0; i<n; i++) {
+            precord = dbAddrArray[i].precord;
+            if(!isSameLockSet) dbScanLock(precord);
             int16 * val = static_cast<int16 *>(dbAddrArray[i].pfield);
-            PVShortArrayPtr pv = static_pointer_cast<PVShortArray>(pvScalarArray);
-            int16 * array = pv->get();
-            array[i] = *val;
-            break;
+            xxx[i] = *val;
+            if(!isSameLockSet) dbScanUnlock(precord);
         }
-        case pvUShort: {
+        shared_vector<const int16> data(freeze(xxx));
+        PVShortArrayPtr pv = static_pointer_cast<PVShortArray>(pvScalarArray);
+        pv->replace(data);
+        break;
+    }
+    case pvUShort: {
+        shared_vector<uint16> xxx(n);
+        for(size_t i=0; i<n; i++) {
+            precord = dbAddrArray[i].precord;
+            if(!isSameLockSet) dbScanLock(precord);
             uint16 * val = static_cast<uint16 *>(dbAddrArray[i].pfield);
-            PVUShortArrayPtr pv = static_pointer_cast<PVUShortArray>(pvScalarArray);
-            uint16 * array = pv->get();
-            array[i] = *val;
-            break;
+            xxx[i] = *val;
+            if(!isSameLockSet) dbScanUnlock(precord);
         }
-        case pvInt: {
+        shared_vector<const uint16> data(freeze(xxx));
+        PVUShortArrayPtr pv = static_pointer_cast<PVUShortArray>(pvScalarArray);
+        pv->replace(data);
+        break;
+    }
+    case pvInt: {
+        shared_vector<int32> xxx(n);
+        for(size_t i=0; i<n; i++) {
+            precord = dbAddrArray[i].precord;
+            if(!isSameLockSet) dbScanLock(precord);
             int32 * val = static_cast<int32 *>(dbAddrArray[i].pfield);
-            PVIntArrayPtr pv = static_pointer_cast<PVIntArray>(pvScalarArray);
-            int32 * array = pv->get();
-            array[i] = *val;
-            break;
+            xxx[i] = *val;
+            if(!isSameLockSet) dbScanUnlock(precord);
         }
-        case pvUInt: {
+        shared_vector<const int32> data(freeze(xxx));
+        PVIntArrayPtr pv = static_pointer_cast<PVIntArray>(pvScalarArray);
+        pv->replace(data);
+        break;
+    }
+    case pvUInt: {
+        shared_vector<uint32> xxx(n);
+        for(size_t i=0; i<n; i++) {
+            precord = dbAddrArray[i].precord;
+            if(!isSameLockSet) dbScanLock(precord);
             uint32 * val = static_cast<uint32 *>(dbAddrArray[i].pfield);
-            PVUIntArrayPtr pv = static_pointer_cast<PVUIntArray>(pvScalarArray);
-            uint32 * array = pv->get();
-            array[i] = *val;
-            break;
+            xxx[i] = *val;
+            if(!isSameLockSet) dbScanUnlock(precord);
         }
-        case pvFloat: {
+        shared_vector<const uint32> data(freeze(xxx));
+        PVUIntArrayPtr pv = static_pointer_cast<PVUIntArray>(pvScalarArray);
+        pv->replace(data);
+        break;
+    }
+    case pvFloat: {
+        shared_vector<float> xxx(n);
+        for(size_t i=0; i<n; i++) {
+            precord = dbAddrArray[i].precord;
+            if(!isSameLockSet) dbScanLock(precord);
             float * val = static_cast<float *>(dbAddrArray[i].pfield);
-            PVFloatArrayPtr pv = static_pointer_cast<PVFloatArray>(pvScalarArray);
-            float * array = pv->get();
-            array[i] = *val;
-            break;
+            xxx[i] = *val;
+            if(!isSameLockSet) dbScanUnlock(precord);
         }
-        case pvDouble: {
+        shared_vector<const float> data(freeze(xxx));
+        PVFloatArrayPtr pv = static_pointer_cast<PVFloatArray>(pvScalarArray);
+        pv->replace(data);
+        break;
+    }
+    case pvDouble: {
+        shared_vector<double> xxx(n);
+        for(size_t i=0; i<n; i++) {
+            precord = dbAddrArray[i].precord;
+            if(!isSameLockSet) dbScanLock(precord);
             double * val = static_cast<double *>(dbAddrArray[i].pfield);
-            PVDoubleArrayPtr pv = static_pointer_cast<PVDoubleArray>(pvScalarArray);
-            double * array = pv->get();
-            array[i] = *val;
-            break;
+            xxx[i] = *val;
+            if(!isSameLockSet) dbScanUnlock(precord);
         }
-        default:
-            channelPutRequester->message(
-                String("Logic Error did not handle scalarType"),errorMessage);
-        }
-        if(!isSameLockSet) dbScanUnlock(precord);
+        shared_vector<const double> data(freeze(xxx));
+        PVDoubleArrayPtr pv = static_pointer_cast<PVDoubleArray>(pvScalarArray);
+        pv->replace(data);
+        break;
+    }
+    default:
+        channelPutRequester->message(
+            String("Logic Error did not handle scalarType"),errorMessage);
     }
     bitSet->clear();
     bitSet->set(0);

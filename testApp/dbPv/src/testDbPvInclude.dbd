@@ -7,7 +7,6 @@ include "ulongRecord.dbd"
 include "floatRecord.dbd"
 include "bigstringinRecord.dbd"
 include "dbPv.dbd"
-include "exampleServiceRegister.dbd"
-include "pvServiceChannelRegister.dbd"
+include "PVAServerRegister.dbd"
 
 registrar("testDbPvRegister")
