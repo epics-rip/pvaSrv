@@ -43,7 +43,7 @@ testDbPv_SRCS_vxWorks += -nil-
 testDbPv_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary
 
 testDbPv_LIBS += testDbPvSupport
-testDbPv_LIBS += pvaSrv pvDatabase pvAccess pvData pvMB
+testDbPv_LIBS += pvaSrv pvAccess pvData pvMB
 testDbPv_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 #===========================
