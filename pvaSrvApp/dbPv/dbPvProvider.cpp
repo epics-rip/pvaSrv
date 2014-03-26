@@ -36,7 +36,7 @@ DbPvProvider::DbPvProvider()
 //printf("dbPvProvider::dbPvProvider\n");
 }
 
-String DbPvProvider::DbPvProvider::getProviderName()
+String DbPvProvider::getProviderName()
 {
     return providerName;
 }
