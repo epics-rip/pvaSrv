@@ -366,8 +366,20 @@ PVStructurePtr DbUtil::createPVStructure(
              }
     }
     if(!(propertyMask&getValueBit)) {
-        PVStructurePtr pvParent = standardPVField->scalar(pvByte,properties);
-        pvParent->removePVField("value");
+        StructureConstPtr structure = standardField->scalar(pvByte,properties);
+        FieldConstPtrArray fields = structure->getFields();
+        StringArray names = structure->getFieldNames();
+        for(size_t i=0; i<names.size(); ++i) {
+            if(names[i].compare("value")==0) {
+                fields.erase(fields.begin()+i);
+                names.erase(names.begin()+i);
+                break;
+            }
+        }
+        StructureConstPtr newStructure = fieldCreate->createStructure(
+             names,fields);
+        PVStructurePtr pvParent = pvDataCreate->createPVStructure(
+            newStructure);
         return pvParent;
     }
     if((propertyMask&scalarValueBit)!=0) {

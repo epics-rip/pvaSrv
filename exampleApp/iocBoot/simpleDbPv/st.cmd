@@ -12,4 +12,4 @@ dbLoadRecords("db/test.db")
 cd ${TOP}/iocBoot/${IOC}
 iocInit()
 
-pvaSrvStart
+startPVAServer
