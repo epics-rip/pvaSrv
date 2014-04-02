@@ -1,6 +1,6 @@
 # This is a Makefile fragment, see ../Makefile
 
-SRC_DIRS += $(PVASRVAPP)/dbGroup
+SRC_DIRS += $(PVASRV_SRC)/dbGroup
 
 DBD += dbGroup.dbd
 

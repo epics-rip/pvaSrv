@@ -7,10 +7,10 @@ PVASRV_VERSION = 0.9.1
 
 LIBRARY_IOC = pvaSrv
 
-PVASRVAPP = $(TOP)/pvaSrvApp
+PVASRV_SRC = $(TOP)/src
 
-include $(PVASRVAPP)/dbPv/Makefile
-# include $(PVASRVAPP)/dbGroup/Makefile
+include $(PVASRV_SRC)/dbPv/Makefile
+#include $(PVASRV_SRC)/dbGroup/Makefile
 
 pvaSrv_LIBS += pvAccess pvData
 pvaSrv_LIBS += $(EPICS_BASE_IOC_LIBS)
