@@ -8,12 +8,14 @@ DIRS := configure
 DIRS += src
 src_DEPEND_DIRS = configure
 
-EMBEDDED_TOPS += exampleApp
-EMBEDDED_TOPS += testApp
+EMBEDDED_TOPS := $(wildcard *Top)
 
 DIRS += $(EMBEDDED_TOPS)
 
-exampleApp_DEPEND_DIRS += src
-testApp_DEPEND_DIRS += src
+define dir_DEP
+  $(1)_DEPEND_DIRS = src
+endef
+
+$(foreach dir, $(EMBEDDED_TOPS), $(eval $(call dir_DEP,$(dir))))
 
 include $(TOP)/configure/RULES_TOP
