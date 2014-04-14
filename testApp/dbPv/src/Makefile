@@ -19,6 +19,7 @@ DBDINC += bigstringinRecord
 
 DBD += testDbPv.dbd
 
+
 LIBRARY_IOC += testDbPvSupport
 testDbPvSupport_SRCS += byteRecord.c
 testDbPvSupport_SRCS += shortRecord.c
@@ -28,6 +29,7 @@ testDbPvSupport_SRCS += ushortRecord.c
 testDbPvSupport_SRCS += ulongRecord.c
 testDbPvSupport_SRCS += bigstringinRecord.c
 testDbPvSupport_SRCS += testDbPv.cpp
+testDbPvSupport_LIBS_WIN32 += pvAccess pvData dbIoc Com
 
 #=============================
 # Build an IOC application

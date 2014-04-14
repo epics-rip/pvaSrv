@@ -30,7 +30,6 @@
 #include <recSup.h>
 #include <dbBase.h>
 #include <dbEvent.h>
-#include <epicsExport.h>
 
 #include <pv/noDefaultMethods.h>
 #include <pv/pvIntrospect.h>
@@ -48,6 +47,8 @@
 #include <pv/pvEnumerated.h>
 #include <pv/pvTimeStamp.h>
 
+#define epicsExportSharedSymbols
+#include <epicsExport.h>
 #include "dbPv.h"
 
 namespace epics { namespace pvaSrv { 

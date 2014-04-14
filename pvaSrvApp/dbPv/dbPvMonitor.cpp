@@ -22,13 +22,15 @@
 #include <dbAccess.h>
 #include <dbNotify.h>
 #include <dbCommon.h>
-#include <epicsExport.h>
 
 #include <pv/pvData.h>
 #include <pv/convert.h>
 #include <pv/monitor.h>
 #include <pv/pvAccess.h>
 
+#define epicsExportSharedSymbols
+
+#include <epicsExport.h>
 #include "dbPv.h"
 #include "caContext.h"
 #include "caMonitor.h"
