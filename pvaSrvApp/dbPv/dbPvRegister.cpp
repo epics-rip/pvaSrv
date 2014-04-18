@@ -47,4 +47,6 @@ static void dbPvRegister(void)
     }
 }
 
-epicsExportRegistrar(dbPvRegister);
+extern "C" {
+    epicsExportRegistrar(dbPvRegister);
+}

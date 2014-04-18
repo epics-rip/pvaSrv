@@ -180,4 +180,6 @@ static void dbGroupRegister(void)
     }
 }
 
-epicsExportRegistrar(dbGroupRegister);
+extern "C" {
+    epicsExportRegistrar(dbGroupRegister);
+}
