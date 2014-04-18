@@ -24,13 +24,15 @@
 #include <epicsThread.h>
 #include <errlog.h>
 #include <iocsh.h>
-#include <epicsExport.h>
 
 #include <pv/pvIntrospect.h>
 #include <pv/pvData.h>
 #include <pv/pvAccess.h>
 
+#define epicsExportSharedSymbols
+
 #include "dbPv.h"
+#include <epicsExport.h>
 
 using namespace epics::pvData;
 using namespace epics::pvAccess;
@@ -45,4 +47,6 @@ static void dbPvRegister(void)
     }
 }
 
-epicsExportRegistrar(dbPvRegister);
+extern "C" {
+    epicsExportRegistrar(dbPvRegister);
+}
