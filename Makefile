@@ -1,21 +1,21 @@
-#Makefile at top of application tree
+# Makefile for the EPICS V4 pvaSrv module
+
 TOP = .
 include $(TOP)/configure/CONFIG
-DIRS := $(DIRS) $(filter-out $(DIRS), configure)
-DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard *App))
-DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard iocBoot))
 
-define DIR_template
- $(1)_DEPEND_DIRS = configure
+DIRS := configure
+
+DIRS += src
+src_DEPEND_DIRS = configure
+
+EMBEDDED_TOPS := $(wildcard *Top)
+
+DIRS += $(EMBEDDED_TOPS)
+
+define dir_DEP
+  $(1)_DEPEND_DIRS = src
 endef
-$(foreach dir, $(filter-out configure,$(DIRS)),$(eval $(call DIR_template,$(dir))))
 
-EMBEDDED_TOPS += exampleApp
-EMBEDDED_TOPS += testApp
-
-iocBoot_DEPEND_DIRS += $(filter %App,$(DIRS))
-
-exampleApp_DEPEND_DIRS += pvaSrvApp
-testApp_DEPEND_DIRS += pvaSrvApp
+$(foreach dir, $(EMBEDDED_TOPS), $(eval $(call dir_DEP,$(dir))))
 
 include $(TOP)/configure/RULES_TOP
