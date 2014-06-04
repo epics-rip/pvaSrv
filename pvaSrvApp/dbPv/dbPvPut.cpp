@@ -106,8 +106,7 @@ bool DbPvPut::init(PVStructure::shared_pointer const &pvRequest)
     channelPutRequester->channelPutConnect(
        Status::Ok,
        getPtrSelf(),
-       pvStructure,
-       bitSet);
+       pvStructure->getStructure());
     return true;
 }
 
@@ -130,17 +129,18 @@ void DbPvPut::destroy() {
     }
 }
 
-void DbPvPut::put(bool lastRequest)
+void DbPvPut::put(PVStructurePtr const &pvStructure, BitSetPtr const & bitSet)
 {
     if(DbPvDebug::getLevel()>0) printf("dbPvPut::put()\n");
     Lock lock(dataMutex);
+    this->pvStructure = pvStructure;
+    this->bitSet = bitSet;
     PVFieldPtr pvField = pvStructure.get()->getPVFields()[0];
     if(propertyMask&dbUtil->dbPutBit) {
         Status status = dbUtil->putField(
             channelPutRequester,propertyMask,dbAddr,pvField);
         lock.unlock();
-        channelPutRequester->putDone(status);
-        if(lastRequest) destroy();
+        channelPutRequester->putDone(status,getPtrSelf());
         return;
     }
     dbScanLock(dbAddr.precord);
@@ -154,8 +154,7 @@ void DbPvPut::put(bool lastRequest)
         dbPutNotify(pNotify.get());
         event.wait();
     }
-    channelPutRequester->putDone(status);
-    if(lastRequest) destroy();
+    channelPutRequester->putDone(status,getPtrSelf());
 }
 
 void DbPvPut::notifyCallback(struct putNotify *pn)
@@ -183,7 +182,11 @@ void DbPvPut::get()
     }
     dbScanUnlock(dbAddr.precord);
     }
-    channelPutRequester->getDone(Status::Ok);
+    channelPutRequester->getDone(
+        Status::Ok,
+        getPtrSelf(),
+        pvStructure,
+        bitSet);
 }
 
 void DbPvPut::lock()

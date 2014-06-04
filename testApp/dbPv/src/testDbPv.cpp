@@ -103,22 +103,23 @@ public:
     virtual void channelGetConnect(
         const Status &status,
         ChannelGet::shared_pointer const &channelGet,
-        PVStructure::shared_pointer const &pvStructure,
-        BitSet::shared_pointer const &bitSet)
+        StructureConstPtr const &structure)
     {
         channelGetPtr = channelGet;
-        pvStructurePtr = pvStructure;
-        bitSetPtr = bitSet;
         printf("channelGetConnect statusOK %s\n",
             (status.isOK() ? "true" : "false"));
     }
-    virtual void getDone(const Status &status)
+    virtual void getDone(
+        const Status &status,
+        ChannelGet::shared_pointer const & channelGet,
+        PVStructurePtr const &pvStructure,
+        BitSetPtr const & bitSet)
     {
+        pvStructurePtr = pvStructure;
+        bitSetPtr = bitSet;
         printf("getDone statusOK %s\n",
             (status.isOK() ? "true" : "false"));
-        String buffer("");
-        pvStructurePtr->toString(&buffer);
-        printf("%s\n",buffer.c_str());
+        std::cout << pvStructure->dumpValue(std::cout) << std::endl;
     }
 private:
     String name;
@@ -141,7 +142,7 @@ static void testDbPvCallFunc(const iocshArgBuf *args)
     String channelName(pvName);
     printf("channelName %s\n",channelName.c_str());
     ChannelProvider::shared_pointer channelProvider =
-        getChannelAccess()->getProvider("dbPv");
+        getChannelProviderRegistry()->getProvider("dbPv");
     String providerName = channelProvider->getProviderName();
     printf("providerName %s\n",providerName.c_str());
     FindRequester::shared_pointer findRequester
@@ -163,7 +164,7 @@ static void testDbPvCallFunc(const iocshArgBuf *args)
         "record[process=true]field(value,timeStamp,alarm)");
     ChannelGet::shared_pointer channelGet = channel->createChannelGet(
         myRequester,pvRequest);
-    channelGet->get(false);
+    channelGet->get();
     channelGet->destroy();
     if(channel!=0) {
         channel->destroy();

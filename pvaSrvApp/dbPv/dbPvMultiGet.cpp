@@ -152,8 +152,7 @@ bool DbPvMultiGet::init(PVStructurePtr const &pvRequest)
     channelGetRequester->channelGetConnect(
        Status::Ok,
        getPtrSelf(),
-       pvStructure,
-       bitSet);
+       pvStructure->getStructure());
     if(DbPvDebug::getLevel()>0)
         printf("dbPvMultiGet::init() returning true\n");
     return true;
@@ -178,7 +177,7 @@ void DbPvMultiGet::destroy() {
     }
 }
 
-void DbPvMultiGet::get(bool lastRequest)
+void DbPvMultiGet::get()
 {
     if(DbPvDebug::getLevel()>0)
         printf("dbPvMultiGet::get()\n");
@@ -345,8 +344,11 @@ void DbPvMultiGet::get(bool lastRequest)
     String message("atomic ");
     message += (isSameLockSet ? "true" : "false");
     channelGetRequester->message(message,infoMessage);
-    channelGetRequester->getDone(Status::Ok);
-    if(lastRequest) destroy();
+    channelGetRequester->getDone(
+        Status::Ok,
+        getPtrSelf(),
+        pvStructure,
+        bitSet);
 }
 
 void DbPvMultiGet::lock()

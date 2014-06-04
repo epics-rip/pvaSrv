@@ -89,8 +89,7 @@ bool DbPvGet::init(PVStructure::shared_pointer const &pvRequest)
     channelGetRequester->channelGetConnect(
        Status::Ok,
        getPtrSelf(),
-       pvStructure,
-       bitSet);
+       pvStructure->getStructure());
     return true;
 }
 
@@ -113,7 +112,7 @@ void DbPvGet::destroy() {
     }
 }
 
-void DbPvGet::get(bool lastRequest)
+void DbPvGet::get()
 {
     if(process) {
         epicsUInt8 value = 1;
@@ -140,8 +139,11 @@ void DbPvGet::get(bool lastRequest)
     }
     
     lock.unlock();
-    channelGetRequester->getDone(status);
-    if(lastRequest) destroy();
+    channelGetRequester->getDone(
+        status,
+        getPtrSelf(),
+        pvStructure,
+        bitSet);
 }
 
 void DbPvGet::notifyCallback(struct putNotify *pn)

@@ -127,12 +127,13 @@ public:
         {
            epics::pvData::Status status(epics::pvData::Status::STATUSTYPE_ERROR,
            epics::pvData::String("ChannelPutGet not supported"));
+           epics::pvData::StructureConstPtr nullStructure;
            requester->channelPutGetConnect(
                status,
                epics::pvAccess::ChannelPutGet::shared_pointer(),
-               epics::pvData::PVStructure::shared_pointer(),
-               epics::pvData::PVStructure::shared_pointer());
-               return epics::pvAccess::ChannelPutGet::shared_pointer();
+               nullStructure,
+               nullStructure);
+           return epics::pvAccess::ChannelPutGet::shared_pointer();
         }
     virtual epics::pvAccess::ChannelRPC::shared_pointer createChannelRPC(
         epics::pvAccess::ChannelRPCRequester::shared_pointer const &requester,
@@ -140,7 +141,9 @@ public:
         {
             epics::pvData::Status status(epics::pvData::Status::STATUSTYPE_ERROR,
             epics::pvData::String("ChannelRPC not supported"));
-            requester->channelRPCConnect(status,epics::pvAccess::ChannelRPC::shared_pointer());
+            requester->channelRPCConnect(
+                 status,
+                 epics::pvAccess::ChannelRPC::shared_pointer());
             return epics::pvAccess::ChannelRPC::shared_pointer();
         }
     virtual epics::pvData::Monitor::shared_pointer createMonitor(
@@ -163,6 +166,7 @@ private:
     epics::pvData::FieldConstPtr recordField; 
     epics::pvData::PVStructurePtr pvNullStructure;
     epics::pvData::BitSetPtr emptyBitSet;
+    epics::pvData::StructureConstPtr nullStructure;
 };
 
 class DbPvProcess :
@@ -182,7 +186,11 @@ public:
         epics::pvData::String const &message,
         epics::pvData::MessageType messageType);
     virtual void destroy();
-    virtual void process(bool lastRequest);
+    virtual std::tr1::shared_ptr<epics::pvAccess::Channel> getChannel()
+      {return dbPv;}
+    virtual void cancel(){}
+    virtual void lastRequest() {}
+    virtual void process();
     virtual void lock();
     virtual void unlock();
 private:
@@ -223,7 +231,11 @@ public:
         epics::pvData::String const &message,
         epics::pvData::MessageType messageType);
     virtual void destroy();
-    virtual void get(bool lastRequest);
+    virtual void get();
+    virtual std::tr1::shared_ptr<epics::pvAccess::Channel> getChannel()
+      {return dbPv;}
+    virtual void cancel(){}
+    virtual void lastRequest() {}
     virtual void lock();
     virtual void unlock();
 private:
@@ -266,7 +278,11 @@ public:
         epics::pvData::String const &message,
         epics::pvData::MessageType messageType);
     virtual void destroy();
-    virtual void get(bool lastRequest);
+    virtual void get();
+    virtual std::tr1::shared_ptr<epics::pvAccess::Channel> getChannel()
+      {return dbPv;}
+    virtual void cancel(){}
+    virtual void lastRequest() {}
     virtual void lock();
     virtual void unlock();
 private:
@@ -309,7 +325,13 @@ public:
         epics::pvData::String const &message,
         epics::pvData::MessageType messageType);
     virtual void destroy();
-    virtual void put(bool lastRequest);
+    virtual void put(
+        epics::pvData::PVStructurePtr const & pvStructure,
+        epics::pvData::BitSetPtr const & bitSet);
+    virtual std::tr1::shared_ptr<epics::pvAccess::Channel> getChannel()
+      {return dbPv;}
+    virtual void cancel(){}
+    virtual void lastRequest() {}
     virtual void get();
     virtual void lock();
     virtual void unlock();
@@ -353,7 +375,13 @@ public:
         epics::pvData::String const &message,
         epics::pvData::MessageType messageType);
     virtual void destroy();
-    virtual void put(bool lastRequest);
+    virtual void put(
+        epics::pvData::PVStructurePtr const & pvStructure,
+        epics::pvData::BitSetPtr const & bitSet);
+    virtual std::tr1::shared_ptr<epics::pvAccess::Channel> getChannel()
+      {return dbPv;}
+    virtual void cancel(){}
+    virtual void lastRequest() {}
     virtual void get();
     virtual void lock();
     virtual void unlock();
@@ -455,9 +483,16 @@ public:
     virtual ~DbPvArray();
     bool init(epics::pvData::PVStructurePtr const & pvRequest);
     virtual void destroy();
-    virtual void putArray(bool lastRequest, int offset, int count);
-    virtual void getArray(bool lastRequest, int offset, int count);
-    virtual void setLength(bool lastRequest, int length, int capacity);
+    virtual void putArray(
+        epics::pvData::PVArray::shared_pointer const &putArray,
+        size_t offset, size_t count, size_t stride);
+    virtual void getArray(size_t offset, size_t count, size_t stride);
+    virtual void getLength();
+    virtual void setLength(size_t length, size_t capacity);
+    virtual std::tr1::shared_ptr<epics::pvAccess::Channel> getChannel()
+      {return dbPv;}
+    virtual void cancel(){}
+    virtual void lastRequest() {}
     virtual void lock();
     virtual void unlock();
 private:
