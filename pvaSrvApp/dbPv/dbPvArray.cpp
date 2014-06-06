@@ -58,6 +58,20 @@ using std::tr1::static_pointer_cast;
 using std::cout;
 using std::endl;
 
+static PVArray::shared_pointer nullPVArray;
+static Status illegalOffsetStatus(
+    Status::Status::STATUSTYPE_ERROR,
+    "count must be >0"
+);
+static Status illegalCountStatus(
+    Status::Status::STATUSTYPE_ERROR,
+    "count must be >0"
+);
+static Status illegalStrideStatus(
+    Status::Status::STATUSTYPE_ERROR,
+    "stride must be >0"
+);
+
 extern "C" {
 typedef long (*get_array_info) (DBADDR *,long *,long *);
 typedef long (*put_array_info) (DBADDR *,long );
@@ -115,6 +129,7 @@ bool DbPvArray::init(PVStructure::shared_pointer const &pvRequest)
         return false;
     }
     pvScalarArray = getPVDataCreate()->createPVScalarArray(scalarType);
+    pvScalarArray->setCapacity(dbAddr.no_elements);
     channelArrayRequester->channelArrayConnect(
         Status::Ok,
         getPtrSelf(),
@@ -134,6 +149,14 @@ void DbPvArray::destroy() {
 
 void DbPvArray::getArray(size_t offset,size_t count,size_t stride)
 {
+    if(offset<0) {
+         channelArrayRequester->getArrayDone(illegalOffsetStatus,getPtrSelf(),nullPVArray);
+         return;
+    }
+    if(stride<0) {
+         channelArrayRequester->getArrayDone(illegalStrideStatus,getPtrSelf(),nullPVArray);
+         return;
+    }
     dbScanLock(dbAddr.precord);
     long v3length = 0;
     long v3offset = 0;
@@ -146,37 +169,42 @@ void DbPvArray::getArray(size_t offset,size_t count,size_t stride)
             dbScanUnlock(dbAddr.precord);
             Status status(Status::STATUSTYPE_ERROR,
                    String("v3offset not supported"));
-            PVArray::shared_pointer xxx;
             channelArrayRequester->getArrayDone(
                 status,
                 getPtrSelf(),
-                xxx);
+                nullPVArray);
             return;
         }
     }
-    if(stride<=0) {
-        Status status(Status::STATUSTYPE_ERROR,String("illegal stride"));
-        PVArray::shared_pointer xxx;
-        channelArrayRequester->getArrayDone( status,getPtrSelf(),xxx);
-
+    bool ok = false;
+    while(true) {
+        size_t length = v3length;
+        if(length<=0) break;
+        if(count<=0) {
+             count = -offset + length/stride;
+             if(count>0) ok = true;
+             break;
+        }
+        size_t maxcount = -offset + length/stride;
+        if(count>maxcount) count = maxcount;
+        ok = true;
+        break;
     }
-    size_t length = v3length;
-    if(count<=0) count = length - offset;
-    if((offset+count)>length) count = length -offset;
-    count = (count+stride-1)/stride;
-    if(count<0) {
+    if(!ok) {
         dbScanUnlock(dbAddr.precord);
+        pvScalarArray->setLength(0);
         channelArrayRequester->getArrayDone(
             Status::Ok,
             getPtrSelf(),
             pvScalarArray);
         return;
     }
+    size_t capacity = pvScalarArray->getCapacity();
     {
     Lock lock(dataMutex);
     switch(dbAddr.field_type) {
     case DBF_CHAR: {
-        shared_vector<int8> xxx(count);
+        shared_vector<int8> xxx(capacity);
         int8 *from = static_cast<int8 *>(dbAddr.pfield);
         for(size_t i= 0;i< count; ++i) xxx[i] = from[i*stride+offset];
         shared_vector<const int8> data(freeze(xxx));
@@ -261,6 +289,7 @@ void DbPvArray::getArray(size_t offset,size_t count,size_t stride)
         break;
     }
     }
+    pvScalarArray->setLength(offset + count*stride);
     }
     dbScanUnlock(dbAddr.precord);
     channelArrayRequester->getArrayDone(
@@ -273,13 +302,25 @@ void DbPvArray::putArray(
     PVArray::shared_pointer const &pvArray,
     size_t offset, size_t count, size_t stride)
 {
+    if(offset<0) {
+         channelArrayRequester->putArrayDone(illegalOffsetStatus,getPtrSelf());
+         return;
+    }
+    if(count<0) {
+         channelArrayRequester->putArrayDone(illegalCountStatus,getPtrSelf());
+         return;
+    }
+    if(stride<0) {
+         channelArrayRequester->putArrayDone(illegalStrideStatus,getPtrSelf());
+         return;
+    }
     dbScanLock(dbAddr.precord);
     long no_elements = dbAddr.no_elements;
     size_t length = no_elements;
-    if(count<=0) count = length - offset;
-    if((offset+count)>length) count = length -offset;
-    count = (count+stride-1)/stride;
-    if(count<0) {
+    if((offset + count*stride)>length) {
+        count = - offset + (length + stride -1)/stride; 
+    }
+    if(count<=0) {
         dbScanUnlock(dbAddr.precord);
         channelArrayRequester->putArrayDone(
             Status::Ok,
@@ -399,13 +440,15 @@ void DbPvArray::setLength(size_t length, size_t capacity)
     dbScanLock(dbAddr.precord);
     long no_elements = dbAddr.no_elements;
     if(length>static_cast<size_t>(no_elements)) length = no_elements;
+    long v3length = length;
     struct rset *prset = dbGetRset(&dbAddr);
     if(prset && prset->put_array_info) {
         put_array_info put_info;
         put_info = (put_array_info)(prset->put_array_info);
-        put_info(&dbAddr, length);
+        put_info(&dbAddr, v3length);
     }
     dbScanUnlock(dbAddr.precord);
+    pvScalarArray->setLength(length);
     channelArrayRequester->setLengthDone(Status::Ok,getPtrSelf());
 }
 
