@@ -52,6 +52,8 @@ public:
     virtual epics::pvAccess::ChannelFind::shared_pointer channelFind(
         epics::pvData::String const &channelName,
         epics::pvAccess::ChannelFindRequester::shared_pointer const & channelFindRequester);
+    virtual epics::pvAccess::ChannelFind::shared_pointer channelList(
+        epics::pvAccess::ChannelListRequester::shared_pointer const & channelListRequester);
     virtual epics::pvAccess::Channel::shared_pointer createChannel(
         epics::pvData::String const &channelName,
         epics::pvAccess::ChannelRequester::shared_pointer const &channelRequester,
