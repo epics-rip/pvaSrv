@@ -116,6 +116,16 @@ ChannelFind::shared_pointer DbPvProvider::channelFind(
     return channelFinder;
 }
 
+ChannelFind::shared_pointer DbPvProvider::channelList(
+    ChannelListRequester::shared_pointer const & channelListRequester)
+{
+    Status errorStatus(Status::STATUSTYPE_ERROR, "not implemented");
+    ChannelFind::shared_pointer nullChannelFind;
+    PVStringArray::const_svector none;    
+    channelListRequester->channelListResult(errorStatus, nullChannelFind, none, false);
+    return nullChannelFind;
+}
+
 Channel::shared_pointer DbPvProvider::createChannel(
     String const & channelName,
     ChannelRequester::shared_pointer  const &channelRequester,

@@ -143,8 +143,7 @@ ChannelGet::shared_pointer DbPv::createChannelGet(
             channelGetRequester->channelGetConnect(
                 createFailed,
                 dbPvMultiGet,
-                pvNullStructure,
-                emptyBitSet);
+                nullStructure);
         }
         return dbPvMultiGet;
     }
@@ -155,8 +154,7 @@ ChannelGet::shared_pointer DbPv::createChannelGet(
         channelGetRequester->channelGetConnect(
             createFailed,
             dbPvGet,
-            pvNullStructure,
-            emptyBitSet);
+            nullStructure);
     }
     return dbPvGet;
 }
@@ -175,8 +173,7 @@ ChannelPut::shared_pointer DbPv::createChannelPut(
             channelPutRequester->channelPutConnect(
                 createFailed,
                 dbPvMultiPut,
-                pvNullStructure,
-                emptyBitSet);
+                nullStructure);
         }
         return dbPvMultiPut;
     }
@@ -187,8 +184,7 @@ ChannelPut::shared_pointer DbPv::createChannelPut(
         channelPutRequester->channelPutConnect(
             createFailed,
             dbPvPut,
-            pvNullStructure,
-            emptyBitSet);
+            nullStructure);
     }
     return dbPvPut;
 }
@@ -218,7 +214,7 @@ ChannelArray::shared_pointer DbPv::createChannelArray(
          new DbPvArray(getPtrSelf(),channelArrayRequester,*(dbAddr.get())));
     if(!dbPvArray->init(pvRequest)) {
         Status createFailed(Status::STATUSTYPE_ERROR, "create dbPvArray failed");
-        PVScalarArrayPtr xxx;
+        ScalarArrayConstPtr xxx;
         channelArrayRequester->channelArrayConnect(
             createFailed,
             dbPvArray,

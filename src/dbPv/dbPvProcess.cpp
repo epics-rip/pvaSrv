@@ -93,13 +93,13 @@ void DbPvProcess::destroy() {
     }
 }
 
-void DbPvProcess::process(bool lastRequest)
+void DbPvProcess::process()
 {
     epicsUInt8 value = 1;
     pNotify.get()->pbuffer = &value;
     dbPutNotify(pNotify.get());
     event.wait();
-    channelProcessRequester->processDone(Status::Ok);
+    channelProcessRequester->processDone(Status::Ok,getPtrSelf());
     
 }
 

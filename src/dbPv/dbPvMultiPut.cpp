@@ -151,8 +151,7 @@ bool DbPvMultiPut::init(PVStructurePtr const &pvRequest)
     channelPutRequester->channelPutConnect(
        Status::Ok,
        getPtrSelf(),
-       pvStructure,
-       bitSet);
+       pvStructure->getStructure());
     if(DbPvDebug::getLevel()>0)
         printf("dbPvMultiPut::init() returning true\n");
     return true;
@@ -177,11 +176,14 @@ void DbPvMultiPut::destroy() {
     }
 }
 
-void DbPvMultiPut::put(bool lastRequest)
+void DbPvMultiPut::put(
+    PVStructurePtr const &pvStructure,BitSetPtr const &bitSet)
 {
     if(DbPvDebug::getLevel()>0)
         printf("dbPvMultiPut::put()\n");
     Lock lock(dataMutex);
+    this->pvStructure = pvStructure;
+    this->bitSet = bitSet;
     bool isSameLockSet = true;
     size_t n = dbAddrArray.size();
     struct dbCommon *precord = dbAddr.precord;
@@ -303,8 +305,7 @@ void DbPvMultiPut::put(bool lastRequest)
     message += (isSameLockSet ? "true" : "false");
     channelPutRequester->message(message,infoMessage);
     lock.unlock();
-    channelPutRequester->putDone(Status::Ok);
-    if(lastRequest) destroy();
+    channelPutRequester->putDone(Status::Ok,getPtrSelf());
 }
 
 void DbPvMultiPut::get()
@@ -447,7 +448,11 @@ void DbPvMultiPut::get()
     bitSet->set(0);
     if(isSameLockSet) dbScanUnlock(dbAddr.precord);
     lock.unlock();
-    channelPutRequester->getDone(Status::Ok);
+    channelPutRequester->getDone(
+       Status::Ok,
+       getPtrSelf(),
+       pvStructure,
+       bitSet);
 }
 
 void DbPvMultiPut::lock()
