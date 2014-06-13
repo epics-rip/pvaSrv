@@ -61,15 +61,15 @@ using std::endl;
 
 static PVArray::shared_pointer nullPVArray;
 static Status illegalOffsetStatus(
-    Status::Status::STATUSTYPE_ERROR,
+    Status::STATUSTYPE_ERROR,
     "count must be >0"
 );
 static Status illegalCountStatus(
-    Status::Status::STATUSTYPE_ERROR,
+    Status::STATUSTYPE_ERROR,
     "count must be >0"
 );
 static Status illegalStrideStatus(
-    Status::Status::STATUSTYPE_ERROR,
+    Status::STATUSTYPE_ERROR,
     "stride must be >0"
 );
 
