@@ -35,6 +35,7 @@
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 using namespace epics::pvaSrv;
+using std::string;
 
 class FindRequester : public ChannelFindRequester {
 public:
@@ -51,7 +52,7 @@ void FindRequester::channelFindResult(
     ChannelFind::shared_pointer const &channelFind,
     bool wasFound)
 {
-    String message = status.getMessage();
+    string message = status.getMessage();
     printf("channelFindResult status %s wasFound %s\n",
         message.c_str(),
         (wasFound ? "true" : "false"));
@@ -65,7 +66,7 @@ class MyRequester :
 public:
     POINTER_DEFINITIONS(MyRequester);
     MyRequester()
-    : name(String("testDbPv")),
+    : name("testDbPv"),
       channelPtr(Channel::shared_pointer()),
       channelGetPtr(ChannelGet::shared_pointer()),
       pvStructurePtr(PVStructure::shared_pointer()),
@@ -73,13 +74,13 @@ public:
     { }
     Channel::shared_pointer const & getChannel() {return channelPtr;}
     virtual ~MyRequester() { }
-    virtual String getRequesterName()
+    virtual string getRequesterName()
     {
         return name;
     }
-    virtual void message(String const &message,MessageType messageType)
+    virtual void message(string const &message,MessageType messageType)
     {
-        String typeName = getMessageTypeName(messageType);
+        string typeName = getMessageTypeName(messageType);
         printf("ChannelRequester message %s messageType %s\n",
             message.c_str(),typeName.c_str());
     }
@@ -88,7 +89,7 @@ public:
         Channel::shared_pointer const &channel)
     {
         channelPtr = channel;
-        String message = status.getMessage();
+        string message = status.getMessage();
         bool isOK = status.isOK();
         printf("channelCreated status %s statusOK %s\n",
         message.c_str(),
@@ -98,7 +99,7 @@ public:
         Channel::shared_pointer const & c,
         Channel::ConnectionState connectionState)
     {
-        String state = Channel::ConnectionStateNames[connectionState];
+        string state = Channel::ConnectionStateNames[connectionState];
         printf("channelStateChange %s\n",state.c_str());
     }
     virtual void channelGetConnect(
@@ -123,7 +124,7 @@ public:
         std::cout << pvStructure->dumpValue(std::cout) << std::endl;
     }
 private:
-    String name;
+    string name;
     Channel::shared_pointer channelPtr;
     ChannelGet::shared_pointer channelGetPtr;
     PVStructure::shared_pointer pvStructurePtr;
@@ -140,11 +141,11 @@ static void testDbPvCallFunc(const iocshArgBuf *args)
 {
     char *pvName = args[0].sval;
     printf("testDbPv pvName %s\n",pvName);
-    String channelName(pvName);
+    string channelName(pvName);
     printf("channelName %s\n",channelName.c_str());
     ChannelProvider::shared_pointer channelProvider =
         getChannelProviderRegistry()->getProvider("dbPv");
-    String providerName = channelProvider->getProviderName();
+    string providerName = channelProvider->getProviderName();
     printf("providerName %s\n",providerName.c_str());
     FindRequester::shared_pointer findRequester
         = FindRequester::shared_pointer(new FindRequester());
@@ -158,7 +159,7 @@ static void testDbPvCallFunc(const iocshArgBuf *args)
          channelName,
          myRequester,
          0,
-         String(""));
+         "");
     
     CreateRequest::shared_pointer createRequest = CreateRequest::create();
     PVStructure::shared_pointer pvRequest = createRequest->createRequest(

@@ -23,20 +23,21 @@
 
 #include "dbPv.h"
 
-namespace epics { namespace pvaSrv { 
-
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 using std::tr1::dynamic_pointer_cast;
+using std::string;
 
-static String providerName("dbPv");
+namespace epics { namespace pvaSrv { 
+
+static string providerName("dbPv");
 
 DbPvProvider::DbPvProvider()
 {
 //printf("dbPvProvider::dbPvProvider\n");
 }
 
-String DbPvProvider::getProviderName()
+string DbPvProvider::getProviderName()
 {
     return providerName;
 }
@@ -49,7 +50,7 @@ class DbPvProviderFactory : public ChannelProviderFactory
 
 public:
     POINTER_DEFINITIONS(DbPvProviderFactory);
-    virtual String getFactoryName() { return providerName;}
+    virtual string getFactoryName() { return providerName;}
     static DbPvProviderFactoryPtr create(
         DbPvProviderPtr const &channelProvider)
     {
@@ -96,7 +97,7 @@ DbPvProvider::~DbPvProvider()
 }
 
 ChannelFind::shared_pointer DbPvProvider::channelFind(
-    String const & channelName,
+    string const & channelName,
     ChannelFindRequester::shared_pointer const &channelFindRequester)
 {
     struct dbAddr dbAddr;
@@ -107,7 +108,7 @@ ChannelFind::shared_pointer DbPvProvider::channelFind(
             channelFinder,
             true);
     } else {
-        Status notFoundStatus(Status::STATUSTYPE_ERROR,String("pv not found"));
+        Status notFoundStatus(Status::STATUSTYPE_ERROR,"pv not found");
         channelFindRequester.get()->channelFindResult(
             notFoundStatus,
             channelFinder,
@@ -127,15 +128,15 @@ ChannelFind::shared_pointer DbPvProvider::channelList(
 }
 
 Channel::shared_pointer DbPvProvider::createChannel(
-    String const & channelName,
+    string const & channelName,
     ChannelRequester::shared_pointer  const &channelRequester,
     short priority,
-    String const & address)
+    string const & address)
 {
     struct dbAddr dbAddr;
     long result = dbNameToAddr(channelName.c_str(),&dbAddr);
     if(result!=0) {
-        Status notFoundStatus(Status::STATUSTYPE_ERROR,String("pv not found"));
+        Status notFoundStatus(Status::STATUSTYPE_ERROR,"pv not found");
         channelRequester->channelCreated(
             notFoundStatus,
             Channel::shared_pointer());

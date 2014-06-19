@@ -25,10 +25,11 @@
 #include "dbPv.h"
 #include "dbUtil.h"
 
-namespace epics { namespace pvaSrv { 
-
 using namespace epics::pvData;
 using namespace epics::pvAccess;
+using std::string;
+
+namespace epics { namespace pvaSrv { 
 
 DbPvGet::DbPvGet(
     DbPvPtr const &dbPv,
@@ -77,7 +78,7 @@ bool DbPvGet::init(PVStructure::shared_pointer const &pvRequest)
        strcpy(buffer,precord->name);
        strcat(buffer,".PROC");
        if(dbNameToAddr(buffer,paddr)!=0) {
-            throw std::logic_error(String("dbNameToAddr failed"));
+            throw std::logic_error("dbNameToAddr failed");
        }
        struct putNotify *pn = pNotify.get();
        pn->userCallback = this->notifyCallback;
@@ -93,11 +94,11 @@ bool DbPvGet::init(PVStructure::shared_pointer const &pvRequest)
     return true;
 }
 
-String DbPvGet::getRequesterName() {
+string DbPvGet::getRequesterName() {
     return channelGetRequester->getRequesterName();
 }
 
-void DbPvGet::message(String const &message,MessageType messageType)
+void DbPvGet::message(string const &message,MessageType messageType)
 {
     channelGetRequester->message(message,messageType);
 }

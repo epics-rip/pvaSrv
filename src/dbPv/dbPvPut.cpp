@@ -31,10 +31,11 @@
 #include "dbPv.h"
 #include "dbUtil.h"
 
-namespace epics { namespace pvaSrv { 
-
 using namespace epics::pvData;
 using namespace epics::pvAccess;
+using std::string;
+
+namespace epics { namespace pvaSrv { 
 
 DbPvPut::DbPvPut(
     DbPvPtr const &dbPv,
@@ -67,7 +68,7 @@ bool DbPvPut::init(PVStructure::shared_pointer const &pvRequest)
     if(propertyMask==dbUtil->noAccessBit) return false;
     if(propertyMask==dbUtil->noModBit) {
         channelPutRequester->message(
-             String("field not allowed to be changed"),errorMessage);
+             "field not allowed to be changed",errorMessage);
         return 0;
     }
     pvStructure = PVStructure::shared_pointer(
@@ -79,7 +80,7 @@ bool DbPvPut::init(PVStructure::shared_pointer const &pvRequest)
     if((propertyMask&dbUtil->dbPutBit)!=0) {
         if((propertyMask&dbUtil->processBit)!=0) {
             channelPutRequester->message(
-             String("process determined by dbPutField"),errorMessage);
+             "process determined by dbPutField",errorMessage);
         }
     } else if((propertyMask&dbUtil->processBit)!=0) {
        process = true;
@@ -92,7 +93,7 @@ bool DbPvPut::init(PVStructure::shared_pointer const &pvRequest)
        strcpy(buffer,precord->name);
        strcat(buffer,".PROC");
        if(dbNameToAddr(buffer,paddr)!=0) {
-            throw std::logic_error(String("dbNameToAddr failed"));
+            throw std::logic_error("dbNameToAddr failed");
        }
        struct putNotify *pn = pNotify.get();
        pn->userCallback = this->notifyCallback;
@@ -110,11 +111,11 @@ bool DbPvPut::init(PVStructure::shared_pointer const &pvRequest)
     return true;
 }
 
-String DbPvPut::getRequesterName() {
+string DbPvPut::getRequesterName() {
     return channelPutRequester->getRequesterName();
 }
 
-void DbPvPut::message(String const &message,MessageType messageType)
+void DbPvPut::message(string const &message,MessageType messageType)
 {
     channelPutRequester->message(message,messageType);
 }

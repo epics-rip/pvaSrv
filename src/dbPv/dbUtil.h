@@ -97,23 +97,23 @@ public:
 private:
     DbUtil();
     epics::pvData::PVStructurePtr  nullPVStructure;
-    epics::pvData::String recordString;
-    epics::pvData::String processString;
-    epics::pvData::String queueSizeString;
-    epics::pvData::String fieldString;
-    epics::pvData::String valueString;
-    epics::pvData::String valueIndexString;
-    epics::pvData::String timeStampString;
-    epics::pvData::String alarmString;
-    epics::pvData::String displayString;
-    epics::pvData::String controlString;
-    epics::pvData::String valueAlarmString;
-    epics::pvData::String lowAlarmLimitString;
-    epics::pvData::String lowWarningLimitString;
-    epics::pvData::String highWarningLimitString;
-    epics::pvData::String highAlarmLimitString;
-    epics::pvData::String allString;
-    epics::pvData::String indexString;
+    std::string recordString;
+    std::string processString;
+    std::string queueSizeString;
+    std::string fieldString;
+    std::string valueString;
+    std::string valueIndexString;
+    std::string timeStampString;
+    std::string alarmString;
+    std::string displayString;
+    std::string controlString;
+    std::string valueAlarmString;
+    std::string lowAlarmLimitString;
+    std::string lowWarningLimitString;
+    std::string highWarningLimitString;
+    std::string highAlarmLimitString;
+    std::string allString;
+    std::string indexString;
 };
 
 }}

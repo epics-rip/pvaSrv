@@ -33,7 +33,7 @@ public:
     PvValue(
          epics::pvData::RequesterPtr const &requester,
          epics::pvAccess::ChannelProvider::shared_pointer const &channelProvider,
-         epics::pvData::String const &channelName);
+         std::string const &channelName);
     virtual ~PvValue();
     void connect();
     virtual void destroy();
@@ -45,9 +45,9 @@ public:
         epics::pvData::TimeStamp &timeStamp);
     epics::pvData::Status getAlarm(
         epics::pvData::Alarm &alarm);
-    virtual epics::pvData::String getRequesterName();
+    virtual std::string getRequesterName();
     virtual void message(
-        epics::pvData::String const & message,
+        std::string const & message,
         epics::pvData::MessageType messageType);
     virtual void channelCreated(
         const epics::pvData::Status& status,
@@ -68,7 +68,7 @@ private:
     }
     epics::pvData::RequesterPtr requester;
     epics::pvAccess::ChannelProvider::shared_pointer channelProvider;
-    epics::pvData::String channelName;
+    std::string channelName;
     bool isConnected;
     epics::pvData::Status status;
     epics::pvData::PVStructurePtr getRequest;

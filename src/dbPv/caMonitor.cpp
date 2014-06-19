@@ -28,6 +28,7 @@
 
 using namespace epics::pvData;
 using namespace epics::pvaSrv;
+using std::string;
 
 CaData::CaData()
 : doubleValue(0.0),
@@ -40,7 +41,7 @@ CaData::~CaData()
 class CaMonitorPvt {
 public:
     CaMonitorPvt(CaMonitorRequesterPtr const &requester,
-        String pvName,CaType caType);
+        string pvName,CaType caType);
     ~CaMonitorPvt();
     CaData & getData();
     void connect();
@@ -48,7 +49,7 @@ public:
     void stop();
 
     CaMonitorRequesterPtr requester;
-    String pvName;
+    string pvName;
     CaType caType;
     CaData data;
     chanId chid;
@@ -190,7 +191,7 @@ static void eventCallback(struct event_handler_args eha)
 
 CaMonitorPvt::CaMonitorPvt(
     CaMonitorRequesterPtr const &requester,
-    String pvName, CaType caType)
+    string pvName, CaType caType)
 : requester(requester), pvName(pvName), caType(caType),
   data(), chid(0), myevid(0), context(caContextCreate::get(requester))
 {
@@ -216,15 +217,13 @@ void CaMonitorPvt::connect()
     status = ca_create_channel(
         pvName.c_str(),connectionCallback,this,20,&chid);
     if(status!=ECA_NORMAL) {
-        requester->message(String(
-            "ca_create_channel failed"),errorMessage);
+        requester->message("ca_create_channel failed",errorMessage);
         if(chid!=0) ca_clear_channel(chid);
         return;
     }
     status = ca_replace_access_rights_event(chid,accessRightsCallback);
     if(status!=ECA_NORMAL) {
-        requester->message(String(
-            "ca_replace_access_rights_event failed"),warningMessage);
+        requester->message("ca_replace_access_rights_event failed",warningMessage);
     }
 }
 
@@ -249,8 +248,7 @@ void CaMonitorPvt::start()
         catype, 1, chid, DBE_VALUE|DBE_ALARM,
         eventCallback, this, &myevid);
     if(status!=ECA_NORMAL) {
-        requester->message(String(
-            "ca_create_subscription failed"),warningMessage);
+        requester->message("ca_create_subscription failed",warningMessage);
     }
 }
 
@@ -263,7 +261,7 @@ void CaMonitorPvt::stop()
 
 CaMonitor::CaMonitor(
     CaMonitorRequesterPtr const &requester,
-    String const &pvName,CaType caType)
+    string const &pvName,CaType caType)
 : pImpl(new CaMonitorPvt(requester, pvName, caType))
 {
     if(DbPvDebug::getLevel()>0) printf("caMonitor::caMonitor\n");

@@ -69,7 +69,7 @@ class CaMonitor : private epics::pvData::NoDefaultMethods {
 public:
     CaMonitor(
         CaMonitorRequesterPtr const &requester,
-        epics::pvData::String const &pvName,
+        std::string const &pvName,
         CaType caType);
     ~CaMonitor();
     CaData & getData();

@@ -51,13 +51,14 @@
 #include <epicsExport.h>
 #include "dbPv.h"
 
-namespace epics { namespace pvaSrv { 
-
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 using std::tr1::static_pointer_cast;
 using std::cout;
 using std::endl;
+using std::string;
+
+namespace epics { namespace pvaSrv { 
 
 static PVArray::shared_pointer nullPVArray;
 static Status illegalOffsetStatus(
@@ -169,7 +170,7 @@ void DbPvArray::getArray(size_t offset,size_t count,size_t stride)
         if(v3offset!=0) {
             dbScanUnlock(dbAddr.precord);
             Status status(Status::STATUSTYPE_ERROR,
-                   String("v3offset not supported"));
+                   "v3offset not supported");
             channelArrayRequester->getArrayDone(
                 status,
                 getPtrSelf(),
@@ -277,14 +278,14 @@ void DbPvArray::getArray(size_t offset,size_t count,size_t stride)
         break;
     }
     case DBF_STRING: {
-        shared_vector<String> xxx(count);
+        shared_vector<string> xxx(count);
         char *from = static_cast<char *>(dbAddr.pfield);
         from += offset*dbAddr.field_size;
         for(size_t i= 0;i< count; ++i) {
-             xxx[i] = String(from);
+             xxx[i] = from;
              from += stride*dbAddr.field_size;
         }
-        shared_vector<const String> data(freeze(xxx));
+        shared_vector<const string> data(freeze(xxx));
         PVStringArrayPtr pva = static_pointer_cast<PVStringArray>(pvScalarArray);
         pva->replace(data);
         break;
@@ -407,7 +408,7 @@ void DbPvArray::putArray(
     }
     case DBF_STRING: {
         PVStringArrayPtr pva = static_pointer_cast<PVStringArray>(pvArray);
-        shared_vector<const String> xxx(pva->view());
+        shared_vector<const string> xxx(pva->view());
         char *to = static_cast<char *>(dbAddr.pfield);
         to += offset*dbAddr.field_size;
         for(size_t i= 0;i< count; i+= stride) {

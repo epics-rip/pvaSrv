@@ -92,7 +92,7 @@ void DbGroup::destroy()
 
 void DbGroup::getField(
     GetFieldRequester::shared_pointer const &requester,
-    String const &subField)
+    string const &subField)
 {
     // for now just return structure
     requester->getDone(Status::Ok,structure);

@@ -28,14 +28,14 @@ static ChannelProviderLocalPtr localProvider;
 static ChannelFind::shared_pointer noChannelFind;
 static Channel::shared_pointer noChannel;
 
-static String dbGroupProvider("dbGroup");
+static string dbGroupProvider("dbGroup");
 
 DbGroupProvider::~DbGroupProvider() {}
 
 DbGroupProvider::DbGroupProvider(
      RequesterPtr const & requester,
      ChannelProvider::shared_pointer const &pvValueProvider,
-     String const &channelName,
+     string const &channelName,
      StringArrayPtr const & fieldNames,
      StringArrayPtr const & pvValueNames)
 : ChannelBaseProvider(dbGroupProvider),
@@ -52,8 +52,8 @@ void DbGroupProvider::dump()
     printf("channelName %s\n", channelName.c_str());
     size_t n = fieldNames->size();
     for(size_t i=0; i<n; i++) {
-    String fieldName = (*fieldNames.get())[i];
-    String pvValueName = (*pvValueNames.get())[i];
+    string fieldName = (*fieldNames.get())[i];
+    string pvValueName = (*pvValueNames.get())[i];
     printf("fieldName %s pvValueName %s\n",
     fieldName.c_str(),pvValueName.c_str());
     }
@@ -63,7 +63,7 @@ void DbGroupProvider::destroy()
 {}
 
 ChannelFind::shared_pointer DbGroupProvider::channelFind(
-    String const & channelName,
+    string const & channelName,
     ChannelFindRequester::shared_pointer const & channelFindRequester)
 {
     bool result =
@@ -73,10 +73,10 @@ ChannelFind::shared_pointer DbGroupProvider::channelFind(
 }
 
 Channel::shared_pointer DbGroupProvider::createChannel(
-    String const & channelName,
+    string const & channelName,
     ChannelRequester::shared_pointer  const & channelRequester,
     short priority,
-    String const & address)
+    string const & address)
 {
     if(!(channelName.compare(this->channelName)==0) ? true : false) {
         channelNotCreated(channelRequester);

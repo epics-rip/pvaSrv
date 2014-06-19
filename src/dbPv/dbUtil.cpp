@@ -35,10 +35,11 @@
 
 #include "dbUtil.h"
 
-namespace epics { namespace pvaSrv { 
-
 using namespace epics::pvData;
 using std::tr1::static_pointer_cast;
+using std::string;
+
+namespace epics { namespace pvaSrv { 
 
 DbUtilPtr DbUtil::getDbUtil()
 {
@@ -101,14 +102,14 @@ int DbUtil::getProperties(
     if(pvField.get()!=NULL) {
         PVStringPtr pvString = pvRequest->getStringField(processString);
         if(pvString.get()!=NULL) {
-            String value = pvString->get();
+            string value = pvString->get();
             if(value.compare("true")==0) propertyMask |= processBit;
         }
     } else {
         if(processDefault) propertyMask |= processBit;
     }
     bool getValue = false;
-    String fieldList;
+    string fieldList;
     PVFieldPtr pvTemp = pvRequest->getSubField(fieldString);
     if(pvTemp.get()==NULL) {
         fieldList += valueString;
@@ -189,11 +190,10 @@ int DbUtil::getProperties(
             scalarType = pvString;
             propertyMask |= (isLinkBit|dbPutBit); break;
         case DBF_NOACCESS:
-            requester->message(String("access is not allowed"),errorMessage);
+            requester->message("access is not allowed",errorMessage);
             propertyMask = noAccessBit; return propertyMask;
         default:
-            requester->message(String(
-                "logic error unknown DBF type"),errorMessage);
+            requester->message("logic error unknown DBF type",errorMessage);
             propertyMask = noAccessBit; return propertyMask;
         }
         if(type==scalar&&scalarType!=pvBoolean) {
@@ -218,30 +218,29 @@ int DbUtil::getProperties(
             case SPC_CALC:
                 propertyMask |= dbPutBit; break;
             default:
-                requester->message(String(
-                    "logic error unknown special type"),errorMessage);
+                requester->message("logic error unknown special type",errorMessage);
                 propertyMask = noAccessBit; return propertyMask;
             }
         }
     }
     if(fieldList.length()!=0) {
-        if(fieldList.find(timeStampString)!=String::npos) {
+        if(fieldList.find(timeStampString)!=string::npos) {
             propertyMask |= timeStampBit;
         }
-        if(fieldList.find(alarmString)!=String::npos) {
+        if(fieldList.find(alarmString)!=string::npos) {
             propertyMask |= alarmBit;
         }
-        if(fieldList.find(displayString)!=String::npos) {
+        if(fieldList.find(displayString)!=string::npos) {
             if(dbAddr.field_type==DBF_LONG||dbAddr.field_type==DBF_DOUBLE) {
                 propertyMask |= displayBit;
             }
         }
-        if(fieldList.find(controlString)!=String::npos) {
+        if(fieldList.find(controlString)!=string::npos) {
             if(dbAddr.field_type==DBF_LONG||dbAddr.field_type==DBF_DOUBLE) {
                 propertyMask |= controlBit;
             }
         }
-        if(fieldList.find(valueAlarmString)!=String::npos) {
+        if(fieldList.find(valueAlarmString)!=string::npos) {
             if(dbAddr.field_type==DBF_LONG||dbAddr.field_type==DBF_DOUBLE) {
                 propertyMask |= valueAlarmBit;
             }
@@ -261,7 +260,7 @@ PVStructurePtr DbUtil::createPVStructure(
     StandardFieldPtr standardField = getStandardField();
     PVDataCreatePtr pvDataCreate = getPVDataCreate();
     FieldCreatePtr fieldCreate = getFieldCreate();
-    String properties;
+    string properties;
     if((propertyMask&timeStampBit)!=0) properties+= timeStampString;
     if((propertyMask&alarmBit)!=0) {
         if(!properties.empty()) properties += ",";
@@ -304,8 +303,7 @@ PVStructurePtr DbUtil::createPVStructure(
             dbDeviceMenu *pdbDeviceMenu
                 = static_cast<dbDeviceMenu *>(pdbFldDes->ftPvt);
             if(pdbDeviceMenu==NULL) {
-                requester->message(
-                   String("record type has no device support"),errorMessage);
+                requester->message("record type has no device support",errorMessage);
                 return nullPVStructure;
             }
             size_t length = pdbDeviceMenu->nChoice;
@@ -332,8 +330,7 @@ PVStructurePtr DbUtil::createPVStructure(
                 choices,properties);
             return pvStructure;
         } else {
-            requester->message(
-               String("bad enum field in V3 record"),errorMessage);
+            requester->message("bad enum field in V3 record",errorMessage);
             return nullPVStructure;
         }
     }
@@ -458,7 +455,7 @@ PVStructurePtr DbUtil::createPVStructure(
              pvDataCreate->createPVStructure(standardField->doubleAlarm()));
           break;
        default:
-          throw std::logic_error(String("Should never get here"));
+          throw std::logic_error("Should never get here");
        }
     }
     PVStructurePtr pvParent = pvDataCreate->createPVStructure(
@@ -481,12 +478,12 @@ void  DbUtil::getPropertyData(
             get_units gunits;
             gunits = (get_units)(prset->get_units);
             gunits(&dbAddr,units);
-            display.setUnits(String(units));
+            display.setUnits(units);
         }
         if(prset && prset->get_precision) {
             get_precision gprec = (get_precision)(prset->get_precision);
             gprec(&dbAddr,&precision);
-            String format("%f");
+            string format("%f");
             if(precision>0) {
                 format += "." + precision;
                 display.setFormat(format);
@@ -692,13 +689,13 @@ Status  DbUtil::get(
                 long result = dbGetField(&dbAddr,DBR_STRING,
                     buffer,0,0,0);
                 if(result!=0) {
-                    requester->message(String("dbGetField error"),errorMessage);
+                    requester->message("dbGetField error",errorMessage);
                 }
                 val = buffer;
             } else {
                 val = static_cast<char *>(dbAddr.pfield);
             }
-            String sval(val);
+            string sval(val);
             PVStringPtr pvString = static_pointer_cast<PVString>(pvField);
             if(pvString->get().empty()) {
                 pvString->put(sval);
@@ -712,7 +709,7 @@ Status  DbUtil::get(
             break;
         }
         default:
-             throw std::logic_error(String("Should never get here"));
+             throw std::logic_error("Should never get here");
         }
         if(wasChanged) bitSet->set(pvField->getFieldOffset());
     } else if((propertyMask&arrayValueBit)!=0) {
@@ -725,7 +722,7 @@ Status  DbUtil::get(
         get_info = (get_array_info)(prset->get_array_info);
         get_info(&dbAddr, &rec_length, &rec_offset);
         if(rec_offset!=0) {
-             throw std::logic_error(String("Can't handle offset != 0"));
+             throw std::logic_error("Can't handle offset != 0");
         }
         size_t length = rec_length;
 
@@ -803,19 +800,19 @@ Status  DbUtil::get(
             break;
         }
         case pvString: {
-            shared_vector<String> xxx(length);
+            shared_vector<string> xxx(length);
             char *pv3 = static_cast<char *>(dbAddr.pfield);
             for(size_t i=0; i<length; i++) {
-                xxx[i] = String(pv3);
+                xxx[i] = pv3;
                 pv3 += dbAddr.field_size;
             }
-            shared_vector<const String> data(freeze(xxx));
+            shared_vector<const string> data(freeze(xxx));
             PVStringArrayPtr pva = static_pointer_cast<PVStringArray>(pvArray);
             pva->replace(data);
             break;
         }
         default:
-             throw std::logic_error(String("Should never get here"));
+             throw std::logic_error("Should never get here");
         }
         bitSet->set(pvField->getFieldOffset());
     } else if((propertyMask&enumValueBit)!=0) {
@@ -849,7 +846,7 @@ Status  DbUtil::get(
         PVTimeStamp pvTimeStamp;
         PVFieldPtr pvField = pvStructure->getSubField(timeStampString);
         if(!pvTimeStamp.attach(pvField)) {
-            throw std::logic_error(String("V3ChannelGet::get logic error"));
+            throw std::logic_error("V3ChannelGet::get logic error");
         }
         epicsTimeStamp *epicsTimeStamp;
         struct dbCommon *precord = dbAddr.precord;
@@ -877,7 +874,7 @@ Status  DbUtil::get(
         PVAlarm pvAlarm;
         PVFieldPtr pvField = pvStructure->getSubField(alarmString);
         if(!pvAlarm.attach(pvField)) {
-            throw std::logic_error(String("V3ChannelGet::get logic error"));
+            throw std::logic_error("V3ChannelGet::get logic error");
         }
         struct dbCommon *precord = dbAddr.precord;
         const char * status = "";
@@ -898,7 +895,7 @@ Status  DbUtil::get(
         AlarmStatus alarmStatus = alarm.getStatus();
         epicsEnum16 prevStatus = static_cast<epicsEnum16>(alarmStatus);
         if((prevSeverity!=sevr) || (prevStatus!=stat)) {
-            String message(status);
+            string message(status);
             AlarmSeverity severity = static_cast<AlarmSeverity>(sevr);
             alarm.setSeverity(severity);
             alarm.setMessage(message);
@@ -981,8 +978,7 @@ Status  DbUtil::put(
             break;
         }
         default:
-            requester->message(
-                String("Logic Error did not handle scalarType"),errorMessage);
+            requester->message("Logic Error did not handle scalarType",errorMessage);
             return Status::Ok;
         }
     } else if((propertyMask&arrayValueBit)!=0) {
@@ -1068,7 +1064,7 @@ Status  DbUtil::put(
             break;
         }
         default:
-             throw std::logic_error(String("Should never get here"));
+             throw std::logic_error("Should never get here");
         }
     } else if((propertyMask&enumValueBit)!=0) {
         PVIntPtr pvIndex;
@@ -1079,19 +1075,16 @@ Status  DbUtil::put(
             pvEnum->getIntField(indexString);
         }
         if(dbAddr.field_type==DBF_MENU) {
-            requester->message(
-                String("Not allowed to change a menu field"),errorMessage);
+            requester->message("Not allowed to change a menu field",errorMessage);
         } else if(dbAddr.field_type==DBF_ENUM||dbAddr.field_type==DBF_DEVICE) {
             epicsEnum16 *value = static_cast<epicsEnum16*>(dbAddr.pfield);
             *value = pvIndex->get();
         } else {
-            requester->message(
-                String("Logic Error unknown enum field"),errorMessage);
+            requester->message("Logic Error unknown enum field",errorMessage);
             return Status::Ok;
         }
     } else {
-        requester->message(
-            String("Logic Error unknown field to put"),errorMessage);
+        requester->message("Logic Error unknown field to put",errorMessage);
             return Status::Ok;
     }
     dbCommon *precord = dbAddr.precord;
@@ -1122,7 +1115,7 @@ Status  DbUtil::putField(
     uint32 uivalue;
     float fvalue;
     double dvalue;
-    String string;
+    string string;
     if((propertyMask&scalarValueBit)!=0) {
         PVScalarPtr pvScalar = static_pointer_cast<PVScalar>(pvField);
         ScalarType scalarType = pvScalar->getScalar()->getScalarType();
@@ -1183,8 +1176,7 @@ Status  DbUtil::putField(
             break;
         }
         default:
-            requester->message(
-                String("Logic Error did not handle scalarType"),errorMessage);
+            requester->message("Logic Error did not handle scalarType",errorMessage);
             return Status::Ok;
         }
     } else if((propertyMask&enumValueBit)!=0) {
@@ -1198,15 +1190,14 @@ Status  DbUtil::putField(
         svalue = pvIndex->get(); pbuffer = &svalue;
         dbrType = DBF_ENUM;
     } else {
-        requester->message(
-                String("Logic Error unknown field to put"),errorMessage);
+        requester->message("Logic Error unknown field to put",errorMessage);
         return Status::Ok;
     }
     long status = dbPutField(&dbAddr,dbrType,pbuffer,1);
     if(status!=0) {
         char buf[30];
         sprintf(buf,"dbPutField returned error 0x%lx",status);
-        String message(buf);
+        std::string message(buf);
         requester->message(message,warningMessage);
     }
     return Status::Ok;

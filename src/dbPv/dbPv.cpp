@@ -21,10 +21,11 @@
 
 #include "dbPv.h"
 
-namespace epics { namespace pvaSrv { 
-
 using namespace epics::pvData;
 using namespace epics::pvAccess;
+using std::string;
+
+namespace epics { namespace pvaSrv { 
 
 static int dbPvDebugLevel = 0;
 void DbPvDebug::setLevel(int level)
@@ -40,7 +41,7 @@ int DbPvDebug::getLevel()
 DbPv::DbPv(
     DbPvProviderPtr const &provider,
     ChannelRequester::shared_pointer const & requester,
-    String const &name,
+    string const &name,
     std::tr1::shared_ptr<DbAddr> dbAddr
 )
 :  provider(provider),
@@ -94,10 +95,10 @@ void DbPv::init()
         bool isArray = (paddr->no_elements>1) ? true : false;
         if(isArray) {
             recordField = standardField->scalarArray(scalarType,
-                String("value,timeStamp,alarm,display"));
+                "value,timeStamp,alarm,display");
         } else {
             recordField = standardField->scalar(scalarType,
-                String("value,timeStamp,alarm,display,control"));
+                "value,timeStamp,alarm,display,control");
         }
     }
 }
@@ -108,14 +109,13 @@ DbPv::~DbPv()
 }
 
 void DbPv::getField(GetFieldRequester::shared_pointer const &requester,
-        String const &subField)
+        string const &subField)
 {
     if(recordField!=0) {
         requester->getDone(Status::Ok,recordField);
         return;
     }
-    Status status(Status::STATUSTYPE_ERROR,
-        String("client asked for illegal V3 field"));
+    Status status(Status::STATUSTYPE_ERROR,"client asked for illegal V3 field");
     requester->getDone(status,FieldConstPtr());
 }
 
@@ -225,12 +225,12 @@ ChannelArray::shared_pointer DbPv::createChannelArray(
 
 void DbPv::printInfo()
 {
-    printf("dbPv provides access to DB records\n");
+    printInfo(std::cout);
 }
 
-void DbPv::printInfo(StringBuilder out)
+void DbPv::printInfo(std::ostream& out)
 {
-    *out += "dbPv provides access to DB records";
+    out << "dbPv provides access to DB records";
 }
 
 }}

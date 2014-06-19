@@ -32,11 +32,12 @@
 #include "dbPv.h"
 #include "dbUtil.h"
 
-namespace epics { namespace pvaSrv { 
-
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 using std::tr1::static_pointer_cast;
+using std::string;
+
+namespace epics { namespace pvaSrv { 
 
 DbPvMultiPut::DbPvMultiPut(
     DbPvPtr const &dbPv,
@@ -73,12 +74,12 @@ bool DbPvMultiPut::init(PVStructurePtr const &pvRequest)
     if(propertyMask==dbUtil->noAccessBit) return false;
     if(propertyMask==dbUtil->noModBit) {
         channelPutRequester->message(
-             String("field not allowed to be changed"),errorMessage);
+             "field not allowed to be changed",errorMessage);
         return 0;
     }
-    String channelName(dbPv->getChannelName());
-    if(channelName.find('.') != String::npos) {
-        String message(channelName);
+    string channelName(dbPv->getChannelName());
+    if(channelName.find('.') != string::npos) {
+        string message(channelName);
         message += " field of a record not allowed";
         channelPutRequester->message(message,errorMessage);
         return 0;
@@ -92,8 +93,8 @@ bool DbPvMultiPut::init(PVStructurePtr const &pvRequest)
     short fieldType = dbAddr.field_type;
     for(size_t i = 1; i<n; i++) {
         channelName = extraNames[i-1];
-        if(channelName.find('.') != String::npos) {
-            String message(channelName);
+        if(channelName.find('.') != string::npos) {
+            string message(channelName);
             message += " field of a record not allowed";
             channelPutRequester->message(message,errorMessage);
             return 0;
@@ -102,7 +103,7 @@ bool DbPvMultiPut::init(PVStructurePtr const &pvRequest)
             if(DbPvDebug::getLevel()>0) {
                 printf("dbNameToAddr failed for %s\n",extraNames[i-1].c_str());
             }
-            String message("record not found ");
+            string message("record not found ");
             message += extraNames[i-1];
             channelPutRequester->message(message,errorMessage);
             return 0;
@@ -111,7 +112,7 @@ bool DbPvMultiPut::init(PVStructurePtr const &pvRequest)
             if(DbPvDebug::getLevel()>0) {
                 printf("scalarType not the same failed %s\n",extraNames[i-1].c_str());
             }
-            String message("scalarType not the same for ");
+            string message("scalarType not the same for ");
             message += extraNames[i-1];
             channelPutRequester->message(message,errorMessage);
             return 0;
@@ -137,10 +138,10 @@ bool DbPvMultiPut::init(PVStructurePtr const &pvRequest)
             scalarType = pvDouble; break;
         default:
             channelPutRequester->message(
-                String("record is not a scalar"),errorMessage);
+                "record is not a scalar",errorMessage);
             return 0;
     }
-    String prop;
+    string prop;
     pvStructure = getStandardPVField()->scalarArray(scalarType,prop);
     pvScalarArray = pvStructure->getScalarArrayField("value",scalarType);
     pvScalarArray->setCapacity(n);
@@ -157,11 +158,11 @@ bool DbPvMultiPut::init(PVStructurePtr const &pvRequest)
     return true;
 }
 
-String DbPvMultiPut::getRequesterName() {
+string DbPvMultiPut::getRequesterName() {
     return channelPutRequester->getRequesterName();
 }
 
-void DbPvMultiPut::message(String const &message,MessageType messageType)
+void DbPvMultiPut::message(string const &message,MessageType messageType)
 {
     channelPutRequester->message(message,messageType);
 }
@@ -298,10 +299,10 @@ void DbPvMultiPut::put(
     }
     default:
         channelPutRequester->message(
-            String("Logic Error did not handle scalarType"),errorMessage);
+            "Logic Error did not handle scalarType",errorMessage);
     }
     if(isSameLockSet) dbScanUnlock(dbAddr.precord);
-    String message("atomic ");
+    string message("atomic ");
     message += (isSameLockSet ? "true" : "false");
     channelPutRequester->message(message,infoMessage);
     lock.unlock();
@@ -442,7 +443,7 @@ void DbPvMultiPut::get()
     }
     default:
         channelPutRequester->message(
-            String("Logic Error did not handle scalarType"),errorMessage);
+            "Logic Error did not handle scalarType",errorMessage);
     }
     bitSet->clear();
     bitSet->set(0);

@@ -32,7 +32,7 @@ using namespace epics::pvaSrv;
 using std::tr1::static_pointer_cast;
 
 
-static String requesterName("dbGroupCreate");
+static string requesterName("dbGroupCreate");
 
 class DbGroupConfig;
 typedef std::tr1::shared_ptr<DbGroupConfig> DbGroupConfigPtr;
@@ -43,7 +43,7 @@ public:
     POINTER_DEFINITIONS(DbGroupConfig);
     std::vector<DbGroupProviderPtr> providerArray;
     virtual ~DbGroupConfig() {}
-    virtual String getRequesterName() {return requesterName;}
+    virtual string getRequesterName() {return requesterName;}
     virtual void message(String const & message,MessageType messageType)
     {
          printf("%s %s\n",requesterName.c_str(),message.c_str());
@@ -59,7 +59,7 @@ static const iocshFuncDef dbGroupCreateFuncDef =
 
 extern "C" void dbGroupCreate(const iocshArgBuf *args)
 {
-    String fileName(args[0].sval);
+    string fileName(args[0].sval);
     epicsThreadSleep(.1);
     FILE *f;
     f = fopen(fileName.c_str(),"r");
@@ -67,8 +67,8 @@ extern "C" void dbGroupCreate(const iocshArgBuf *args)
         printf("dbGroupCreate file %s open failure\n",fileName.c_str());
         return;
     }
-    String valueProvider("dbPv");
-    String channelName;
+    string valueProvider("dbPv");
+    string channelName;
     StringArrayPtr fieldNames(new StringArray());
     StringArrayPtr valueChannelNames(new StringArray());
     char buffer[180];
@@ -76,7 +76,7 @@ extern "C" void dbGroupCreate(const iocshArgBuf *args)
     while(true) {
         char *result = fgets(buffer,180,f);
         if(result==NULL) break;
-        String line(buffer);
+        string line(buffer);
         size_t pos = line.find("channelValueProvider");
         if(pos!=std::string::npos) {
               pos = line.find(' ');
@@ -125,17 +125,17 @@ extern "C" void dbGroupCreate(const iocshArgBuf *args)
             fclose(f);
             return;
         }
-        String line(buffer);
+        string line(buffer);
         size_t pos = line.find_first_not_of(' ');
         line = line.substr(pos);
         pos = line.find_first_of(' ');
-        String fieldName = line.substr(0,pos);
+        string fieldName = line.substr(0,pos);
         fieldNames->push_back(fieldName);
         line = line.substr(pos+1);
         pos = line.find_first_not_of(' ');
         line = line.substr(pos);
         pos = line.find_first_of('\n');
-        String valueChannelName = line.substr(0,pos);
+        string valueChannelName = line.substr(0,pos);
         valueChannelNames->push_back(valueChannelName);
     }
     fclose(f);

@@ -34,7 +34,7 @@ public:
     ~caContext();
     void release();
     void stop();
-    void exception(epics::pvData::String const &message);
+    void exception(std::string const &message);
     void checkContext();
 private:
     std::list<epicsThreadId> auxThreadList ;

@@ -26,6 +26,7 @@
 
 using namespace epics::pvData;
 using namespace epics::pvaSrv;
+using std::string;
 
 extern "C" {
 
@@ -33,7 +34,7 @@ static void exceptionCallback(struct exception_handler_args args)
 {
     if(DbPvDebug::getLevel()>0) printf("caContext::exceptionCallback\n");
     caContext *context = static_cast<caContext *>(args.usr);
-    String message(ca_message(args.stat));
+    string message(ca_message(args.stat));
     context->exception(message);
 }
 
@@ -117,7 +118,7 @@ void caContext::release()
     referenceCount--;
 }
 
-void caContext::exception(String const &message)
+void caContext::exception(string const &message)
 {
     Lock xx(mutex);
     requester->message(message,errorMessage);

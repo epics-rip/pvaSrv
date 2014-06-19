@@ -18,7 +18,7 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 using std::tr1::static_pointer_cast;
 
-static String getRequestString("value,alarm,timeStamp");
+static string getRequestString("value,alarm,timeStamp");
 
 
 PvValue::~PvValue() {}
@@ -26,7 +26,7 @@ PvValue::~PvValue() {}
 PvValue::PvValue(
          RequesterPtr const &requester,
          ChannelProvider::shared_pointer const &channelProvider,
-         String const &channelName)
+         string const &channelName)
 : requester(requester),
   channelProvider(channelProvider),
   channelName(channelName),
@@ -118,7 +118,7 @@ String PvValue::getRequesterName()
 }
 
 void PvValue::message(
-    String const & message,
+    string const & message,
     MessageType messageType)
 {
     requester->message(message,messageType);
@@ -171,7 +171,7 @@ void PvValue::channelGetConnect(
         bool allGood = true;
         if(pvValue.get()==NULL) allGood = false;
         if(!allGood) {
-            String builder("channel ");
+            string builder("channel ");
             builder += channelName;
             if(pvValue.get()==NULL) builder += " no value field ";
             if(pvAlarm.get()==NULL) builder += " no alarm field ";

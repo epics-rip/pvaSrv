@@ -36,11 +36,12 @@
 #include "caMonitor.h"
 #include "dbUtil.h"
 
-namespace epics { namespace pvaSrv { 
-
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 using std::tr1::dynamic_pointer_cast;
+using std::string;
+
+namespace epics { namespace pvaSrv { 
 
 DbPvMonitor::DbPvMonitor(
     DbPvPtr const &dbPv,
@@ -76,12 +77,12 @@ DbPvMonitor::~DbPvMonitor() {
 bool DbPvMonitor::init(
     PVStructure::shared_pointer const &pvRequest)
 {
-    String queueSizeString("record._options.queueSize");
+    string queueSizeString("record._options.queueSize");
     PVFieldPtr pvField = pvRequest.get()->getSubField(queueSizeString);
     if(pvField!=0) {
         PVStringPtr pvString = pvRequest.get()->getStringField(queueSizeString);
         if(pvString.get()!=NULL) {
-             String value = pvString->get();
+             string value = pvString->get();
              queueSize = atoi(value.c_str());
         }
     }
@@ -124,10 +125,10 @@ bool DbPvMonitor::init(
         case pvDouble: caType = CaDouble; break;
         case pvString: caType = CaString; break;
         default:
-            throw std::logic_error(String("bad scalarType"));
+            throw std::logic_error("bad scalarType");
         }
     }
-    String pvName = dbPv->getChannelName();
+    string pvName = dbPv->getChannelName();
     caMonitor.reset(
         new CaMonitor(getPtrSelf(), pvName, caType));
     caMonitor->connect();
@@ -140,11 +141,11 @@ bool DbPvMonitor::init(
     return true;
 }
 
-String DbPvMonitor::getRequesterName() {
+string DbPvMonitor::getRequesterName() {
     return monitorRequester.get()->getRequesterName();
 }
 
-void DbPvMonitor::message(String const &message,MessageType messageType)
+void DbPvMonitor::message(string const &message,MessageType messageType)
 {
     monitorRequester->message(message,messageType);
 }
@@ -177,8 +178,8 @@ Status DbPvMonitor::start()
     currentElement =getFree();
     if(currentElement.get()==0) {
         printf("dbPvMonitor::start will throw\n");
-        throw std::logic_error(String(
-            "dbPvMonitor::start no free queue element"));
+        throw std::logic_error(
+            "dbPvMonitor::start no free queue element");
     }
     BitSet::shared_pointer bitSet = currentElement->changedBitSet;
     bitSet->clear();
@@ -242,7 +243,7 @@ void DbPvMonitor::eventCallback(const char *status)
     if(DbPvDebug::getLevel()>0) printf("dbPvMonitor::eventCallback\n");
     if(beingDestroyed) return;
     if(status!=0) {
-         monitorRequester->message(String(status),errorMessage);
+         monitorRequester->message(status,errorMessage);
     }
     PVStructure::shared_pointer pvStructure = currentElement->pvStructurePtr;
     BitSet::shared_pointer bitSet = currentElement->changedBitSet;

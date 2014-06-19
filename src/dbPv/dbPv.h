@@ -47,24 +47,24 @@ class DbPvProvider :
 public:
      POINTER_DEFINITIONS(DbPvProvider);
     virtual ~DbPvProvider();
-    virtual  epics::pvData::String getProviderName();
+    virtual  std::string getProviderName();
     virtual void destroy() {}
     virtual epics::pvAccess::ChannelFind::shared_pointer channelFind(
-        epics::pvData::String const &channelName,
+        std::string const &channelName,
         epics::pvAccess::ChannelFindRequester::shared_pointer const & channelFindRequester);
     virtual epics::pvAccess::ChannelFind::shared_pointer channelList(
         epics::pvAccess::ChannelListRequester::shared_pointer const & channelListRequester);
     virtual epics::pvAccess::Channel::shared_pointer createChannel(
-        epics::pvData::String const &channelName,
+        std::string const &channelName,
         epics::pvAccess::ChannelRequester::shared_pointer const &channelRequester,
         short priority)
     { return createChannel(channelName,channelRequester,priority,"");}
 
     virtual epics::pvAccess::Channel::shared_pointer createChannel(
-        epics::pvData::String const &channelName,
+        std::string const &channelName,
         epics::pvAccess::ChannelRequester::shared_pointer  const &channelRequester,
         short priority,
-        epics::pvData::String const &address);
+        std::string const &address);
 private:
     shared_pointer getPtrSelf()
     {
@@ -84,25 +84,25 @@ public:
     DbPv(
         DbPvProviderPtr const & provider,
         epics::pvAccess::ChannelRequester::shared_pointer const & requester,
-        epics::pvData::String const & name,
+        std::string const & name,
         std::tr1::shared_ptr<DbAddr> addr
         );
     virtual ~DbPv();
     void init();
     virtual void destroy(){}
-    virtual epics::pvData::String getRequesterName()
+    virtual std::string getRequesterName()
        {return requester->getRequesterName();}
     virtual void message(
-        epics::pvData::String const & message,
+        std::string const & message,
         epics::pvData::MessageType messageType)
        {requester->message(message,messageType);}
     virtual epics::pvAccess::ChannelProvider::shared_pointer getProvider()
        { return provider;}
-    virtual epics::pvData::String getRemoteAddress()
+    virtual std::string getRemoteAddress()
        { return "local";}
     virtual epics::pvAccess::Channel::ConnectionState getConnectionState()
        { return epics::pvAccess::Channel::CONNECTED;}
-    virtual epics::pvData::String getChannelName()
+    virtual std::string getChannelName()
        { return name; }
     virtual epics::pvAccess::ChannelRequester::shared_pointer getChannelRequester()
        { return requester;}
@@ -110,7 +110,7 @@ public:
        { return true;}
     virtual void getField(
         epics::pvAccess::GetFieldRequester::shared_pointer const &requester,
-        epics::pvData::String const &subField);
+        std::string const &subField);
     virtual epics::pvAccess::AccessRights getAccessRights(
         epics::pvData::PVField::shared_pointer const &pvField)
         {throw std::logic_error("Not Implemented");}
@@ -128,7 +128,7 @@ public:
         epics::pvData::PVStructure::shared_pointer const &pvRequest)
         {
            epics::pvData::Status status(epics::pvData::Status::STATUSTYPE_ERROR,
-           epics::pvData::String("ChannelPutGet not supported"));
+           "ChannelPutGet not supported");
            epics::pvData::StructureConstPtr nullStructure;
            requester->channelPutGetConnect(
                status,
@@ -142,7 +142,7 @@ public:
         epics::pvData::PVStructure::shared_pointer const &pvRequest)
         {
             epics::pvData::Status status(epics::pvData::Status::STATUSTYPE_ERROR,
-            epics::pvData::String("ChannelRPC not supported"));
+            "ChannelRPC not supported");
             requester->channelRPCConnect(
                  status,
                  epics::pvAccess::ChannelRPC::shared_pointer());
@@ -155,7 +155,7 @@ public:
         epics::pvAccess::ChannelArrayRequester::shared_pointer const &channelArrayRequester,
         epics::pvData::PVStructurePtr const &pvRequest);
     virtual void printInfo();
-    virtual void printInfo(epics::pvData::StringBuilder out);
+    virtual void printInfo(std::ostream& out);
 private:
     shared_pointer getPtrSelf()
     {
@@ -163,7 +163,7 @@ private:
     }
     DbPvProviderPtr  provider;
     epics::pvAccess::ChannelRequester::shared_pointer requester;
-    epics::pvData::String name;
+    std::string name;
     std::tr1::shared_ptr<DbAddr> dbAddr;
     epics::pvData::FieldConstPtr recordField; 
     epics::pvData::PVStructurePtr pvNullStructure;
@@ -183,9 +183,9 @@ public:
         DbAddr &dbAddr);
     virtual ~DbPvProcess();
     bool init();
-    virtual epics::pvData::String getRequesterName();
+    virtual std::string getRequesterName();
     virtual void message(
-        epics::pvData::String const &message,
+        std::string const &message,
         epics::pvData::MessageType messageType);
     virtual void destroy();
     virtual std::tr1::shared_ptr<epics::pvAccess::Channel> getChannel()
@@ -204,11 +204,11 @@ private:
     DbPvPtr dbPv;
     epics::pvAccess::ChannelProcessRequester::shared_pointer channelProcessRequester;
     DbAddr &dbAddr;
-    epics::pvData::String recordString;
-    epics::pvData::String processString;
-    epics::pvData::String fieldString;
-    epics::pvData::String fieldListString;
-    epics::pvData::String valueString;
+    std::string recordString;
+    std::string processString;
+    std::string fieldString;
+    std::string fieldListString;
+    std::string valueString;
     std::tr1::shared_ptr<struct putNotify> pNotify;
     std::tr1::shared_ptr<DbAddr> notifyAddr;
     epics::pvData::Event event;
@@ -228,9 +228,9 @@ public:
         DbAddr &dbAddr);
     virtual ~DbPvGet();
     bool init(epics::pvData::PVStructurePtr const & pvRequest);
-    virtual epics::pvData::String getRequesterName();
+    virtual std::string getRequesterName();
     virtual void message(
-        epics::pvData::String const &message,
+        std::string const &message,
         epics::pvData::MessageType messageType);
     virtual void destroy();
     virtual void get();
@@ -275,9 +275,9 @@ public:
         DbAddr &dbAddr);
     virtual ~DbPvMultiGet();
     bool init(epics::pvData::PVStructurePtr const & pvRequest);
-    virtual epics::pvData::String getRequesterName();
+    virtual std::string getRequesterName();
     virtual void message(
-        epics::pvData::String const &message,
+        std::string const &message,
         epics::pvData::MessageType messageType);
     virtual void destroy();
     virtual void get();
@@ -322,9 +322,9 @@ public:
         DbAddr &dbAddr);
     virtual ~DbPvPut();
     bool init(epics::pvData::PVStructurePtr const & pvRequest);
-    virtual epics::pvData::String getRequesterName();
+    virtual std::string getRequesterName();
     virtual void message(
-        epics::pvData::String const &message,
+        std::string const &message,
         epics::pvData::MessageType messageType);
     virtual void destroy();
     virtual void put(
@@ -372,9 +372,9 @@ public:
         DbAddr &dbAddr);
     virtual ~DbPvMultiPut();
     bool init(epics::pvData::PVStructurePtr const & pvRequest);
-    virtual epics::pvData::String getRequesterName();
+    virtual std::string getRequesterName();
     virtual void message(
-        epics::pvData::String const &message,
+        std::string const &message,
         epics::pvData::MessageType messageType);
     virtual void destroy();
     virtual void put(
@@ -423,9 +423,9 @@ public:
     );
     virtual ~DbPvMonitor();
     bool init(epics::pvData::PVStructurePtr const &  pvRequest);
-    virtual epics::pvData::String getRequesterName();
+    virtual std::string getRequesterName();
     virtual void message(
-        epics::pvData::String const &message,
+        std::string const &message,
         epics::pvData::MessageType messageType);
     virtual void destroy();
     virtual epics::pvData::Status start();

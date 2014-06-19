@@ -39,7 +39,7 @@ public:
     virtual void destroy();
     virtual void getField(
         epics::pvAccess::GetFieldRequester::shared_pointer const &requester,
-        epics::pvData::String const &subField);
+        std::string const &subField);
     virtual epics::pvAccess::ChannelGet::shared_pointer createChannelGet(
         epics::pvAccess::ChannelGetRequester::shared_pointer const &channelGetRequester,
         epics::pvData::PVStructure::shared_pointer const &pvRequest);
@@ -64,9 +64,9 @@ public:
         epics::pvAccess::ChannelGetRequester::shared_pointer const &channelGetRequester);
     virtual ~DbGroupGet();
     bool init(epics::pvData::PVStructure::shared_pointer const & pvRequest);
-    virtual epics::pvData::String getRequesterName();
+    virtual std::string getRequesterName();
     virtual void message(
-        epics::pvData::String const &message,
+        std::string const &message,
         epics::pvData::MessageType messageType);
     virtual void destroy();
     virtual void get(bool lastRequest);
@@ -105,19 +105,19 @@ public:
     DbGroupProvider(
          epics::pvData::RequesterPtr const & requester,
          epics::pvAccess::ChannelProvider::shared_pointer const &pvValueProvider,
-         epics::pvData::String const & channelName,
+         std::string const & channelName,
          epics::pvData::StringArrayPtr const & fieldNames,
          epics::pvData::StringArrayPtr const & pvValueNames);
     virtual ~DbGroupProvider();
     virtual void destroy();
     virtual epics::pvAccess::ChannelFind::shared_pointer channelFind(
-        epics::pvData::String const & channelName,
+        std::string const & channelName,
         epics::pvAccess::ChannelFindRequester::shared_pointer const & channelFindRequester);
     virtual epics::pvAccess::Channel::shared_pointer createChannel(
-        epics::pvData::String const & channelName,
+        std::string const & channelName,
         epics::pvAccess::ChannelRequester::shared_pointer  const & channelRequester,
         short priority,
-        epics::pvData::String const & address);
+        std::string const & address);
     virtual std::tr1::shared_ptr<epics::pvAccess::ChannelProvider> getChannelProvider()
         {return getPtrSelf();}
     virtual void cancelChannelFind() {}
@@ -125,7 +125,7 @@ public:
 private:
     epics::pvData::RequesterPtr requester;
     epics::pvAccess::ChannelProvider::shared_pointer pvValueProvider;
-    epics::pvData::String channelName;
+    std::string channelName;
     epics::pvData::StringArrayPtr fieldNames;
     epics::pvData::StringArrayPtr pvValueNames;
     epics::pvData::Mutex mutex;

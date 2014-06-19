@@ -32,11 +32,12 @@
 #include "dbPv.h"
 #include "dbUtil.h"
 
-namespace epics { namespace pvaSrv { 
-
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 using std::tr1::static_pointer_cast;
+using std::string;
+
+namespace epics { namespace pvaSrv { 
 
 DbPvMultiGet::DbPvMultiGet(
     DbPvPtr const &dbPv,
@@ -73,13 +74,12 @@ bool DbPvMultiGet::init(PVStructurePtr const &pvRequest)
         true);
     if(propertyMask==dbUtil->noAccessBit) return false;
     if(propertyMask==dbUtil->noModBit) {
-        channelGetRequester->message(
-             String("field not allowed to be changed"),errorMessage);
+        channelGetRequester->message("field not allowed to be changed",errorMessage);
         return 0;
     }
-    String channelName(dbPv->getChannelName());
-    if(channelName.find('.') != String::npos) {
-        String message(channelName);
+    string channelName(dbPv->getChannelName());
+    if(channelName.find('.') != string::npos) {
+        string message(channelName);
         message += " field of a record not allowed";
         channelGetRequester->message(message,errorMessage);
         return 0;
@@ -93,8 +93,8 @@ bool DbPvMultiGet::init(PVStructurePtr const &pvRequest)
     short fieldType = dbAddr.field_type;
     for(size_t i = 1; i<n; i++) {
         channelName = extraNames[i-1];
-        if(channelName.find('.') != String::npos) {
-            String message(channelName);
+        if(channelName.find('.') != string::npos) {
+            string message(channelName);
             message += " field of a record not allowed";
             channelGetRequester->message(message,errorMessage);
             return 0;
@@ -103,7 +103,7 @@ bool DbPvMultiGet::init(PVStructurePtr const &pvRequest)
             if(DbPvDebug::getLevel()>0) {
                 printf("dbNameToAddr failed for %s\n",extraNames[i-1].c_str());
             }
-            String message("record not found ");
+            string message("record not found ");
             message += extraNames[i-1];
             channelGetRequester->message(message,errorMessage);
             return 0;
@@ -112,7 +112,7 @@ bool DbPvMultiGet::init(PVStructurePtr const &pvRequest)
             if(DbPvDebug::getLevel()>0) {
                 printf("scalarType not the same failed %s\n",extraNames[i-1].c_str());
             }
-            String message("scalarType not the same for ");
+            string message("scalarType not the same for ");
             message += extraNames[i-1];
             channelGetRequester->message(message,errorMessage);
             return 0;
@@ -137,11 +137,10 @@ bool DbPvMultiGet::init(PVStructurePtr const &pvRequest)
         case DBF_DOUBLE:
             scalarType = pvDouble; break;
         default:
-            channelGetRequester->message(
-                String("record is not a scalar"),errorMessage);
+            channelGetRequester->message("record is not a scalar",errorMessage);
             return 0;
     }
-    String prop;
+    string prop;
     pvStructure = getStandardPVField()->scalarArray(scalarType,prop);
     pvScalarArray = pvStructure->getScalarArrayField("value",scalarType);
     pvScalarArray->setCapacity(n);
@@ -158,11 +157,11 @@ bool DbPvMultiGet::init(PVStructurePtr const &pvRequest)
     return true;
 }
 
-String DbPvMultiGet::getRequesterName() {
+string DbPvMultiGet::getRequesterName() {
     return channelGetRequester->getRequesterName();
 }
 
-void DbPvMultiGet::message(String const &message,MessageType messageType)
+void DbPvMultiGet::message(string const &message,MessageType messageType)
 {
     channelGetRequester->message(message,messageType);
 }
@@ -334,14 +333,13 @@ void DbPvMultiGet::get()
         break;
     }
     default:
-        channelGetRequester->message(
-            String("Logic Error did not handle scalarType"),errorMessage);
+        channelGetRequester->message("Logic Error did not handle scalarType",errorMessage);
     }
     bitSet->clear();
     bitSet->set(0);
     if(isSameLockSet) dbScanUnlock(dbAddr.precord);
     lock.unlock();
-    String message("atomic ");
+    string message("atomic ");
     message += (isSameLockSet ? "true" : "false");
     channelGetRequester->message(message,infoMessage);
     channelGetRequester->getDone(
