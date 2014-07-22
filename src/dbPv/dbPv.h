@@ -490,7 +490,7 @@ public:
         size_t offset, size_t count, size_t stride);
     virtual void getArray(size_t offset, size_t count, size_t stride);
     virtual void getLength();
-    virtual void setLength(size_t length, size_t capacity);
+    virtual void setLength(size_t length);
     virtual std::tr1::shared_ptr<epics::pvAccess::Channel> getChannel()
       {return dbPv;}
     virtual void cancel(){}

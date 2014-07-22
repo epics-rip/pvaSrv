@@ -430,11 +430,9 @@ void DbPvArray::putArray(
 
 void DbPvArray::getLength()
 {
-    long v3capacity = 0;
     long v3offset = 0;
     long v3length = 0;
     dbScanLock(dbAddr.precord);
-    v3capacity = dbAddr.no_elements;
     struct rset *prset = dbGetRset(&dbAddr);
     if(prset && prset->get_array_info) {
         get_array_info get_info;
@@ -443,10 +441,10 @@ void DbPvArray::getLength()
     }
     dbScanUnlock(dbAddr.precord);
     channelArrayRequester->getLengthDone(
-       Status::Ok,getPtrSelf(),v3length,v3capacity);
+       Status::Ok,getPtrSelf(),v3length);
 }
 
-void DbPvArray::setLength(size_t length, size_t capacity)
+void DbPvArray::setLength(size_t length)
 {
     dbScanLock(dbAddr.precord);
     long no_elements = dbAddr.no_elements;
