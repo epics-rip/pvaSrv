@@ -862,7 +862,7 @@ Status  DbUtil::get(
         int32 nanoseconds = nsec;
         pvTimeStamp.get(timeStamp);
         int64 oldSecs = timeStamp.getSecondsPastEpoch();
-        int32 oldNano = timeStamp.getNanoSeconds();
+        int32 oldNano = timeStamp.getNanoseconds();
         if(oldSecs!=seconds || oldNano!=nanoseconds) {
             timeStamp.put(seconds,nanoseconds);
             pvTimeStamp.set(timeStamp);
