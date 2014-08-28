@@ -19,6 +19,8 @@
 #include <stdexcept>
 #include <memory>
 
+#include <epicsThread.h>
+
 #include <dbAccess.h>
 #include <dbNotify.h>
 #include <dbCommon.h>
@@ -39,9 +41,11 @@
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 using std::tr1::dynamic_pointer_cast;
-using std::string;
+using namespace std;
 
 namespace epics { namespace pvaSrv { 
+
+static ConvertPtr convert = getConvert();
 
 DbPvMonitor::DbPvMonitor(
     DbPvPtr const &dbPv,
@@ -79,9 +83,9 @@ bool DbPvMonitor::init(
 {
     string queueSizeString("record._options.queueSize");
     PVFieldPtr pvField = pvRequest.get()->getSubField(queueSizeString);
-    if(pvField!=0) {
+    if(pvField) {
         PVStringPtr pvString = pvRequest.get()->getStringField(queueSizeString);
-        if(pvString.get()!=NULL) {
+        if(pvString) {
              string value = pvString->get();
              queueSize = atoi(value.c_str());
         }
@@ -102,7 +106,7 @@ bool DbPvMonitor::init(
                 monitorRequester,
                 propertyMask,
                 dbAddr));
-        if(pvStructure.get()==NULL) return false;
+        if(!pvStructure) return false;
         MonitorElementPtr element(new MonitorElement(pvStructure));
         elements.push_back(element);
     }
@@ -176,18 +180,13 @@ Status DbPvMonitor::start()
         isStarted = true;
     }
     currentElement =getFree();
-    if(currentElement.get()==0) {
+    if(!currentElement) {
         printf("dbPvMonitor::start will throw\n");
         throw std::logic_error(
             "dbPvMonitor::start no free queue element");
     }
     BitSet::shared_pointer bitSet = currentElement->changedBitSet;
     bitSet->clear();
-    nextElement =getFree();
-    if(nextElement.get()!=0) {
-        BitSet::shared_pointer bitSet = nextElement->changedBitSet;
-        bitSet->clear();
-    }
     caMonitor.get()->start();
     return Status::Ok;
 }
@@ -200,7 +199,7 @@ Status DbPvMonitor::stop()
         isStarted = false;
     }
     if(DbPvDebug::getLevel()>0) printf("dbPvMonitor::stop\n");
-    caMonitor.get()->stop();
+    caMonitor->stop();
     return Status::Ok;
 }
 
@@ -245,6 +244,7 @@ void DbPvMonitor::eventCallback(const char *status)
     if(status!=0) {
          monitorRequester->message(status,errorMessage);
     }
+    MonitorElementPtr nextElement = nullElement;
     PVStructure::shared_pointer pvStructure = currentElement->pvStructurePtr;
     BitSet::shared_pointer bitSet = currentElement->changedBitSet;
     dbScanLock(dbAddr.precord);
@@ -267,19 +267,12 @@ void DbPvMonitor::eventCallback(const char *status)
         index = overrunBitSet->nextSetBit(index+1);
     }
     if(bitSet->nextSetBit(0)>=0) {
-        if(nextElement.get()==0) nextElement =getFree();
-        if(nextElement.get()!=0) {
+        nextElement =getFree();
+        if(nextElement) {
             PVStructure::shared_pointer pvNext = nextElement->pvStructurePtr;
-            BitSet::shared_pointer bitSetNext = nextElement->changedBitSet;
-            Status stat = dbUtil->get(
-                monitorRequester,
-                propertyMask,
-                dbAddr,
-                pvNext,
-                bitSetNext,
-                &caData);
-            bitSetNext->clear();
-            *bitSetNext |= *bitSet;
+            convert->copy(pvStructure,pvNext);
+            nextElement->changedBitSet->clear();
+            nextElement->overrunBitSet->clear();
         }
     }
     dbScanUnlock(dbAddr.precord);
@@ -289,18 +282,12 @@ void DbPvMonitor::eventCallback(const char *status)
         bitSet->set(0);
     }
     if(bitSet->nextSetBit(0)<0) return;
-    if(nextElement.get()==0) return;
+    if(!nextElement) return;
     numberUsed++;
     nextSetUsed++;
     if(nextSetUsed>=queueSize) nextSetUsed = 0;
     currentElement = nextElement;
-    nextElement =getFree();
-    if(nextElement!=0) {
-        nextElement->changedBitSet->clear();
-        nextElement->overrunBitSet->clear();
-    }
     monitorRequester->monitorEvent(getPtrSelf());
-
 }
 
 void DbPvMonitor::lock()

@@ -467,7 +467,6 @@ private:
     bool isStarted;
     epics::pvData::MonitorElementPtrArray elements;
     epics::pvData::MonitorElementPtr currentElement;
-    epics::pvData::MonitorElementPtr nextElement;
     epics::pvData::MonitorElementPtr nullElement;
     epics::pvData::MonitorElementPtrArray elementArray;
 };
