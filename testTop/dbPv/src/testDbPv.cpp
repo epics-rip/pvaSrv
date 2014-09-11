@@ -168,7 +168,7 @@ static void testDbPvCallFunc(const iocshArgBuf *args)
         myRequester,pvRequest);
     channelGet->get();
     channelGet->destroy();
-    if(channel!=0) {
+    if(channel) {
         channel->destroy();
     }
 }

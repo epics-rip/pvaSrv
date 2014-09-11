@@ -84,8 +84,8 @@ DbPvProviderPtr getDbPvProvider()
     Lock xx(mutex);
 
     if(dbPvProvider.get()==0) {
-	SecurityPluginRegistry::instance().
-            installServerSecurityPlugin(SecurityPlugin::shared_pointer(new CAServerSecurityPlugin()));
+        CAServerSecurityPlugin::shared_pointer cssp(new CAServerSecurityPlugin());
+        SecurityPluginRegistry::instance().installServerSecurityPlugin(cssp);
         dbPvProvider = DbPvProviderPtr(new DbPvProvider());
         ChannelProvider::shared_pointer xxx = dynamic_pointer_cast<ChannelProvider>(dbPvProvider);
         dbPvProvider->channelFinder = SyncChannelFind::shared_pointer(new SyncChannelFind(xxx));

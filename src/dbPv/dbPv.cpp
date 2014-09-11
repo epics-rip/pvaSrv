@@ -111,7 +111,7 @@ DbPv::~DbPv()
 void DbPv::getField(GetFieldRequester::shared_pointer const &requester,
         string const &subField)
 {
-    if(recordField!=0) {
+    if(recordField) {
         requester->getDone(Status::Ok,recordField);
         return;
     }

@@ -483,10 +483,14 @@ void  DbUtil::getPropertyData(
         if(prset && prset->get_precision) {
             get_precision gprec = (get_precision)(prset->get_precision);
             gprec(&dbAddr,&precision);
-            string format("%f");
             if(precision>0) {
-                format += "." + precision;
-                display.setFormat(format);
+                char fmt[16];
+                sprintf(fmt,"%%.%ldf",precision);
+                display.setFormat(string(fmt));
+            }
+            else {
+                static string defaultFormat("%f");
+                display.setFormat(defaultFormat);
             }
         }
         struct dbr_grDouble graphics;

@@ -98,7 +98,7 @@ DbPvArray::~DbPvArray()
 
 bool DbPvArray::init(PVStructure::shared_pointer const &pvRequest)
 {
-    if(!dbAddr.no_elements>1) {
+    if(!(dbAddr.no_elements>1)) {
         channelArrayRequester.get()->message("field in V3 record is not an array",errorMessage);
         return false;
     }
