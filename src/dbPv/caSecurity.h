@@ -55,7 +55,7 @@ namespace epics {
 
         // bitSet w/ one bit
         virtual epics::pvData::Status authorizeCreateChannelProcess(
-                epics::pvAccess::pvAccessID ioid, epics::pvData::PVStructure const & /*pvRequest*/) {
+                epics::pvAccess::pvAccessID ioid, epics::pvData::PVStructure::shared_pointer const & /*pvRequest*/) {
             return epics::pvData::Status::Ok;
         }
 
@@ -65,7 +65,7 @@ namespace epics {
 
         // bitSet w/ one bit (allowed, not allowed) and rest of the bit per field
         virtual epics::pvData::Status authorizeCreateChannelGet(
-                epics::pvAccess::pvAccessID /*ioid*/, epics::pvData::PVStructure const & /*pvRequest*/) {
+                epics::pvAccess::pvAccessID /*ioid*/, epics::pvData::PVStructure::shared_pointer const & /*pvRequest*/) {
             return epics::pvData::Status::Ok;
         }
 
@@ -79,7 +79,7 @@ namespace epics {
         // read: bitSet w/ one bit (allowed, not allowed) and rest of the bit per field
         // write: bitSet w/ one bit (allowed, not allowed) and rest of the bit per field
         virtual epics::pvData::Status authorizeCreateChannelPut(
-                epics::pvAccess::pvAccessID /*ioid*/, epics::pvData::PVStructure const & /*pvRequest*/) {
+                epics::pvAccess::pvAccessID /*ioid*/, epics::pvData::PVStructure::shared_pointer const & /*pvRequest*/) {
             return epics::pvData::Status::Ok;
         }
 
@@ -97,7 +97,7 @@ namespace epics {
         // write: bitSet w/ one bit (allowed, not allowed) and rest of the bit per field
         // process: bitSet w/ one bit (allowed, not allowed)
         virtual epics::pvData::Status authorizeCreateChannelPutGet(
-                epics::pvAccess::pvAccessID /*ioid*/, epics::pvData::PVStructure const & /*pvRequest*/) {
+                epics::pvAccess::pvAccessID /*ioid*/, epics::pvData::PVStructure::shared_pointer const & /*pvRequest*/) {
             return epics::pvData::Status::Ok;
         }
 
@@ -113,7 +113,7 @@ namespace epics {
 
         // bitSet w/ one bit
         virtual epics::pvData::Status authorizeCreateChannelRPC(
-                epics::pvAccess::pvAccessID /*ioid*/, epics::pvData::PVStructure const & /*pvRequest*/) {
+                epics::pvAccess::pvAccessID /*ioid*/, epics::pvData::PVStructure::shared_pointer const & /*pvRequest*/) {
             return epics::pvData::Status::Ok;
         }
 
@@ -125,7 +125,7 @@ namespace epics {
 
         // read: bitSet w/ one bit (allowed, not allowed) and rest of the bit per field
         virtual epics::pvData::Status authorizeCreateMonitor(
-                epics::pvAccess::pvAccessID /*ioid*/, epics::pvData::PVStructure const & /*pvRequest*/) {
+                epics::pvAccess::pvAccessID /*ioid*/, epics::pvData::PVStructure::shared_pointer const & /*pvRequest*/) {
             return epics::pvData::Status::Ok;
         }
 
@@ -138,7 +138,7 @@ namespace epics {
 
         // read: bitSet w/ one bit (allowed, not allowed) and rest put/get/set length
         virtual epics::pvData::Status authorizeCreateChannelArray(
-                epics::pvAccess::pvAccessID /*ioid*/, epics::pvData::PVStructure const & /*pvRequest*/) {
+                epics::pvAccess::pvAccessID /*ioid*/, epics::pvData::PVStructure::shared_pointer const & /*pvRequest*/) {
             return epics::pvData::Status::Ok;
         }
 
@@ -228,7 +228,7 @@ namespace epics {
 
     class epicsShareClass CAServerSecurityPlugin :
             public epics::pvAccess::SecurityPlugin,
-            public std::tr1::enable_shared_from_this<epics::pvAccess::SecurityPlugin>
+            public std::tr1::enable_shared_from_this<CAServerSecurityPlugin>
     {
     public:
         POINTER_DEFINITIONS(CAServerSecurityPlugin);
