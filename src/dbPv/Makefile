@@ -7,10 +7,12 @@ DBD += dbPv.dbd
 INC += dbPv.h
 INC += dbPvDebug.h
 INC += caMonitor.h
+INC += caSecurity.h
 
 LIBSRCS += caContext.cpp
 LIBSRCS += dbUtil.cpp
 LIBSRCS += caMonitor.cpp
+LIBSRCS += caSecurity.cpp
 LIBSRCS += dbPv.cpp
 LIBSRCS += dbPvProvider.cpp
 LIBSRCS += dbPvProcess.cpp

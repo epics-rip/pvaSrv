@@ -22,6 +22,7 @@
 #include <pv/lock.h>
 
 #include "dbPv.h"
+#include "caSecurity.h"
 
 using namespace epics::pvData;
 using namespace epics::pvAccess;
@@ -83,6 +84,8 @@ DbPvProviderPtr getDbPvProvider()
     Lock xx(mutex);
 
     if(dbPvProvider.get()==0) {
+	SecurityPluginRegistry::instance().
+            installServerSecurityPlugin(SecurityPlugin::shared_pointer(new CAServerSecurityPlugin()));
         dbPvProvider = DbPvProviderPtr(new DbPvProvider());
         ChannelProvider::shared_pointer xxx = dynamic_pointer_cast<ChannelProvider>(dbPvProvider);
         dbPvProvider->channelFinder = SyncChannelFind::shared_pointer(new SyncChannelFind(xxx));
