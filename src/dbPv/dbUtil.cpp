@@ -1076,7 +1076,7 @@ Status  DbUtil::put(
             pvIndex = static_pointer_cast<PVInt>(pvField);
         } else {
             PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
-            pvEnum->getIntField(indexString);
+            pvIndex = pvEnum->getIntField(indexString);
         }
         if(dbAddr.field_type==DBF_MENU) {
             requester->message("Not allowed to change a menu field",errorMessage);
