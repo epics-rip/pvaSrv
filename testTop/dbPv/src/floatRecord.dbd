@@ -26,16 +26,6 @@ recordtype(float) {
 		promptgroup(GUI_DISPLAY)
 		interest(1)
 	}
-	field(DRVH,DBF_FLOAT) {
-		prompt("High Operating Range")
-		promptgroup(GUI_DISPLAY)
-		interest(1)
-	}
-	field(DRVL,DBF_FLOAT) {
-		prompt("Low Operating Range")
-		promptgroup(GUI_DISPLAY)
-		interest(1)
-	}
 	field(HIHI,DBF_FLOAT) {
 		prompt("Hihi Alarm Limit")
 		promptgroup(GUI_ALARMS)
