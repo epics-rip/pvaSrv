@@ -13,6 +13,7 @@
 
 #include <epicsExit.h>
 #include <dbAccess.h>
+#include <dbStaticLib.h>
 
 #include <pv/serverContext.h>
 #include <pv/syncChannelFind.h>
@@ -123,10 +124,29 @@ ChannelFind::shared_pointer DbPvProvider::channelFind(
 ChannelFind::shared_pointer DbPvProvider::channelList(
     ChannelListRequester::shared_pointer const & channelListRequester)
 {
-    Status errorStatus(Status::STATUSTYPE_ERROR, "not implemented");
+    PVStringArray::svector channelNames;
+
+    DBENTRY dbentry;
+    DBENTRY *pdbentry=&dbentry;
+
+    if (pdbbase) {
+        dbInitEntry(pdbbase, pdbentry);
+        long status = dbFirstRecordType(pdbentry);
+        if (!status) {
+            while (!status) {
+                status = dbFirstRecord(pdbentry);
+                while (!status) {
+                    channelNames.push_back(dbGetRecordName(pdbentry));
+                    status = dbNextRecord(pdbentry);
+                }
+                status = dbNextRecordType(pdbentry);
+            }
+        }
+        dbFinishEntry(pdbentry);
+    }
+
     ChannelFind::shared_pointer nullChannelFind;
-    PVStringArray::const_svector none;    
-    channelListRequester->channelListResult(errorStatus, nullChannelFind, none, false);
+    channelListRequester->channelListResult(Status::Ok, nullChannelFind, freeze(channelNames), false);
     return nullChannelFind;
 }
 

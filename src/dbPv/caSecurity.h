@@ -212,6 +212,10 @@ namespace epics {
         virtual epics::pvAccess::ChannelSecuritySession::shared_pointer createChannelSession(std::string const & channelName)
             throw (epics::pvAccess::SecurityException)
         {
+            // allways allow server RPC service
+            if (channelName == "server")
+                return epics::pvAccess::NoSecurityPlugin::INSTANCE->createChannelSession("server");
+
             return epics::pvAccess::ChannelSecuritySession::shared_pointer(
                         new CAServerChannelSecuritySession(channelName, m_user.c_str(), m_host)
                         );
