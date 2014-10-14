@@ -17,14 +17,13 @@
 #include <asLib.h>
 
 #include <pv/pvData.h>
+#include <pv/security.h>
 
 
 #ifdef casecurityEpicsExportSharedSymbols
 #   define epicsExportSharedSymbols
 #	undef casecurityEpicsExportSharedSymbols
 #endif
-
-#include <pv/security.h>
 
 #include <shareLib.h>
 
