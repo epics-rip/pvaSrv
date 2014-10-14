@@ -7,6 +7,10 @@
  * @author mrk
  */
 
+#ifdef _WIN32
+#define NOMINMAX
+#endif
+
 #include <string>
 #include <stdexcept>
 #include <memory>
