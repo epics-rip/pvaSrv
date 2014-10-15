@@ -211,13 +211,22 @@ namespace epics {
         virtual epics::pvAccess::ChannelSecuritySession::shared_pointer createChannelSession(std::string const & channelName)
             throw (epics::pvAccess::SecurityException)
         {
-            // allways allow server RPC service
-            if (channelName == "server")
-                return epics::pvAccess::NoSecurityPlugin::INSTANCE->createChannelSession("server");
+            try
+            {
+                return epics::pvAccess::ChannelSecuritySession::shared_pointer(
+                            new CAServerChannelSecuritySession(channelName, m_user.c_str(), m_host)
+                            );
+            } catch (epics::pvAccess::SecurityException &se) {
 
-            return epics::pvAccess::ChannelSecuritySession::shared_pointer(
-                        new CAServerChannelSecuritySession(channelName, m_user.c_str(), m_host)
-                        );
+                // allow channels that do not live in db (e.g. a server hosts 2 providers)
+                // TODO think about this, it is better to split servers
+                // additional case: server RPC service (channelName == "server")
+                const char * msg = se.what();
+                if (msg && strcmp(msg, "no such pv") == 0)
+                    return epics::pvAccess::NoSecurityPlugin::INSTANCE->createChannelSession(channelName);
+                else
+                    throw;
+            }
         }
 
     private:

@@ -3,7 +3,7 @@
 TOP = ..
 include $(TOP)/configure/CONFIG
 
-PVASRV_VERSION = 0.9.1
+PVASRV_VERSION = 0.9.4
 
 LIBRARY_IOC = pvaSrv
 
