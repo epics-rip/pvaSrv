@@ -36,7 +36,7 @@ New : doubleArray01 3 11 22 33
 --------------------------------------------------------------------------------
 > pvget -r 'field()' double01
 double01
-uri:ev4:nt/2012/pwd:NTScalar 
+epics:nt/NTScalar:1.0
     double value 1.23
     alarm_t alarm
         int severity 2
@@ -73,7 +73,7 @@ uri:ev4:nt/2012/pwd:NTScalar
 --------------------------------------------------------------------------------
 > pvget -r 'field(value,timeStamp,alarm)' double01
 double01
-uri:ev4:nt/2012/pwd:NTScalar 
+epics:nt/NTScalar:1.0
     double value 1.23
     alarm_t alarm
         int severity 2
