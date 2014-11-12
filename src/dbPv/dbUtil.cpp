@@ -154,6 +154,10 @@ int DbUtil::getProperties(
             }
         }
     }
+    if (!fieldList.size()) {
+        requester->message("no valid field name specified", errorMessage);
+        propertyMask = noAccessBit; return propertyMask;
+    }
     if(getValue) {
         propertyMask |= getValueBit;
         Type type = (dbAddr.special==SPC_DBADDR) ? scalarArray : scalar;
