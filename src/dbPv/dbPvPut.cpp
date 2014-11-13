@@ -129,7 +129,7 @@ void DbPvPut::destroy() {
         Lock xx(mutex);
         if(beingDestroyed) return;
         beingDestroyed = true;
-        dbNotifyCancel(pNotify.get());
+        if (pNotify) dbNotifyCancel(pNotify.get());
     }
 }
 
