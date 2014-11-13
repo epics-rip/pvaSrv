@@ -150,13 +150,14 @@ void DbPvPut::put(PVStructurePtr const &pvStructure, BitSetPtr const & bitSet)
     dbScanLock(dbAddr.precord);
     Status status = dbUtil->put(
         channelPutRequester,propertyMask,dbAddr,pvField);
+    if (process && !block) dbProcess(dbAddr.precord);
     dbScanUnlock(dbAddr.precord);
     lock.unlock();
-    if (process) {
+    if (process && block) {
         epicsUInt8 value = 1;
         pNotify.get()->pbuffer = &value;
         dbPutNotify(pNotify.get());
-        if (block) event.wait();
+        event.wait();
     }
     channelPutRequester->putDone(status,getPtrSelf());
 }
