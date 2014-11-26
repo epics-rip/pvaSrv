@@ -15,6 +15,7 @@
 #include <string>
 
 #include <asLib.h>
+#include <epicsVersion.h>
 
 #include <pv/pvData.h>
 #include <pv/security.h>
@@ -164,6 +165,9 @@ namespace epics {
 
         static epics::pvData::Status m_noAccessStatus;
 
+#if defined(VERSION_INT) && EPICS_VERSION_INT >= VERSION_INT(3,15,0,0)
+        struct dbChannel *m_dbChannel;
+#endif
         ASCLIENTPVT m_asClientPvt;
     };
 
