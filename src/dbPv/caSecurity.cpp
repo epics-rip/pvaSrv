@@ -9,7 +9,12 @@
 #include <asDbLib.h>
 
 #include <epicsVersion.h>
-#if defined(VERSION_INT) && EPICS_VERSION_INT >= VERSION_INT(3,15,0,0)
+#ifndef EPICS_VERSION_INT
+#define VERSION_INT(V,R,M,P) ( ((V)<<24) | ((R)<<16) | ((M)<<8) | (P))
+#define EPICS_VERSION_INT VERSION_INT(EPICS_VERSION, EPICS_REVISION, EPICS_MODIFICATION, EPICS_PATCH_LEVEL)
+#endif
+
+#if EPICS_VERSION_INT >= VERSION_INT(3,15,0,0)
 #include <db_access_routines.h>
 #include <dbChannel.h>
 #endif
@@ -59,7 +64,23 @@ CAServerChannelSecuritySession::CAServerChannelSecuritySession(std::string const
                                char * host)
     throw (SecurityException)
 {
-#if defined(VERSION_INT) && EPICS_VERSION_INT < VERSION_INT(3,15,0,0)
+#if EPICS_VERSION_INT >= VERSION_INT(3,15,0,0)
+    m_dbChannel = dbChannel_create (channelName.c_str());
+    if (!m_dbChannel)
+        throw SecurityException("failed to create dbChannel");
+
+    long status = asAddClient(
+            &m_asClientPvt,
+            (ASMEMBERPVT)asDbGetMemberPvt(m_dbChannel),
+            asDbGetAsl(m_dbChannel),
+            user,
+            host);
+    if (status != 0 && status != S_asLib_asNotActive)
+    {
+        dbChannelDelete(m_dbChannel);
+        throw SecurityException("no room for security table");
+    }
+#else
     struct dbAddr dbAddr;
     long result = dbNameToAddr(channelName.c_str(), &dbAddr);
     if (result != 0)
@@ -73,22 +94,6 @@ CAServerChannelSecuritySession::CAServerChannelSecuritySession(std::string const
             host);
     if (status != 0 && status != S_asLib_asNotActive)
         throw SecurityException("no room for security table");
-#else
-    m_dbChannel = dbChannel_create (channelName.c_str());
-    if (!m_dbChannel)
-        throw SecurityException("failed to create dbChannel");
-
-    long status = asAddClient(
-            &m_asClientPvt,
-            (ASMEMBERPVT)asDbGetMemberPvt(m_dbChannel),
-            asDbGetAsl(m_dbChannel),
-            user,
-            host);
-    if (status != 0 && status != S_asLib_asNotActive)
-    {       
-        dbChannelDelete(m_dbChannel);
-        throw SecurityException("no room for security table");
-    }
 #endif
 }
 
@@ -97,7 +102,7 @@ CAServerChannelSecuritySession::~CAServerChannelSecuritySession() {
 }
 
 void CAServerChannelSecuritySession::close() {
-#if defined(VERSION_INT) && EPICS_VERSION_INT >= VERSION_INT(3,15,0,0)
+#if EPICS_VERSION_INT >= VERSION_INT(3,15,0,0)
     if (m_dbChannel)
     {
         dbChannelDelete(m_dbChannel);
