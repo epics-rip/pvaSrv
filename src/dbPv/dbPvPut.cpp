@@ -77,7 +77,7 @@ bool DbPvPut::init(PVStructure::shared_pointer const &pvRequest)
             channelPutRequester,
             propertyMask,
             dbAddr));
-    if (!pvStructure.get()) return 0;
+    if (!pvStructure.get()) return false;
     if (propertyMask & dbUtil->dbPutBit) {
         if (propertyMask & dbUtil->processBit) {
             channelPutRequester->message(
@@ -127,8 +127,9 @@ void DbPvPut::destroy() {
          (beingDestroyed ? "true" : "false"));
     {
         Lock xx(mutex);
-        if(beingDestroyed) return;
+        if (beingDestroyed) return;
         beingDestroyed = true;
+        if (pNotify) dbNotifyCancel(pNotify.get());
     }
 }
 
@@ -148,22 +149,23 @@ void DbPvPut::put(PVStructurePtr const &pvStructure, BitSetPtr const & bitSet)
     }
     dbScanLock(dbAddr.precord);
     Status status = dbUtil->put(
-        channelPutRequester,propertyMask,dbAddr,pvField);
+                channelPutRequester, propertyMask, dbAddr, pvField);
+    if (process && !block) dbProcess(dbAddr.precord);
     dbScanUnlock(dbAddr.precord);
     lock.unlock();
-    if (process) {
+    if (block && process) {
         epicsUInt8 value = 1;
         pNotify.get()->pbuffer = &value;
         dbPutNotify(pNotify.get());
-        if (block) event.wait();
+    } else {
+        channelPutRequester->putDone(status, getPtrSelf());
     }
-    channelPutRequester->putDone(status,getPtrSelf());
 }
 
 void DbPvPut::notifyCallback(struct putNotify *pn)
 {
-    DbPvPut * cput = static_cast<DbPvPut *>(pn->usrPvt);
-    if (cput->block) cput->event.signal();
+    DbPvPut * pdp = static_cast<DbPvPut *>(pn->usrPvt);
+    pdp->channelPutRequester->putDone(Status::Ok, pdp->getPtrSelf());
 }
 
 void DbPvPut::get()
