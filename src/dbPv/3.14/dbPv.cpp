@@ -134,19 +134,6 @@ ChannelGet::shared_pointer DbPv::createChannelGet(
         PVStructure::shared_pointer const &pvRequest)
 {
     PVFieldPtr pvField = pvRequest->getSubField("getField");
-    if(pvField.get()!=NULL) {
-        DbPvMultiGet::shared_pointer dbPvMultiGet(
-            new DbPvMultiGet(
-                getPtrSelf(),channelGetRequester,*(dbAddr.get())));
-        if(!dbPvMultiGet->init(pvRequest)) {
-            Status createFailed(Status::STATUSTYPE_ERROR, "create dbPvMultiGet failed");
-            channelGetRequester->channelGetConnect(
-                createFailed,
-                dbPvMultiGet,
-                nullStructure);
-        }
-        return dbPvMultiGet;
-    }
     DbPvGet::shared_pointer dbPvGet(
         new DbPvGet(getPtrSelf(),channelGetRequester,*(dbAddr.get())));
     if(!dbPvGet->init(pvRequest)) {
@@ -164,19 +151,6 @@ ChannelPut::shared_pointer DbPv::createChannelPut(
         PVStructure::shared_pointer const &pvRequest)
 {
     PVFieldPtr pvField = pvRequest->getSubField("putField");
-    if(pvField.get()!=NULL) {
-        DbPvMultiPut::shared_pointer dbPvMultiPut(
-            new DbPvMultiPut(
-                getPtrSelf(),channelPutRequester,*(dbAddr.get())));
-        if(!dbPvMultiPut->init(pvRequest)) {
-            Status createFailed(Status::STATUSTYPE_ERROR, "create dbPvMultiPut failed");
-            channelPutRequester->channelPutConnect(
-                createFailed,
-                dbPvMultiPut,
-                nullStructure);
-        }
-        return dbPvMultiPut;
-    }
     DbPvPut::shared_pointer dbPvPut(
           new DbPvPut(getPtrSelf(),channelPutRequester,*(dbAddr.get())));
     if(!dbPvPut->init(pvRequest)) {
