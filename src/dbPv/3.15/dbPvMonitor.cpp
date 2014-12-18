@@ -49,12 +49,10 @@ static ConvertPtr convert = getConvert();
 
 DbPvMonitor::DbPvMonitor(
     DbPvPtr const &dbPv,
-    MonitorRequester::shared_pointer const &monitorRequester,
-    DbAddr &dbAddr)
+    MonitorRequester::shared_pointer const &monitorRequester)
 : dbUtil(DbUtil::getDbUtil()),
   dbPv(dbPv),
   monitorRequester(monitorRequester),
-  dbAddr(dbAddr),
   event(),
   propertyMask(0),
   firstTime(true),
@@ -93,11 +91,11 @@ bool DbPvMonitor::init(
     propertyMask = dbUtil->getProperties(
         monitorRequester,
         pvRequest,
-        dbAddr,
+        dbPv->getDbChannel(),
         false);
     if(propertyMask==dbUtil->noAccessBit) return false;
     if(propertyMask&dbUtil->isLinkBit) {
-        monitorRequester->message("can not monitor a link field",errorMessage);
+        monitorRequester->message("can not monitor a link field", errorMessage);
         return 0;
     }
     elements.reserve(queueSize);
@@ -105,7 +103,7 @@ bool DbPvMonitor::init(
         PVStructurePtr pvStructure(dbUtil->createPVStructure(
                 monitorRequester,
                 propertyMask,
-                dbAddr));
+                dbPv->getDbChannel()));
         if(!pvStructure) return false;
         MonitorElementPtr element(new MonitorElement(pvStructure));
         elements.push_back(element);
@@ -117,7 +115,7 @@ bool DbPvMonitor::init(
     } else {
         ScalarType scalarType = dbUtil->getScalarType(
             monitorRequester,
-            dbAddr);
+            dbPv->getDbChannel());
         switch(scalarType) {
         case pvByte: caType = CaByte; break;
         case pvUByte: caType = CaUByte; break;
@@ -179,8 +177,8 @@ Status DbPvMonitor::start()
         if(isStarted) return Status::Ok;
         isStarted = true;
     }
-    currentElement =getFree();
-    if(!currentElement) {
+    currentElement = getFree();
+    if (!currentElement) {
         printf("dbPvMonitor::start will throw\n");
         throw std::logic_error(
             "dbPvMonitor::start no free queue element");
@@ -195,10 +193,10 @@ Status DbPvMonitor::stop()
 {
     {
         Lock xx(mutex);
-        if(!isStarted) return Status::Ok;
+        if (!isStarted) return Status::Ok;
         isStarted = false;
     }
-    if(DbPvDebug::getLevel()>0) printf("dbPvMonitor::stop\n");
+    if (DbPvDebug::getLevel() > 0) printf("dbPvMonitor::stop\n");
     caMonitor->stop();
     return Status::Ok;
 }
@@ -243,21 +241,21 @@ void DbPvMonitor::accessRightsCallback()
 
 void DbPvMonitor::eventCallback(const char *status)
 {
-    if(DbPvDebug::getLevel()>0) printf("dbPvMonitor::eventCallback\n");
+    if (DbPvDebug::getLevel() > 0) printf("dbPvMonitor::eventCallback\n");
     if(beingDestroyed) return;
     if(status!=0) {
-         monitorRequester->message(status,errorMessage);
+         monitorRequester->message(status, errorMessage);
     }
     MonitorElementPtr nextElement = nullElement;
     PVStructure::shared_pointer pvStructure = currentElement->pvStructurePtr;
     BitSet::shared_pointer bitSet = currentElement->changedBitSet;
-    dbScanLock(dbAddr.precord);
+    dbScanLock(dbChannelRecord(dbPv->getDbChannel()));
     CaData &caData = caMonitor.get()->getData();
     BitSet::shared_pointer overrunBitSet = currentElement->overrunBitSet;
     Status stat = dbUtil->get(
        monitorRequester,
        propertyMask,
-       dbAddr,
+       dbPv->getDbChannel(),
        pvStructure,
        overrunBitSet,
        &caData);
@@ -279,8 +277,8 @@ void DbPvMonitor::eventCallback(const char *status)
             nextElement->overrunBitSet->clear();
         }
     }
-    dbScanUnlock(dbAddr.precord);
-    if(firstTime) {
+    dbScanUnlock(dbChannelRecord(dbPv->getDbChannel()));
+    if (firstTime) {
         firstTime = false;
         bitSet->clear();
         bitSet->set(0);
@@ -289,7 +287,7 @@ void DbPvMonitor::eventCallback(const char *status)
     if(!nextElement) return;
     numberUsed++;
     nextSetUsed++;
-    if(nextSetUsed>=queueSize) nextSetUsed = 0;
+    if (nextSetUsed >= queueSize) nextSetUsed = 0;
     currentElement = nextElement;
     monitorRequester->monitorEvent(getPtrSelf());
 }

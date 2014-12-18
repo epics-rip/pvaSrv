@@ -69,32 +69,32 @@ public:
     int getProperties(
         epics::pvData::Requester::shared_pointer const &requester,
         epics::pvData::PVStructure::shared_pointer const &pvRequest,
-        DbAddr &dbAddr,
+        dbChannel *dbChan,
         bool processDefault);
     epics::pvData::PVStructurePtr createPVStructure(
         epics::pvData::Requester::shared_pointer const &requester,
-        int mask,DbAddr &dbAddr);
+        int mask, dbChannel *dbChan);
     void getPropertyData(
         epics::pvData::Requester::shared_pointer const &requester,
-        int mask,DbAddr &dbAddr,
+        int mask, dbChannel *dbChan,
         epics::pvData::PVStructurePtr const &pvStructure);
     epics::pvData::Status get(
         epics::pvData::Requester::shared_pointer const &requester,
-        int mask,DbAddr &dbAddr,
+        int mask, dbChannel *dbChan,
         epics::pvData::PVStructurePtr const &pvStructure,
         epics::pvData::BitSet::shared_pointer const &bitSet,
         CaData *caV3Data);
     epics::pvData::Status put(
         epics::pvData::Requester::shared_pointer const &requester,
-        int mask,DbAddr &dbAddr,
+        int mask, dbChannel *dbChan,
         epics::pvData::PVFieldPtr const &pvField);
     epics::pvData::Status putField(
         epics::pvData::Requester::shared_pointer const &requester,
-        int mask,DbAddr &dbAddr,
+        int mask, dbChannel *dbChan,
         epics::pvData::PVFieldPtr const &pvField);
     epics::pvData::ScalarType getScalarType(
         epics::pvData::Requester::shared_pointer const &requester,
-        DbAddr &dbAddr);
+        dbChannel *dbChan);
 private:
     DbUtil();
     epics::pvData::PVStructurePtr  nullPVStructure;

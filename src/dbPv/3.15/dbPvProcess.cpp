@@ -33,12 +33,10 @@ namespace epics { namespace pvaSrv {
 
 DbPvProcess::DbPvProcess(
     DbPvPtr const &dbPv,
-    ChannelProcessRequester::shared_pointer const &channelProcessRequester,
-    DbAddr &dbAddr)
+    ChannelProcessRequester::shared_pointer const &channelProcessRequester)
 : dbUtil(DbUtil::getDbUtil()),
   dbPv(dbPv),
   channelProcessRequester(channelProcessRequester),
-  dbAddr(dbAddr),
   recordString("record"),
   processString("process"),
   fieldString("field"),
@@ -59,26 +57,15 @@ bool DbPvProcess::init(epics::pvData::PVStructurePtr const & pvRequest)
     propertyMask = dbUtil->getProperties(
                 channelProcessRequester,
                 pvRequest,
-                dbAddr,
+                dbPv->getDbChannel(),
                 true);
     if (propertyMask == dbUtil->noAccessBit) return false;
 
-    pNotify.reset(new (struct putNotify)());
-    notifyAddr.reset(new DbAddr());
-    memcpy(notifyAddr.get(), &dbAddr, sizeof(DbAddr));
-    DbAddr *paddr = notifyAddr.get();
-    struct dbCommon *precord = paddr->precord;
-    char buffer[sizeof(precord->name) + 10];
-    strcpy(buffer,precord->name);
-    strcat(buffer,".PROC");
-    if (dbNameToAddr(buffer,paddr)) {
-        throw std::logic_error("dbNameToAddr failed");
-    }
-    struct putNotify *pn = pNotify.get();
-    pn->userCallback = this->notifyCallback;
-    pn->paddr = paddr;
-    pn->nRequest = 1;
-    pn->dbrType = DBR_CHAR;
+    pNotify.reset(new (struct processNotify)());
+    struct processNotify *pn = pNotify.get();
+    pn->chan = dbPv->getDbChannel();
+    pn->requestType = processRequest;
+    pn->doneCallback = this->notifyCallback;
     pn->usrPvt = this;
     if (propertyMask & dbUtil->blockBit) block = true;
     channelProcessRequester->channelProcessConnect(Status::Ok, getPtrSelf());
@@ -108,17 +95,15 @@ void DbPvProcess::destroy() {
 void DbPvProcess::process()
 {
     if (block) {
-        epicsUInt8 value = 1;
-        pNotify.get()->pbuffer = &value;
-        dbPutNotify(pNotify.get());
+        dbProcessNotify(pNotify.get());
     } else {
-        dbScanLock(dbAddr.precord);
-        dbProcess(dbAddr.precord);
-        dbScanUnlock(dbAddr.precord);
+        dbScanLock(dbChannelRecord(dbPv->getDbChannel()));
+        dbProcess(dbChannelRecord(dbPv->getDbChannel()));
+        dbScanUnlock(dbChannelRecord(dbPv->getDbChannel()));
     }
 }
 
-void DbPvProcess::notifyCallback(struct putNotify *pn)
+void DbPvProcess::notifyCallback(struct processNotify *pn)
 {
     DbPvProcess * pdp = static_cast<DbPvProcess *>(pn->usrPvt);
     pdp->channelProcessRequester->processDone(Status::Ok, pdp->getPtrSelf());

@@ -160,23 +160,20 @@ Channel::shared_pointer DbPvProvider::createChannel(
     short priority,
     string const & address)
 {
-    struct dbAddr dbAddr;
-    long result = dbNameToAddr(channelName.c_str(),&dbAddr);
-    if(result!=0) {
+    dbChannel *chan = dbChannelCreate(channelName.c_str());
+    if (!chan) {
         Status notFoundStatus(Status::STATUSTYPE_ERROR,"pv not found");
         channelRequester->channelCreated(
             notFoundStatus,
             Channel::shared_pointer());
         return Channel::shared_pointer();
     }
-    std::tr1::shared_ptr<DbAddr> addr(new DbAddr());
-    memcpy(addr.get(),&dbAddr,sizeof(dbAddr));
-    DbPvPtr v3Channel(new DbPv(
+    DbPvPtr dbpv(new DbPv(
             getPtrSelf(),
-            channelRequester,channelName,addr));
-    v3Channel->init();
-    channelRequester->channelCreated(Status::Ok,v3Channel);
-    return v3Channel;
+            channelRequester, channelName, chan));
+    dbpv->init();
+    channelRequester->channelCreated(Status::Ok, dbpv);
+    return dbpv;
 }
 
 }}

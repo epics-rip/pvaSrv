@@ -266,53 +266,6 @@ private:
     bool beingDestroyed;
 };
 
-class DbPvMultiGet :
-  public virtual epics::pvAccess::ChannelGet,
-  public std::tr1::enable_shared_from_this<DbPvMultiGet>
-{
-public:
-    POINTER_DEFINITIONS(DbPvMultiGet);
-    DbPvMultiGet(
-        DbPvPtr const & dbPv,
-        epics::pvAccess::ChannelGetRequester::shared_pointer const &channelGetRequester,
-        DbAddr &dbAddr);
-    virtual ~DbPvMultiGet();
-    bool init(epics::pvData::PVStructurePtr const & pvRequest);
-    virtual std::string getRequesterName();
-    virtual void message(
-        std::string const &message,
-        epics::pvData::MessageType messageType);
-    virtual void destroy();
-    virtual void get();
-    virtual std::tr1::shared_ptr<epics::pvAccess::Channel> getChannel()
-      {return dbPv;}
-    virtual void cancel(){}
-    virtual void lastRequest() {}
-    virtual void lock();
-    virtual void unlock();
-private:
-    shared_pointer getPtrSelf()
-    {
-        return shared_from_this();
-    }
-    static void notifyCallback(struct putNotify *);
-    DbUtilPtr dbUtil;
-    DbPvPtr dbPv;
-    epics::pvAccess::ChannelGetRequester::shared_pointer channelGetRequester;
-    epics::pvData::PVStructurePtr pvStructure;
-    epics::pvData::PVScalarArrayPtr pvScalarArray;
-    epics::pvData::BitSet::shared_pointer bitSet;
-    DbAddr &dbAddr;
-    DbAddrArray dbAddrArray;
-    int propertyMask;
-    bool process;
-    bool firstTime;
-    epics::pvData::Mutex dataMutex;
-    epics::pvData::Event event;
-    epics::pvData::Mutex mutex;
-    bool beingDestroyed;
-};
-
 class DbPvPut :
   public virtual epics::pvAccess::ChannelPut,
   public std::tr1::enable_shared_from_this<DbPvPut>
@@ -359,55 +312,6 @@ private:
     std::tr1::shared_ptr<struct putNotify> pNotify;
     std::tr1::shared_ptr<DbAddr> notifyAddr;
     epics::pvData::Mutex dataMutex;
-    epics::pvData::Mutex mutex;
-    bool beingDestroyed;
-};
-
-class DbPvMultiPut :
-  public virtual epics::pvAccess::ChannelPut,
-  public std::tr1::enable_shared_from_this<DbPvMultiPut>
-{
-public:
-    POINTER_DEFINITIONS(DbPvMultiPut);
-    DbPvMultiPut(
-        DbPvPtr const & dbPv,
-        epics::pvAccess::ChannelPutRequester::shared_pointer const &channelPutRequester,
-        DbAddr &dbAddr);
-    virtual ~DbPvMultiPut();
-    bool init(epics::pvData::PVStructurePtr const & pvRequest);
-    virtual std::string getRequesterName();
-    virtual void message(
-        std::string const &message,
-        epics::pvData::MessageType messageType);
-    virtual void destroy();
-    virtual void put(
-        epics::pvData::PVStructurePtr const & pvStructure,
-        epics::pvData::BitSetPtr const & bitSet);
-    virtual std::tr1::shared_ptr<epics::pvAccess::Channel> getChannel()
-      {return dbPv;}
-    virtual void cancel(){}
-    virtual void lastRequest() {}
-    virtual void get();
-    virtual void lock();
-    virtual void unlock();
-private:
-    shared_pointer getPtrSelf()
-    {
-        return shared_from_this();
-    }
-    DbUtilPtr dbUtil;
-    DbPvPtr dbPv;
-    epics::pvAccess::ChannelPutRequester::shared_pointer channelPutRequester;
-    epics::pvData::PVStructurePtr pvStructure;
-    epics::pvData::PVScalarArrayPtr pvScalarArray;
-    epics::pvData::BitSet::shared_pointer bitSet;
-    DbAddr &dbAddr;
-    DbAddrArray dbAddrArray;
-    int propertyMask;
-    bool process;
-    bool firstTime;
-    epics::pvData::Mutex dataMutex;
-    epics::pvData::Event event;
     epics::pvData::Mutex mutex;
     bool beingDestroyed;
 };

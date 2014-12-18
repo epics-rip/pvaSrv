@@ -38,18 +38,16 @@ using std::string;
 namespace epics { namespace pvaSrv { 
 
 DbPvPut::DbPvPut(
-    DbPvPtr const &dbPv,
-    ChannelPutRequester::shared_pointer const &channelPutRequester,
-    DbAddr &dbAddr)
-: dbUtil(DbUtil::getDbUtil()),
-  dbPv(dbPv),
-  channelPutRequester(channelPutRequester),
-  dbAddr(dbAddr),
-  propertyMask(0),
-  process(false),
-  block(false),
-  firstTime(true),
-  beingDestroyed(false)
+        DbPvPtr const &dbPv,
+        ChannelPutRequester::shared_pointer const &channelPutRequester)
+    : dbUtil(DbUtil::getDbUtil()),
+      dbPv(dbPv),
+      channelPutRequester(channelPutRequester),
+      propertyMask(0),
+      process(false),
+      block(false),
+      firstTime(true),
+      beingDestroyed(false)
 {
     if(DbPvDebug::getLevel()>0) printf("dbPvPut::dbPvPut()\n");
 }
@@ -64,44 +62,36 @@ bool DbPvPut::init(PVStructure::shared_pointer const &pvRequest)
     propertyMask = dbUtil->getProperties(
         channelPutRequester,
         pvRequest,
-        dbAddr,
+        dbPv->getDbChannel(),
         true);
     if(propertyMask==dbUtil->noAccessBit) return false;
     if(propertyMask==dbUtil->noModBit) {
         channelPutRequester->message(
-             "field not allowed to be changed",errorMessage);
+                    "field not allowed to be changed",
+                    errorMessage);
         return 0;
     }
     pvStructure = PVStructure::shared_pointer(
         dbUtil->createPVStructure(
             channelPutRequester,
             propertyMask,
-            dbAddr));
+            dbPv->getDbChannel()));
     if (!pvStructure.get()) return false;
     if (propertyMask & dbUtil->dbPutBit) {
         if (propertyMask & dbUtil->processBit) {
             channelPutRequester->message(
-                        "process determined by dbPutField", errorMessage);
+                        "process determined by dbPutField",
+                        errorMessage);
         }
     } else if (propertyMask&dbUtil->processBit) {
         process = true;
-        pNotify.reset(new (struct putNotify)());
-        notifyAddr.reset(new DbAddr());
-        memcpy(notifyAddr.get(), &dbAddr, sizeof(DbAddr));
-        DbAddr *paddr = notifyAddr.get();
-        struct dbCommon *precord = paddr->precord;
-        char buffer[sizeof(precord->name) + 10];
-        strcpy(buffer, precord->name);
-        strcat(buffer, ".PROC");
-        if (dbNameToAddr(buffer, paddr)) {
-            throw std::logic_error("dbNameToAddr failed");
-        }
-        struct putNotify *pn = pNotify.get();
-        pn->userCallback = this->notifyCallback;
-        pn->paddr        = paddr;
-        pn->nRequest     = 1;
-        pn->dbrType      = DBR_CHAR;
-        pn->usrPvt       = this;
+        pNotify.reset(new (struct processNotify)());
+        struct processNotify *pn = pNotify.get();
+        pn->chan = dbPv->getDbChannel();
+        pn->requestType = putProcessRequest;
+        pn->putCallback  = this->putCallback;
+        pn->doneCallback = this->doneCallback;
+        pn->usrPvt = this;
         if (propertyMask & dbUtil->blockBit) block = true;
     }
     int numFields = pvStructure->getNumberFields();
@@ -135,63 +125,67 @@ void DbPvPut::destroy() {
 
 void DbPvPut::put(PVStructurePtr const &pvStructure, BitSetPtr const & bitSet)
 {
-    if(DbPvDebug::getLevel()>0) printf("dbPvPut::put()\n");
+    if (DbPvDebug::getLevel()>0) printf("dbPvPut::put()\n");
     Lock lock(dataMutex);
     this->pvStructure = pvStructure;
     this->bitSet = bitSet;
     PVFieldPtr pvField = pvStructure.get()->getPVFields()[0];
-    if(propertyMask&dbUtil->dbPutBit) {
-        Status status = dbUtil->putField(
-            channelPutRequester,propertyMask,dbAddr,pvField);
+    if (propertyMask & dbUtil->dbPutBit) {
+        status = dbUtil->putField(
+                    channelPutRequester,
+                    propertyMask,
+                    dbPv->getDbChannel(),
+                    pvField);
         lock.unlock();
-        channelPutRequester->putDone(status,getPtrSelf());
+        channelPutRequester->putDone(status, getPtrSelf());
         return;
     }
-    dbScanLock(dbAddr.precord);
-    Status status = dbUtil->put(
-                channelPutRequester, propertyMask, dbAddr, pvField);
-    if (process && !block) dbProcess(dbAddr.precord);
-    dbScanUnlock(dbAddr.precord);
+    dbScanLock(dbChannelRecord(dbPv->getDbChannel()));
+    status = dbUtil->put(
+                channelPutRequester, propertyMask, dbPv->getDbChannel(), pvField);
+    if (process && !block) dbProcess(dbChannelRecord(dbPv->getDbChannel()));
+    dbScanUnlock(dbChannelRecord(dbPv->getDbChannel()));
     lock.unlock();
     if (block && process) {
-        epicsUInt8 value = 1;
-        pNotify.get()->pbuffer = &value;
-        dbPutNotify(pNotify.get());
+        dbProcessNotify(pNotify.get());
     } else {
         channelPutRequester->putDone(status, getPtrSelf());
     }
 }
 
-void DbPvPut::notifyCallback(struct putNotify *pn)
+void DbPvPut::doneCallback(struct processNotify *pn)
 {
     DbPvPut * pdp = static_cast<DbPvPut *>(pn->usrPvt);
-    pdp->channelPutRequester->putDone(Status::Ok, pdp->getPtrSelf());
+    pdp->channelPutRequester->putDone(
+                pdp->status,
+                pdp->getPtrSelf());
 }
 
 void DbPvPut::get()
 {
     if(DbPvDebug::getLevel()>0) printf("dbPvPut::get()\n");
     {
-    Lock lock(dataMutex);
-    bitSet->clear();
-    dbScanLock(dbAddr.precord);
-    Status status = dbUtil->get(
-        channelPutRequester,
-        propertyMask,dbAddr,
-        pvStructure,
-        bitSet,
-        0);
-    if(firstTime) {
-        firstTime = false;
-        bitSet->set(pvStructure->getFieldOffset());
-    }
-    dbScanUnlock(dbAddr.precord);
+        Lock lock(dataMutex);
+        dbScanLock(dbChannelRecord(dbPv->getDbChannel()));
+        bitSet->clear();
+        Status status = dbUtil->get(
+                    channelPutRequester,
+                    propertyMask,
+                    dbPv->getDbChannel(),
+                    pvStructure,
+                    bitSet,
+                    0);
+        dbScanUnlock(dbChannelRecord(dbPv->getDbChannel()));
+        if(firstTime) {
+            firstTime = false;
+            bitSet->set(pvStructure->getFieldOffset());
+        }
     }
     channelPutRequester->getDone(
-        Status::Ok,
-        getPtrSelf(),
-        pvStructure,
-        bitSet);
+                status,
+                getPtrSelf(),
+                pvStructure,
+                bitSet);
 }
 
 void DbPvPut::lock()
