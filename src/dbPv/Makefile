@@ -1,6 +1,12 @@
 # This is a Makefile fragment, see ../Makefile
 
-SRC_DIRS += $(PVASRV_SRC)/dbPv/$(EPICS_VERSION).$(EPICS_REVISION)
+PLACE=$(EPICS_VERSION).$(EPICS_REVISION)
+
+ifeq ($(PLACE),3.16)
+  PLACE=3.15
+endif
+
+SRC_DIRS += $(PVASRV_SRC)/dbPv/$(PLACE)
 
 DBD += dbPv.dbd
 
