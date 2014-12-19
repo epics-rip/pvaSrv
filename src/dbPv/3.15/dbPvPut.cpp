@@ -64,8 +64,8 @@ bool DbPvPut::init(PVStructure::shared_pointer const &pvRequest)
         pvRequest,
         dbPv->getDbChannel(),
         true);
-    if(propertyMask==dbUtil->noAccessBit) return false;
-    if(propertyMask==dbUtil->noModBit) {
+    if (propertyMask == dbUtil->noAccessBit) return false;
+    if (propertyMask == dbUtil->noModBit) {
         channelPutRequester->message(
                     "field not allowed to be changed",
                     errorMessage);
@@ -125,10 +125,17 @@ void DbPvPut::destroy() {
 
 void DbPvPut::put(PVStructurePtr const &pvStructure, BitSetPtr const & bitSet)
 {
-    if (DbPvDebug::getLevel()>0) printf("dbPvPut::put()\n");
-    Lock lock(dataMutex);
+    if (DbPvDebug::getLevel() > 0) printf("dbPvPut::put()\n");
+
     this->pvStructure = pvStructure;
     this->bitSet = bitSet;
+
+    if (block && process) {
+        dbProcessNotify(pNotify.get());
+        return;
+    }
+
+    Lock lock(dataMutex);
     PVFieldPtr pvField = pvStructure.get()->getPVFields()[0];
     if (propertyMask & dbUtil->dbPutBit) {
         status = dbUtil->putField(
@@ -136,26 +143,55 @@ void DbPvPut::put(PVStructurePtr const &pvStructure, BitSetPtr const & bitSet)
                     propertyMask,
                     dbPv->getDbChannel(),
                     pvField);
-        lock.unlock();
-        channelPutRequester->putDone(status, getPtrSelf());
-        return;
-    }
-    dbScanLock(dbChannelRecord(dbPv->getDbChannel()));
-    status = dbUtil->put(
-                channelPutRequester, propertyMask, dbPv->getDbChannel(), pvField);
-    if (process && !block) dbProcess(dbChannelRecord(dbPv->getDbChannel()));
-    dbScanUnlock(dbChannelRecord(dbPv->getDbChannel()));
-    lock.unlock();
-    if (block && process) {
-        dbProcessNotify(pNotify.get());
     } else {
-        channelPutRequester->putDone(status, getPtrSelf());
+        dbScanLock(dbChannelRecord(dbPv->getDbChannel()));
+        status = dbUtil->put(
+                    channelPutRequester, propertyMask, dbPv->getDbChannel(), pvField);
+        if (process) dbProcess(dbChannelRecord(dbPv->getDbChannel()));
+        dbScanUnlock(dbChannelRecord(dbPv->getDbChannel()));
     }
+    lock.unlock();
+    channelPutRequester->putDone(status, getPtrSelf());
+}
+
+int DbPvPut::putCallback(struct processNotify *pn, notifyPutType type)
+{
+    DbPvPut *pdp = static_cast<DbPvPut *>(pn->usrPvt);
+
+    if (pn->status == notifyCanceled) {
+        if (DbPvDebug::getLevel() > 0) printf("dbPvPut::putCallback notifyCanceled\n");
+        return 0;
+    }
+    Lock lock(pdp->dataMutex);
+    PVFieldPtr pvField = pdp->pvStructure.get()->getPVFields()[0];
+    switch (type) {
+    case putDisabledType:
+        pn->status = notifyError;
+        return 0;
+    case putFieldType:
+        pdp->status = pdp->dbUtil->putField(
+                    pdp->channelPutRequester,
+                    pdp->propertyMask,
+                    pdp->dbPv->getDbChannel(),
+                    pvField);
+        break;
+    case putType:
+        pdp->status = pdp->dbUtil->put(
+                    pdp->channelPutRequester,
+                    pdp->propertyMask,
+                    pdp->dbPv->getDbChannel(),
+                    pvField);
+        break;
+    }
+    if (!pdp->status.isSuccess())
+        pn->status = notifyError;
+    return 1;
 }
 
 void DbPvPut::doneCallback(struct processNotify *pn)
 {
-    DbPvPut * pdp = static_cast<DbPvPut *>(pn->usrPvt);
+    DbPvPut *pdp = static_cast<DbPvPut *>(pn->usrPvt);
+
     pdp->channelPutRequester->putDone(
                 pdp->status,
                 pdp->getPtrSelf());
