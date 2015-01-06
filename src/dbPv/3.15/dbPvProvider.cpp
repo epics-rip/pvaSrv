@@ -108,16 +108,15 @@ ChannelFind::shared_pointer DbPvProvider::channelFind(
     string const & channelName,
     ChannelFindRequester::shared_pointer const &channelFindRequester)
 {
-    struct dbAddr dbAddr;
-    long result = dbNameToAddr(channelName.c_str(),&dbAddr);
+    long result = dbChannelTest(channelName.c_str());
     if(result==0) {
         channelFindRequester->channelFindResult(
             Status::Ok,
             channelFinder,
             true);
     } else {
-        Status notFoundStatus(Status::STATUSTYPE_ERROR,"pv not found");
-        channelFindRequester.get()->channelFindResult(
+        Status notFoundStatus(Status::STATUSTYPE_ERROR, "PV not found");
+        channelFindRequester->channelFindResult(
             notFoundStatus,
             channelFinder,
             false);
@@ -162,9 +161,17 @@ Channel::shared_pointer DbPvProvider::createChannel(
 {
     dbChannel *chan = dbChannelCreate(channelName.c_str());
     if (!chan) {
-        Status notFoundStatus(Status::STATUSTYPE_ERROR,"pv not found");
+        Status notFoundStatus(Status::STATUSTYPE_ERROR, "PV not found");
         channelRequester->channelCreated(
             notFoundStatus,
+            Channel::shared_pointer());
+        return Channel::shared_pointer();
+    }
+    long status = dbChannelOpen(chan);
+    if (status) {
+        Status cantOpenStatus(Status::STATUSTYPE_ERROR, "cannot open PV");
+        channelRequester->channelCreated(
+            cantOpenStatus,
             Channel::shared_pointer());
         return Channel::shared_pointer();
     }
