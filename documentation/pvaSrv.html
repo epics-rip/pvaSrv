@@ -33,7 +33,7 @@
     <dd><a
       href="pvaSrv.html">pvaSrv.html</a></dd>
   <dt>Editors:</dt>
-  <dd>Marty Kraimer, BNL<br>Ralph Lange, ITER</dd>
+  <dd>Marty Kraimer, BNL<br>Ralph Lange, ITER Organization</dd>
 </dl>
 
 <hr />
@@ -55,9 +55,9 @@ This version is released as part of EPICS V4.4.0 (BETA).</p>
 
 <h2 id="introduction">Introduction</h2>
 
-<p>pvaSrv is a pvAccess server that runs in the EPICS V3 IOC.</p>
+<p>pvaSrv is a pvAccess server that runs in the EPICS IOC, providing a connection to the EPICS database.</p>
 
-<p>pvaSrv allows you to get, put and monitor V3 PVs (fields of EPICS DB records) over pvAccess, translating
+<p>pvaSrv allows you to get, put and monitor EPICS PVs (fields of EPICS DB records) over pvAccess, translating
 the value and its meta data (graphics limits, alarm status, timestamp) to or from V4 Normative Type (NT)
 pvData structures (NTScalar, NTScalarArray).</p>
 
@@ -76,7 +76,7 @@ records in the local EPICS database.</p>
 <p>You need to have the following modules installed and mentioned in the configure/RELEASE file of pvaSrv:</p>
 <dl>
 <dt>EPICS Base</dt>
-<dd>&ge; 3.14.11</dd>
+<dd>3.14 series &ge; 3.14.11</dd>
 <dt>pvCommonCPP</dt>
 <dt>pvDataCPP</dt>
 <dt>pvAccessCPP</dt>
@@ -89,7 +89,7 @@ records in the local EPICS database.</p>
 
 <h2 id="usage">Usage</h2>
 
-<p>pvaSrv is a regular V3 support module. To use it in a V3 IOC created in yourApp,
+<p>pvaSrv is a regular EPICS V3 support module. To use it in an IOC created in yourApp,
 you have to do the following steps:</p>
 
 <ol>
@@ -129,7 +129,7 @@ CHANNEL  : TESTLONG
 STATE    : CONNECTED
 ADDRESS  : 192.168.n.n:5075
 
-epics:nt/NTScalar:1.0
+ev4:nt/NTScalar:1.0
     int value
     alarm_t alarm
         int severity
@@ -151,6 +151,8 @@ epics:nt/NTScalar:1.0
         double minStep
 </pre>
 </p>
+
+<p>The pvget command line tool is part of the EPICS V4 pvAccessCPP module.</p>
 
 <h2 id="example">Example Application</h2>
 
