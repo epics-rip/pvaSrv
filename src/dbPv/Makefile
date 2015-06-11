@@ -10,7 +10,7 @@ SRC_DIRS += $(PVASRV_SRC)/dbPv/$(PLACE)
 
 DBD += dbPv.dbd
 
-INC += dbPvBla.h
+INC += dbPvBlaBla.h
 INC += dbPvDebug.h
 INC += caMonitor.h
 INC += caSecurity.h
