@@ -82,7 +82,7 @@ bool DbPvMonitor::init(
     string queueSizeString("record._options.queueSize");
     PVFieldPtr pvField = pvRequest.get()->getSubField(queueSizeString);
     if(pvField) {
-        PVStringPtr pvString = pvRequest.get()->getStringField(queueSizeString);
+        PVStringPtr pvString = pvRequest.get()->getSubField<PVString>(queueSizeString);
         if(pvString) {
              string value = pvString->get();
              queueSize = atoi(value.c_str());
