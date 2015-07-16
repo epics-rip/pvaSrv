@@ -102,7 +102,7 @@ int DbUtil::getProperties(
     int propertyMask = 0;
     PVFieldPtr pvField = pvRequest->getSubField(processString);
     if(pvField.get()!=NULL) {
-        PVStringPtr pvString = pvRequest->getStringField(processString);
+        PVStringPtr pvString = pvRequest->getSubField<PVString>(processString);
         if(pvString.get()!=NULL) {
             string value = pvString->get();
             if(value.compare("true")==0) propertyMask |= processBit;
@@ -112,7 +112,7 @@ int DbUtil::getProperties(
     }
     pvField = pvRequest->getSubField(blockString);
     if (pvField.get()) {
-        PVStringPtr pvString = pvRequest->getStringField(blockString);
+        PVStringPtr pvString = pvRequest->getSubField<PVString>(blockString);
         if (pvString.get()) {
             string value = pvString->get();
             if (value.compare("true") == 0) propertyMask |= blockBit;
@@ -549,8 +549,8 @@ void  DbUtil::getPropertyData(
            cc(&dbAddr,&ald);
         }
         PVStructurePtr pvAlarmLimits =
-            pvStructure->getStructureField(valueAlarmString);
-        PVBooleanPtr pvActive = pvAlarmLimits->getBooleanField("active");
+            pvStructure->getSubField<PVStructure>(valueAlarmString);
+        PVBooleanPtr pvActive = pvAlarmLimits->getSubField<PVBoolean>("active");
         if(pvActive.get()!=NULL) pvActive->put(false);
         PVFieldPtr pvf = pvAlarmLimits->getSubField(lowAlarmLimitString);
         if(pvf.get()!=NULL && pvf->getField()->getType()==scalar) {
@@ -854,7 +854,7 @@ Status  DbUtil::get(
             }
         } else {
             PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
-            PVIntPtr pvIndex = pvEnum->getIntField(indexString);
+            PVIntPtr pvIndex = pvEnum->getSubField<PVInt>(indexString);
             if(pvIndex->get()!=val) {
                 pvIndex->put(val);
                 bitSet->set(pvIndex->getFieldOffset());
@@ -1092,7 +1092,7 @@ Status  DbUtil::put(
             pvIndex = static_pointer_cast<PVInt>(pvField);
         } else {
             PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
-            pvIndex = pvEnum->getIntField(indexString);
+            pvIndex = pvEnum->getSubField<PVInt>(indexString);
         }
         if(dbAddr.field_type==DBF_MENU) {
             requester->message("Not allowed to change a menu field",errorMessage);
@@ -1203,7 +1203,7 @@ Status  DbUtil::putField(
         PVIntPtr pvIndex;
         if(pvField->getField()->getType()==structure) {
              PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
-             pvIndex = pvEnum->getIntField(indexString);
+             pvIndex = pvEnum->getSubField<PVInt>(indexString);
         } else {
             pvIndex = static_pointer_cast<PVInt>(pvField);
         }
