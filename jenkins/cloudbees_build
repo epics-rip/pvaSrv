@@ -6,7 +6,7 @@
 #
 # Author: Ralph Lange <Ralph.Lange@gmx.de>
 # Copyright (C) 2013-2014 Helmholtz-Zentrum Berlin für Materialien und Energie GmbH
-# Copyright (C) 2014 ITER Organization.
+# Copyright (C) 2014-2015 ITER Organization.
 # All rights reserved. Use is subject to license terms.
 
 ###########################################
@@ -32,7 +32,7 @@ wget -nv https://openepics.ci.cloudbees.com/job/Base-${BASE}_Build/lastSuccessfu
 wget -nv https://openepics.ci.cloudbees.com/job/Doxygen-1.8.3_Build/lastSuccessfulBuild/artifact/doxygen-1.8.3.CB-dist.tar.gz
 wget -nv https://openepics.ci.cloudbees.com/job/pvCommonCPP_Build/BASE=${BASE}/lastSuccessfulBuild/artifact/pvCommon.CB-dist.tar.gz
 wget -nv https://openepics.ci.cloudbees.com/job/pvDataCPP_Build/BASE=${BASE}/lastSuccessfulBuild/artifact/pvData.CB-dist.tar.gz
-wget -nv https://openepics.ci.cloudbees.com/job/pvAccessCPP_Build/BASE=${BASE}/lastSuccessfulBuild/artifact/pvAccess.CB-dist.tar.gz
+wget -nv https://openepics.ci.cloudbees.com/job/pvAccessCPP_Build/BASE=${BASE}/USE_MB=MB_NO/lastSuccessfulBuild/artifact/pvAccess.CB-dist.tar.gz
 tar -xzf base-${BASE}.CB-dist.tar.gz
 tar -xzf doxygen-1.8.3.CB-dist.tar.gz
 tar -xzf pvCommon.CB-dist.tar.gz
