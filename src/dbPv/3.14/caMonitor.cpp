@@ -22,6 +22,8 @@
 #include <dbDefs.h>
 #include <alarmString.h>
 
+#include <pv/caStatus.h>
+
 #include "dbPvDebug.h"
 #include "caMonitor.h"
 #include "caContext.h"
@@ -29,6 +31,8 @@
 using namespace epics::pvData;
 using namespace epics::pvaSrv;
 using std::string;
+using epics::pvAccess::ca::dbrStatus2alarmMessage;
+using epics::pvAccess::ca::dbrStatus2alarmStatus;
 
 CaData::CaData()
 : doubleValue(0.0),
@@ -86,7 +90,7 @@ static void eventCallback(struct event_handler_args eha)
                 static_cast<const struct dbr_time_enum*>(eha.dbr);
             pvt->data.sevr = from->severity;
             pvt->data.stat = from->status;
-            pvt->data.status = epicsAlarmConditionStrings[from->status];
+            pvt->data.status = dbrStatus2alarmMessage[from->status];
             pvt->data.intValue = from->value;
             pvt->data.timeStamp = from->stamp;
             break;
@@ -96,7 +100,7 @@ static void eventCallback(struct event_handler_args eha)
                 static_cast<const struct dbr_time_char*>(eha.dbr);
             pvt->data.sevr = from->severity;
             pvt->data.stat = from->status;
-            pvt->data.status = epicsAlarmConditionStrings[from->status];
+            pvt->data.status = dbrStatus2alarmMessage[from->status];
             pvt->data.byteValue = from->value;
             pvt->data.timeStamp = from->stamp;
             break;
@@ -106,7 +110,7 @@ static void eventCallback(struct event_handler_args eha)
                 static_cast<const struct dbr_time_char*>(eha.dbr);
             pvt->data.sevr = from->severity;
             pvt->data.stat = from->status;
-            pvt->data.status = epicsAlarmConditionStrings[from->status];
+            pvt->data.status = dbrStatus2alarmMessage[from->status];
             pvt->data.ubyteValue = static_cast<uint8>(from->value);
             pvt->data.timeStamp = from->stamp;
             break;
@@ -116,7 +120,7 @@ static void eventCallback(struct event_handler_args eha)
                 static_cast<const struct dbr_time_short*>(eha.dbr);
             pvt->data.sevr = from->severity;
             pvt->data.stat = from->status;
-            pvt->data.status = epicsAlarmConditionStrings[from->status];
+            pvt->data.status = dbrStatus2alarmMessage[from->status];
             pvt->data.shortValue = from->value;
             pvt->data.timeStamp = from->stamp;
             break;
@@ -126,7 +130,7 @@ static void eventCallback(struct event_handler_args eha)
                 static_cast<const struct dbr_time_short*>(eha.dbr);
             pvt->data.sevr = from->severity;
             pvt->data.stat = from->status;
-            pvt->data.status = epicsAlarmConditionStrings[from->status];
+            pvt->data.status = dbrStatus2alarmMessage[from->status];
             pvt->data.ushortValue = static_cast<uint16>(from->value);
             pvt->data.timeStamp = from->stamp;
             break;
@@ -136,7 +140,7 @@ static void eventCallback(struct event_handler_args eha)
                 static_cast<const struct dbr_time_long*>(eha.dbr);
             pvt->data.sevr = from->severity;
             pvt->data.stat = from->status;
-            pvt->data.status = epicsAlarmConditionStrings[from->status];
+            pvt->data.status = dbrStatus2alarmMessage[from->status];
             pvt->data.intValue = from->value;
             pvt->data.timeStamp = from->stamp;
             break;
@@ -146,7 +150,7 @@ static void eventCallback(struct event_handler_args eha)
                 static_cast<const struct dbr_time_long*>(eha.dbr);
             pvt->data.sevr = from->severity;
             pvt->data.stat = from->status;
-            pvt->data.status = epicsAlarmConditionStrings[from->status];
+            pvt->data.status = dbrStatus2alarmMessage[from->status];
             pvt->data.uintValue = static_cast<uint32>(from->value);
             pvt->data.timeStamp = from->stamp;
             break;
@@ -156,7 +160,7 @@ static void eventCallback(struct event_handler_args eha)
                 static_cast<const struct dbr_time_float*>(eha.dbr);
             pvt->data.sevr = from->severity;
             pvt->data.stat = from->status;
-            pvt->data.status = epicsAlarmConditionStrings[from->status];
+            pvt->data.status = dbrStatus2alarmMessage[from->status];
             pvt->data.floatValue = from->value;
             pvt->data.timeStamp = from->stamp;
             break;
@@ -166,7 +170,7 @@ static void eventCallback(struct event_handler_args eha)
                 static_cast<const struct dbr_time_double*>(eha.dbr);
             pvt->data.sevr = from->severity;
             pvt->data.stat = from->status;
-            pvt->data.status = epicsAlarmConditionStrings[from->status];
+            pvt->data.status = dbrStatus2alarmMessage[from->status];
             pvt->data.doubleValue = from->value;
             pvt->data.timeStamp = from->stamp;
             break;
@@ -176,7 +180,7 @@ static void eventCallback(struct event_handler_args eha)
                 static_cast<const struct dbr_time_string*>(eha.dbr);
             pvt->data.sevr = from->severity;
             pvt->data.stat = from->status;
-            pvt->data.status = epicsAlarmConditionStrings[from->status];
+            pvt->data.status = dbrStatus2alarmMessage[from->status];
             pvt->data.timeStamp = from->stamp;
             // client will get value from record
             break;

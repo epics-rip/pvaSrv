@@ -33,12 +33,15 @@
 #include <pv/pvTimeStamp.h>
 #include <pv/pvControl.h>
 #include <pv/pvDisplay.h>
+#include <pv/caStatus.h>
 
 #include "dbUtil.h"
 
 using namespace epics::pvData;
 using std::tr1::static_pointer_cast;
 using std::string;
+using epics::pvAccess::ca::dbrStatus2alarmMessage;
+using epics::pvAccess::ca::dbrStatus2alarmStatus;
 
 namespace epics { namespace pvaSrv { 
 
@@ -900,7 +903,7 @@ Status  DbUtil::get(
             throw std::logic_error("V3ChannelGet::get logic error");
         }
         struct dbCommon *precord = dbChannelRecord(dbChan);
-        const char * status = "";
+        string status = "";
         epicsEnum16 stat;
         epicsEnum16 sevr;
         if(caData) {
@@ -908,7 +911,7 @@ Status  DbUtil::get(
             stat = caData->stat;
             sevr = caData->sevr;
         } else {
-            status = epicsAlarmConditionStrings[precord->stat];
+            status = dbrStatus2alarmMessage[precord->stat];
             stat = precord->stat;
             sevr = precord->sevr;
         }
