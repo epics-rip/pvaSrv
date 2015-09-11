@@ -36,7 +36,7 @@ using epics::pvAccess::ca::dbrStatus2alarmStatus;
 
 CaData::CaData()
 : doubleValue(0.0),
-  sevr(0), stat(0), status(0)
+  sevr(0), stat(0), status("")
 {}
 
 CaData::~CaData()
