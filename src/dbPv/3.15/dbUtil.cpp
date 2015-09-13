@@ -45,6 +45,21 @@ using epics::pvAccess::ca::dbrStatus2alarmStatus;
 
 namespace epics { namespace pvaSrv { 
 
+
+// Return DBF type of final field (after any filters applied)
+static short dbChannelFinalDBFType(dbChannel *dbChan)
+{
+    // dbChannelFinalFieldType returns dbChannel final_type which is equal
+    // to addr.dbr_field_type in the case of no filters, so if field type
+    // is DBF_DEVICE or DBF_MENU it will return DBR_ENUM. Return 
+    // DBF type, at least if no filters.
+    if (ellCount(&dbChan->filters) == 0)
+        return dbChannelFieldType(dbChan);
+    else
+        // This is correct when field_type is not DBF_DEVICE or DBF_MENU
+        return dbChannelFinalFieldType(dbChan);
+}
+
 DbUtilPtr DbUtil::getDbUtil()
 {
     static DbUtilPtr util;
@@ -179,7 +194,7 @@ int DbUtil::getProperties(
         Type type = (dbChannelSpecial(dbChan)==SPC_DBADDR) ? scalarArray : scalar;
         ScalarType scalarType(pvBoolean);
         // Note that pvBoolean is not a supported type
-        switch (dbChannelFinalFieldType(dbChan)) {
+        switch (dbChannelFinalDBFType(dbChan)) {
         case DBF_STRING:
             scalarType = pvString; break;
         case DBF_CHAR:
@@ -251,17 +266,17 @@ int DbUtil::getProperties(
             propertyMask |= alarmBit;
         }
         if(fieldList.find(displayString)!=string::npos) {
-            if(dbChannelFinalFieldType(dbChan)==DBF_LONG||dbChannelFinalFieldType(dbChan)==DBF_DOUBLE) {
+            if(dbChannelFinalDBFType(dbChan)==DBF_LONG||dbChannelFinalDBFType(dbChan)==DBF_DOUBLE) {
                 propertyMask |= displayBit;
             }
         }
         if(fieldList.find(controlString)!=string::npos) {
-            if(dbChannelFinalFieldType(dbChan)==DBF_LONG||dbChannelFinalFieldType(dbChan)==DBF_DOUBLE) {
+            if(dbChannelFinalDBFType(dbChan)==DBF_LONG||dbChannelFinalDBFType(dbChan)==DBF_DOUBLE) {
                 propertyMask |= controlBit;
             }
         }
         if(fieldList.find(valueAlarmString)!=string::npos) {
-            if(dbChannelFinalFieldType(dbChan)==DBF_LONG||dbChannelFinalFieldType(dbChan)==DBF_DOUBLE) {
+            if(dbChannelFinalDBFType(dbChan)==DBF_LONG||dbChannelFinalDBFType(dbChan)==DBF_DOUBLE) {
                 propertyMask |= valueAlarmBit;
             }
         }
@@ -305,7 +320,7 @@ PVStructurePtr DbUtil::createPVStructure(
         }
         struct dbr_enumStrs enumStrs;
         struct rset *prset = dbGetRset(&dbChan->addr);
-        if(dbChannelFinalFieldType(dbChan) == DBF_ENUM &&
+        if(dbChannelFinalDBFType(dbChan)== DBF_ENUM &&
                prset && prset->get_enum_strs) {
             get_enum_strs get_strs;
             get_strs = (get_enum_strs)(prset->get_enum_strs);
@@ -319,7 +334,7 @@ PVStructurePtr DbUtil::createPVStructure(
             PVStructurePtr pvStructure = standardPVField->enumerated(
                  choices,properties);
             return pvStructure;
-        } else if (dbChannelFinalFieldType(dbChan) == DBF_DEVICE) {
+        } else if (dbChannelFinalDBFType(dbChan) == DBF_DEVICE) {
             dbFldDes *pdbFldDes = dbChannelFldDes(dbChan);
             dbDeviceMenu *pdbDeviceMenu
                 = static_cast<dbDeviceMenu *>(pdbFldDes->ftPvt);
@@ -337,7 +352,7 @@ PVStructurePtr DbUtil::createPVStructure(
             PVStructurePtr pvStructure = standardPVField->enumerated(
                 choices,properties);
             return pvStructure;
-        } else if (dbChannelFinalFieldType(dbChan) == DBF_MENU) {
+        } else if (dbChannelFinalDBFType(dbChan) == DBF_MENU) {
             dbFldDes *pdbFldDes = dbChannelFldDes(dbChan);
             dbMenu *pdbMenu = static_cast<dbMenu *>(pdbFldDes->ftPvt);
             size_t length = pdbMenu->nChoice;
@@ -357,7 +372,7 @@ PVStructurePtr DbUtil::createPVStructure(
     }
     ScalarType scalarType(pvBoolean);
     // Note that pvBoolean is not a supported type
-    switch (dbChannelFinalFieldType(dbChan)) {
+    switch (dbChannelFinalDBFType(dbChan)) {
         case DBF_CHAR:
             scalarType = pvByte; break;
         case DBF_UCHAR:
@@ -847,7 +862,7 @@ Status  DbUtil::get(
         if(caData) {
             val = caData->intValue;
         } else {
-            if (dbChannelFinalFieldType(dbChan) == DBF_DEVICE) {
+            if (dbChannelFinalDBFType(dbChan) == DBF_DEVICE) {
                 val = static_cast<epicsEnum16>(dbChannelRecord(dbChan)->dtyp);
             } else {
                 val = *static_cast<int32 *>(dbChannelField(dbChan));
@@ -1104,9 +1119,9 @@ Status  DbUtil::put(
             PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
             pvIndex = pvEnum->getSubField<PVInt>(indexString);
         }
-        if (dbChannelFinalFieldType(dbChan) == DBF_MENU) {
+        if (dbChannelFinalDBFType(dbChan) == DBF_MENU) {
             requester->message("Not allowed to change a menu field",errorMessage);
-        } else if (dbChannelFinalFieldType(dbChan) == DBF_ENUM || dbChannelFinalFieldType(dbChan) == DBF_DEVICE) {
+        } else if (dbChannelFinalDBFType(dbChan) == DBF_ENUM || dbChannelFinalDBFType(dbChan) == DBF_DEVICE) {
             epicsEnum16 *value = static_cast<epicsEnum16*>(dbChannelField(dbChan));
             *value = pvIndex->get();
         } else {
@@ -1238,7 +1253,7 @@ ScalarType DbUtil::getScalarType(
         Requester::shared_pointer const &requester,
         dbChannel *dbChan)
 {
-    switch (dbChannelFinalFieldType(dbChan)) {
+    switch (dbChannelFinalDBFType(dbChan)) {
         case DBF_CHAR:
             return pvByte;
         case DBF_UCHAR:
