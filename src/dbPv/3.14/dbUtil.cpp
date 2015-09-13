@@ -304,7 +304,7 @@ PVStructurePtr DbUtil::createPVStructure(
         }
         struct dbr_enumStrs enumStrs;
         struct rset *prset = dbGetRset(&dbAddr);
-        if(prset && prset->get_enum_strs) {
+        if(dbAddr.field_type==DBF_ENUM && prset && prset->get_enum_strs) {
             get_enum_strs get_strs;
             get_strs = (get_enum_strs)(prset->get_enum_strs);
             get_strs(&dbAddr,&enumStrs);
