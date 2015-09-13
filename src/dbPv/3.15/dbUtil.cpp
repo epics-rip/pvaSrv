@@ -903,16 +903,16 @@ Status  DbUtil::get(
             throw std::logic_error("V3ChannelGet::get logic error");
         }
         struct dbCommon *precord = dbChannelRecord(dbChan);
-        string status = "";
+        string message;
         epicsEnum16 stat;
         epicsEnum16 sevr;
         if(caData) {
-            status = caData->status;
+            message = caData->status;
             stat = caData->stat;
             sevr = caData->sevr;
         } else {
-            status = dbrStatus2alarmMessage[precord->stat];
-            stat = precord->stat;
+            message = dbrStatus2alarmMessage[precord->stat];
+            stat = dbrStatus2alarmStatus[precord->stat];
             sevr = precord->sevr;
         }
         pvAlarm.get(alarm);
@@ -921,9 +921,10 @@ Status  DbUtil::get(
         AlarmStatus alarmStatus = alarm.getStatus();
         epicsEnum16 prevStatus = static_cast<epicsEnum16>(alarmStatus);
         if((prevSeverity!=sevr) || (prevStatus!=stat)) {
-            string message(status);
             AlarmSeverity severity = static_cast<AlarmSeverity>(sevr);
             alarm.setSeverity(severity);
+            AlarmStatus status = static_cast<AlarmStatus>(stat);
+            alarm.setStatus(status);
             alarm.setMessage(message);
             pvAlarm.set(alarm);
             bitSet->set(pvField->getFieldOffset());
