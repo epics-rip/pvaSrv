@@ -125,12 +125,11 @@ int DbUtil::getProperties(
     }
     bool getValue = false;
     string fieldList;
-    PVFieldPtr pvTemp = pvRequest->getSubField(fieldString);
-    if(pvTemp.get()==NULL) {
+    PVStructurePtr fieldPV = pvRequest->getSubField<PVStructure>(fieldString);
+    if(fieldPV.get()==NULL) {
         fieldList += valueString;
         getValue = true;
     } else {
-        PVStructurePtr fieldPV = static_pointer_cast<PVStructure>(pvTemp);
         if(fieldPV.get()!=NULL) pvRequest = fieldPV.get();
         if(pvRequest->getStructure()->getNumberFields()==0) {
             getValue = true;
