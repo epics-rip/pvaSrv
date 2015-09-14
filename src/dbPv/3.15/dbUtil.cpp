@@ -98,6 +98,7 @@ DbUtil::DbUtil()
   fieldString("field"),
   valueString("value"),
   valueIndexString("value.index"),
+  valueChoicesString("value.choices"),
   timeStampString("timeStamp"),
   alarmString("alarm"),
   displayString("display"),
@@ -294,6 +295,7 @@ PVStructurePtr DbUtil::createPVStructure(
     StandardFieldPtr standardField = getStandardField();
     PVDataCreatePtr pvDataCreate = getPVDataCreate();
     FieldCreatePtr fieldCreate = getFieldCreate();
+
     string properties;
     if((propertyMask&timeStampBit)!=0) properties+= timeStampString;
     if((propertyMask&alarmBit)!=0) {
@@ -312,93 +314,36 @@ PVStructurePtr DbUtil::createPVStructure(
         if(!properties.empty()) properties += ",";
         properties += valueAlarmString;
     }
-    if((propertyMask&enumValueBit)!=0) {
-        if((propertyMask&enumIndexBit)!=0) {
-            PVStructurePtr xxx = standardPVField->scalar(pvInt,properties);
-              return xxx;
-        }
-        struct dbr_enumStrs enumStrs;
-        struct rset *prset = dbGetRset(&dbChan->addr);
-        if(dbChannelFinalDBFType(dbChan)== DBF_ENUM &&
-               prset && prset->get_enum_strs) {
-            get_enum_strs get_strs;
-            get_strs = (get_enum_strs)(prset->get_enum_strs);
-            get_strs(&dbChan->addr, &enumStrs);
-            size_t length = enumStrs.no_str;
-            StringArray choices;
-            choices.reserve(length);
-            for(size_t i=0; i<length; i++) {
-                 choices.push_back(enumStrs.strs[i]);
-            }
-            PVStructurePtr pvStructure = standardPVField->enumerated(
-                 choices,properties);
-            return pvStructure;
-        } else if (dbChannelFinalDBFType(dbChan) == DBF_DEVICE) {
-            dbFldDes *pdbFldDes = dbChannelFldDes(dbChan);
-            dbDeviceMenu *pdbDeviceMenu
-                = static_cast<dbDeviceMenu *>(pdbFldDes->ftPvt);
-            if(pdbDeviceMenu==NULL) {
-                requester->message("record type has no device support",errorMessage);
-                return nullPVStructure;
-            }
-            size_t length = pdbDeviceMenu->nChoice;
-            char **papChoice = pdbDeviceMenu->papChoice;
-            StringArray choices;
-            choices.reserve(length);
-            for(size_t i=0; i<length; i++) {
-                 choices.push_back(papChoice[i]);
-            }
-            PVStructurePtr pvStructure = standardPVField->enumerated(
-                choices,properties);
-            return pvStructure;
-        } else if (dbChannelFinalDBFType(dbChan) == DBF_MENU) {
-            dbFldDes *pdbFldDes = dbChannelFldDes(dbChan);
-            dbMenu *pdbMenu = static_cast<dbMenu *>(pdbFldDes->ftPvt);
-            size_t length = pdbMenu->nChoice;
-            char **papChoice = pdbMenu->papChoiceValue;
-            StringArray choices;
-            choices.reserve(length);
-            for(size_t i=0; i<length; i++) {
-                 choices.push_back(papChoice[i]);
-            }
-            PVStructurePtr pvStructure = standardPVField->enumerated(
-                choices,properties);
-            return pvStructure;
-        } else {
-            requester->message("bad enum field in db record", errorMessage);
+
+    StructureConstPtr structure;
+
+    if((propertyMask & enumValueBit)!=0) {
+        if((propertyMask&enumIndexBit)!=0)
+            // TODO: This is the wrong structure. Leave now until
+            // have fix for returning partial structures
+            structure = standardField->scalar(pvInt,properties);
+        else
+            structure = standardField->enumerated(properties);
+    }
+    else {
+        ScalarType scalarType = propertyMask&isLinkBit ?
+            pvString : getScalarType(requester,dbChan);
+        if (scalarType == pvBoolean)
+            throw std::logic_error("Should never get here");
+
+        if((propertyMask & scalarValueBit)!=0)
+            structure = standardField->scalar(scalarType,properties);
+        else if((propertyMask & arrayValueBit)!=0)
+            structure = standardField->scalarArray(scalarType,properties);        
+        else if(!(propertyMask&getValueBit))
+            // default to scalar when no value field requested
+            structure = standardField->scalar(scalarType,properties);
+        else
             return nullPVStructure;
-        }
     }
-    ScalarType scalarType(pvBoolean);
-    // Note that pvBoolean is not a supported type
-    switch (dbChannelFinalDBFType(dbChan)) {
-        case DBF_CHAR:
-            scalarType = pvByte; break;
-        case DBF_UCHAR:
-            scalarType = pvUByte; break;
-        case DBF_SHORT:
-            scalarType = pvShort; break;
-        case DBF_USHORT:
-            scalarType = pvUShort; break;
-        case DBF_LONG:
-            scalarType = pvInt; break;
-        case DBF_ULONG:
-            scalarType = pvUInt; break;
-        case DBF_FLOAT:
-            scalarType = pvFloat; break;
-        case DBF_DOUBLE:
-            scalarType = pvDouble; break;
-        case DBF_STRING:
-            scalarType = pvString; break;
-        default:
-             if(propertyMask&isLinkBit) {
-                  scalarType = pvString; break;
-             } else {
-                throw std::logic_error("Should never get here");
-             }
-    }
+
+    // delete value field if not requested
     if(!(propertyMask&getValueBit)) {
-        StructureConstPtr structure = standardField->scalar(pvByte,properties);
         FieldConstPtrArray fields = structure->getFields();
         StringArray names = structure->getFieldNames();
         for(size_t i=0; i<names.size(); ++i) {
@@ -408,95 +353,64 @@ PVStructurePtr DbUtil::createPVStructure(
                 break;
             }
         }
-        StructureConstPtr newStructure = fieldCreate->createStructure(
-             names,fields);
-        PVStructurePtr pvParent = pvDataCreate->createPVStructure(
-            newStructure);
-        return pvParent;
+        structure = fieldCreate->createStructure(names,fields);
     }
-    if((propertyMask&scalarValueBit)!=0) {
-        return standardPVField->scalar(scalarType,properties);
+
+    PVStructurePtr pvStructure = pvDataCreate->createPVStructure(structure);
+
+    if((propertyMask&enumValueBit)!=0) {
+        struct dbr_enumStrs enumStrs;
+        struct rset *prset = dbGetRset(&dbChan->addr);
+
+        PVStringArrayPtr pvChoices = pvStructure->getSubField<PVStringArray>(valueChoicesString);
+        if(pvChoices.get()) {
+            PVStringArray::svector choices;
+
+            if (dbChannelFinalDBFType(dbChan) == DBF_ENUM &&
+                prset && prset->get_enum_strs) {
+                get_enum_strs get_strs;
+                get_strs = (get_enum_strs)(prset->get_enum_strs);
+                get_strs(&dbChan->addr, &enumStrs);
+                size_t length = enumStrs.no_str;
+                choices.reserve(length);
+                for(size_t i=0; i<length; i++)
+                    choices.push_back(enumStrs.strs[i]);
+            }
+            else if(dbChannelFinalDBFType(dbChan) == DBF_DEVICE) {
+                dbFldDes *pdbFldDes = dbChannelFldDes(dbChan);
+                dbDeviceMenu *pdbDeviceMenu
+                    = static_cast<dbDeviceMenu *>(pdbFldDes->ftPvt);
+                if(pdbDeviceMenu==NULL) {
+                    requester->message(
+                        "record type has no device support", errorMessage);
+                    return nullPVStructure;
+                }
+
+                size_t length = pdbDeviceMenu->nChoice;
+                char **papChoice = pdbDeviceMenu->papChoice;
+                choices.reserve(length);
+                for(size_t i=0; i<length; i++)
+                    choices.push_back(papChoice[i]);
+            }
+            else if(dbChannelFinalDBFType(dbChan) == DBF_MENU) {
+                dbFldDes *pdbFldDes = dbChannelFldDes(dbChan);
+                dbMenu *pdbMenu = static_cast<dbMenu *>(pdbFldDes->ftPvt);
+                size_t length = pdbMenu->nChoice;
+                char **papChoice = pdbMenu->papChoiceValue;
+                choices.reserve(length);
+                for(size_t i=0; i<length; i++)
+                    choices.push_back(papChoice[i]);
+            }
+            else {
+                requester->message("bad enum field in V3 record",errorMessage);
+                return nullPVStructure;
+            }
+            pvChoices->replace(freeze(choices));
+        }
     }
-    if((propertyMask&arrayValueBit)==0) {
-        requester->message("did not ask for value",errorMessage);
-        return nullPVStructure;
-    }
-    PVFieldPtr pvValue = pvDataCreate->createPVScalarArray(scalarType);
-    int numberFields = 1;
-    if((propertyMask&timeStampBit)!=0) numberFields++;
-    if((propertyMask&alarmBit)!=0) numberFields++;
-    if((propertyMask&displayBit)!=0) numberFields++;
-    if((propertyMask&controlBit)!=0) numberFields++;
-    if((propertyMask&valueAlarmBit)!=0) numberFields++;
-    StringArray fieldNames;
-    PVFieldPtrArray pvFields;
-    fieldNames.reserve(numberFields);
-    pvFields.reserve(numberFields);
-    fieldNames.push_back("value");
-    pvFields.push_back(pvValue);
-    if((propertyMask&timeStampBit)!=0) {
-        fieldNames.push_back("timeStamp");
-        pvFields.push_back(
-             pvDataCreate->createPVStructure(standardField->timeStamp()));
-    }
-    if((propertyMask&alarmBit)!=0) {
-        fieldNames.push_back("alarm");
-        pvFields.push_back(
-             pvDataCreate->createPVStructure(standardField->alarm()));
-    }
-    if((propertyMask&displayBit)!=0) {
-        fieldNames.push_back("display");
-        pvFields.push_back(
-             pvDataCreate->createPVStructure(standardField->display()));
-    }
-    if((propertyMask&controlBit)!=0) {
-        fieldNames.push_back("control");
-        pvFields.push_back(
-             pvDataCreate->createPVStructure(standardField->control()));
-    }
-    if((propertyMask&valueAlarmBit)!=0) {
-       fieldNames.push_back("valueAlarm");
-       switch(scalarType) {
-       case pvByte:
-          pvFields.push_back(
-             pvDataCreate->createPVStructure(standardField->byteAlarm()));
-          break;
-       case pvUByte:
-          pvFields.push_back(
-             pvDataCreate->createPVStructure(standardField->ubyteAlarm()));
-          break;
-       case pvShort:
-          pvFields.push_back(
-             pvDataCreate->createPVStructure(standardField->shortAlarm()));
-          break;
-       case pvUShort:
-          pvFields.push_back(
-             pvDataCreate->createPVStructure(standardField->ushortAlarm()));
-          break;
-       case pvInt:
-          pvFields.push_back(
-             pvDataCreate->createPVStructure(standardField->intAlarm()));
-          break;
-       case pvUInt:
-          pvFields.push_back(
-             pvDataCreate->createPVStructure(standardField->uintAlarm()));
-          break;
-       case pvFloat:
-          pvFields.push_back(
-             pvDataCreate->createPVStructure(standardField->floatAlarm()));
-          break;
-       case pvDouble:
-          pvFields.push_back(
-             pvDataCreate->createPVStructure(standardField->doubleAlarm()));
-          break;
-       default:
-          throw std::logic_error("Should never get here");
-       }
-    }
-    PVStructurePtr pvParent = pvDataCreate->createPVStructure(
-        fieldNames,pvFields);
-    return pvParent;
+    return pvStructure;
 }
+
 
 void  DbUtil::getPropertyData(
         Requester::shared_pointer const &requester,
