@@ -175,6 +175,7 @@ int DbUtil::getProperties(
     }
     if(getValue) {
         propertyMask |= getValueBit;
+    }
         Type type = (dbAddr.special==SPC_DBADDR) ? scalarArray : scalar;
         ScalarType scalarType(pvBoolean);
         // Note that pvBoolean is not a supported type
@@ -241,7 +242,7 @@ int DbUtil::getProperties(
                 propertyMask = noAccessBit; return propertyMask;
             }
         }
-    }
+
     if(fieldList.length()!=0) {
         if(fieldList.find(timeStampString)!=string::npos) {
             propertyMask |= timeStampBit;
@@ -319,9 +320,6 @@ PVStructurePtr DbUtil::createPVStructure(
             structure = standardField->scalar(scalarType,properties);
         else if((propertyMask & arrayValueBit)!=0)
             structure = standardField->scalarArray(scalarType,properties);        
-        else if(!(propertyMask&getValueBit))
-            // default to scalar when no value field requested
-            structure = standardField->scalar(scalarType,properties);
         else
             return nullPVStructure;
     }
@@ -497,6 +495,7 @@ Status  DbUtil::get(
         BitSet::shared_pointer const &bitSet,
         CaData *caData)
 {
+    if((propertyMask&getValueBit)!=0) {
     PVFieldPtrArray pvFields = pvStructure->getPVFields();
     PVFieldPtr pvField = pvFields[0];
     if((propertyMask&scalarValueBit)!=0) {
@@ -776,6 +775,7 @@ Status  DbUtil::get(
             }
         }
     }
+    }
     if((propertyMask&timeStampBit)!=0) {
         TimeStamp timeStamp;
         PVTimeStamp pvTimeStamp;
@@ -847,6 +847,11 @@ Status  DbUtil::put(
         int propertyMask,DbAddr &dbAddr,
         PVFieldPtr const &pvField)
 {
+    if((propertyMask&getValueBit)==0) {
+        requester->message("Logic Error unknown field to put",errorMessage);
+            return Status::Ok;
+    }
+
     if((propertyMask&scalarValueBit)!=0) {
         PVScalarPtr pvScalar = static_pointer_cast<PVScalar>(pvField);
         ScalarType scalarType = pvScalar->getScalar()->getScalarType();
@@ -1023,6 +1028,7 @@ Status  DbUtil::put(
         requester->message("Logic Error unknown field to put",errorMessage);
             return Status::Ok;
     }
+
     dbCommon *precord = dbAddr.precord;
     dbFldDes *pfldDes = dbAddr.pfldDes;
     int isValueField = dbIsValueField(pfldDes);
@@ -1052,6 +1058,11 @@ Status  DbUtil::putField(
     float fvalue;
     double dvalue;
     string string;
+    if((propertyMask&getValueBit)==0) {
+        requester->message("Logic Error unknown field to put",errorMessage);
+            return Status::Ok;
+    }
+
     if((propertyMask&scalarValueBit)!=0) {
         PVScalarPtr pvScalar = static_pointer_cast<PVScalar>(pvField);
         ScalarType scalarType = pvScalar->getScalar()->getScalarType();
