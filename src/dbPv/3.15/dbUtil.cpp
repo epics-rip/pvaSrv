@@ -515,285 +515,285 @@ Status  DbUtil::get(
         CaData *caData)
 {
     if((propertyMask&getValueBit)!=0) {
-    PVFieldPtrArray pvFields = pvStructure->getPVFields();
-    PVFieldPtr pvField = pvFields[0];
-    if((propertyMask&scalarValueBit)!=0) {
-        PVScalarPtr pvScalar = static_pointer_cast<PVScalar>(pvField);
-        ScalarType scalarType = pvScalar->getScalar()->getScalarType();
-        bool wasChanged = false;
-        switch(scalarType) {
-        case pvByte: {
-            int8 val = 0;
-            if(caData) {
-                val = caData->byteValue;
-            } else {
-                val = *static_cast<int8 *>(dbChannelField(dbChan));
+        PVFieldPtrArray pvFields = pvStructure->getPVFields();
+        PVFieldPtr pvField = pvFields[0];
+            if((propertyMask&scalarValueBit)!=0) {
+            PVScalarPtr pvScalar = static_pointer_cast<PVScalar>(pvField);
+            ScalarType scalarType = pvScalar->getScalar()->getScalarType();
+            bool wasChanged = false;
+            switch(scalarType) {
+            case pvByte: {
+                int8 val = 0;
+                if(caData) {
+                    val = caData->byteValue;
+                } else {
+                    val = *static_cast<int8 *>(dbChannelField(dbChan));
+                }
+                PVBytePtr pv = static_pointer_cast<PVByte>(pvField);
+                if(pv->get()!=val) {
+                    pv->put(val);
+                    wasChanged = true;
+                }
+                break;
             }
-            PVBytePtr pv = static_pointer_cast<PVByte>(pvField);
-            if(pv->get()!=val) {
-                pv->put(val);
-                wasChanged = true;
+            case pvUByte: {
+                uint8 val = 0;
+                if(caData) {
+                    val = caData->ubyteValue;
+                } else {
+                    val = *static_cast<uint8 *>(dbChannelField(dbChan));
+                }
+                PVUBytePtr pv = static_pointer_cast<PVUByte>(pvField);
+                if(pv->get()!=val) {
+                    pv->put(val);
+                    wasChanged = true;
+                }
+                break;
             }
-            break;
-        }
-        case pvUByte: {
-            uint8 val = 0;
-            if(caData) {
-                val = caData->ubyteValue;
-            } else {
-                val = *static_cast<uint8 *>(dbChannelField(dbChan));
-            }
-            PVUBytePtr pv = static_pointer_cast<PVUByte>(pvField);
-            if(pv->get()!=val) {
-                pv->put(val);
-                wasChanged = true;
-            }
-            break;
-        }
-        case pvShort: {
+            case pvShort: {
             int16 val = 0;
-            if(caData) {
-                val = caData->shortValue;
-            } else {
-                val = *static_cast<int16 *>(dbChannelField(dbChan));
+                if(caData) {
+                    val = caData->shortValue;
+                } else {
+                    val = *static_cast<int16 *>(dbChannelField(dbChan));
+                }
+                PVShortPtr pv = static_pointer_cast<PVShort>(pvField);
+                if(pv->get()!=val) {
+                    pv->put(val);
+                    wasChanged = true;
+                }
+                break;
             }
-            PVShortPtr pv = static_pointer_cast<PVShort>(pvField);
-            if(pv->get()!=val) {
-                pv->put(val);
-                wasChanged = true;
+            case pvUShort: {
+                uint16 val = 0;
+                if(caData) {
+                    val = caData->ushortValue;
+                } else {
+                    val = *static_cast<uint16 *>(dbChannelField(dbChan));
+                }
+                PVUShortPtr pv = static_pointer_cast<PVUShort>(pvField);
+                if(pv->get()!=val) {
+                    pv->put(val);
+                    wasChanged = true;
+                }
+                break;
             }
-            break;
-        }
-        case pvUShort: {
-            uint16 val = 0;
-            if(caData) {
-                val = caData->ushortValue;
-            } else {
-                val = *static_cast<uint16 *>(dbChannelField(dbChan));
+            case pvInt: {
+                int32 val = 0;
+                if(caData) {
+                    val = caData->intValue;
+                } else {
+                    val = *static_cast<int32 *>(dbChannelField(dbChan));
+                }
+                PVIntPtr pv = static_pointer_cast<PVInt>(pvField);
+                if(pv->get()!=val) {
+                    pv->put(val);
+                    wasChanged = true;
+                }
+                break;
             }
-            PVUShortPtr pv = static_pointer_cast<PVUShort>(pvField);
-            if(pv->get()!=val) {
-                pv->put(val);
-                wasChanged = true;
+            case pvUInt: {
+                uint32 val = 0;
+                if(caData) {
+                    val = caData->uintValue;
+                } else {
+                    val = *static_cast<uint32 *>(dbChannelField(dbChan));
+                }
+                PVUIntPtr pv = static_pointer_cast<PVUInt>(pvField);
+                if(pv->get()!=val) {
+                    pv->put(val);
+                    wasChanged = true;
+                }
+                break;
             }
-            break;
-        }
-        case pvInt: {
+            case pvFloat: {
+                float val = 0;
+                if(caData) {
+                    val = caData->floatValue;
+                } else {
+                    val = *static_cast<float *>(dbChannelField(dbChan));
+                }
+                PVFloatPtr pv = static_pointer_cast<PVFloat>(pvField);
+                if(pv->get()!=val) {
+                    pv->put(val);
+                    wasChanged = true;
+                }
+                break;
+            }
+            case pvDouble: {
+                double val = 0;
+                if(caData) {
+                    val = caData->doubleValue;
+                } else {
+                    val = *static_cast<double *>(dbChannelField(dbChan));
+                }
+                PVDoublePtr pv = static_pointer_cast<PVDouble>(pvField);
+                if(pv->get()!=val) {
+                    pv->put(val);
+                    wasChanged = true;
+                }
+                break;
+            }
+            case pvString: {
+                char * val = 0;
+                if(propertyMask&isLinkBit) {
+                    char buffer[200];
+                    for(int i=0; i<200; i++) buffer[i]  = 0;
+                    long result = dbGetField(&dbChan->addr,DBR_STRING,
+                        buffer,0,0,0);
+                    if(result!=0) {
+                        requester->message("dbGetField error",errorMessage);
+                    }
+                    val = buffer;
+                } else {
+                    val = static_cast<char *>(dbChannelField(dbChan));
+                }
+                string sval(val);
+                PVStringPtr pvString = static_pointer_cast<PVString>(pvField);
+                if(pvString->get().empty()) {
+                    pvString->put(sval);
+                    wasChanged = true;
+                } else {
+                    if((pvString->get().compare(sval))!=0) {
+                        pvString->put(sval);
+                        wasChanged = true;
+                    }
+                }
+                break;
+            }
+            default:
+                 throw std::logic_error("Should never get here");
+            }
+            if(wasChanged) bitSet->set(pvField->getFieldOffset());
+        } else if((propertyMask&arrayValueBit)!=0) {
+            PVScalarArrayPtr pvArray = static_pointer_cast<PVScalarArray>(pvField);
+            ScalarType scalarType = pvArray->getScalarArray()->getElementType();
+            long rec_length = 0;
+            long rec_offset = 0;
+            struct rset *prset = dbGetRset(&dbChan->addr);
+            get_array_info get_info;
+            get_info = (get_array_info)(prset->get_array_info);
+            get_info(&dbChan->addr, &rec_length, &rec_offset);
+            if(rec_offset!=0) {
+                 throw std::logic_error("Can't handle offset != 0");
+            }
+            size_t length = rec_length;
+
+            switch(scalarType) {
+            case pvByte: {
+                shared_vector<int8> xxx(length);
+                int8 *pv3 = static_cast<int8 *>(dbChannelField(dbChan));
+                for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
+                shared_vector<const int8> data(freeze(xxx));
+                PVByteArrayPtr pva = static_pointer_cast<PVByteArray>(pvArray);
+                pva->replace(data);
+                break;
+            }
+            case pvUByte: {
+                shared_vector<uint8> xxx(length);
+                uint8 *pv3 = static_cast<uint8 *>(dbChannelField(dbChan));
+                for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
+                shared_vector<const uint8> data(freeze(xxx));
+                PVUByteArrayPtr pva = static_pointer_cast<PVUByteArray>(pvArray);
+                pva->replace(data);
+                break;
+            }
+            case pvShort: {
+                shared_vector<int16> xxx(length);
+                int16 *pv3 = static_cast<int16 *>(dbChannelField(dbChan));
+                for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
+                shared_vector<const int16> data(freeze(xxx));
+                PVShortArrayPtr pva = static_pointer_cast<PVShortArray>(pvArray);
+                pva->replace(data);
+                break;
+            }
+            case pvUShort: {
+                shared_vector<uint16> xxx(length);
+                uint16 *pv3 = static_cast<uint16 *>(dbChannelField(dbChan));
+                for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
+                shared_vector<const uint16> data(freeze(xxx));
+                PVUShortArrayPtr pva = static_pointer_cast<PVUShortArray>(pvArray);
+                pva->replace(data);
+                break;
+            }
+            case pvInt: {
+                shared_vector<int32> xxx(length);
+                int32 *pv3 = static_cast<int32 *>(dbChannelField(dbChan));
+                for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
+                shared_vector<const int32> data(freeze(xxx));
+                PVIntArrayPtr pva = static_pointer_cast<PVIntArray>(pvArray);
+                pva->replace(data);
+                break;
+            }
+            case pvUInt: {
+                shared_vector<uint32> xxx(length);
+                uint32 *pv3 = static_cast<uint32 *>(dbChannelField(dbChan));
+                for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
+                shared_vector<const uint32> data(freeze(xxx));
+                PVUIntArrayPtr pva = static_pointer_cast<PVUIntArray>(pvArray);
+                pva->replace(data);
+                break;
+            }
+            case pvFloat: {
+                shared_vector<float> xxx(length);
+                float *pv3 = static_cast<float *>(dbChannelField(dbChan));
+                for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
+                shared_vector<const float> data(freeze(xxx));
+                PVFloatArrayPtr pva = static_pointer_cast<PVFloatArray>(pvArray);
+                pva->replace(data);
+                break;
+            }
+            case pvDouble: {
+                shared_vector<double> xxx(length);
+                double *pv3 = static_cast<double *>(dbChannelField(dbChan));
+                for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
+                shared_vector<const double> data(freeze(xxx));
+                PVDoubleArrayPtr pva = static_pointer_cast<PVDoubleArray>(pvArray);
+                pva->replace(data);
+                break;
+            }
+            case pvString: {
+                shared_vector<string> xxx(length);
+                char *pv3 = static_cast<char *>(dbChannelField(dbChan));
+                for(size_t i=0; i<length; i++) {
+                    xxx[i] = pv3;
+                    pv3 += dbChannelFinalFieldSize(dbChan);
+                }
+                shared_vector<const string> data(freeze(xxx));
+                PVStringArrayPtr pva = static_pointer_cast<PVStringArray>(pvArray);
+                pva->replace(data);
+                break;
+            }
+            default:
+                 throw std::logic_error("Should never get here");
+            }
+            bitSet->set(pvField->getFieldOffset());
+        } else if((propertyMask&enumValueBit)!=0) {
             int32 val = 0;
             if(caData) {
                 val = caData->intValue;
             } else {
-                val = *static_cast<int32 *>(dbChannelField(dbChan));
-            }
-            PVIntPtr pv = static_pointer_cast<PVInt>(pvField);
-            if(pv->get()!=val) {
-                pv->put(val);
-                wasChanged = true;
-            }
-            break;
-        }
-        case pvUInt: {
-            uint32 val = 0;
-            if(caData) {
-                val = caData->uintValue;
-            } else {
-                val = *static_cast<uint32 *>(dbChannelField(dbChan));
-            }
-            PVUIntPtr pv = static_pointer_cast<PVUInt>(pvField);
-            if(pv->get()!=val) {
-                pv->put(val);
-                wasChanged = true;
-            }
-            break;
-        }
-        case pvFloat: {
-            float val = 0;
-            if(caData) {
-                val = caData->floatValue;
-            } else {
-                val = *static_cast<float *>(dbChannelField(dbChan));
-            }
-            PVFloatPtr pv = static_pointer_cast<PVFloat>(pvField);
-            if(pv->get()!=val) {
-                pv->put(val);
-                wasChanged = true;
-            }
-            break;
-        }
-        case pvDouble: {
-            double val = 0;
-            if(caData) {
-                val = caData->doubleValue;
-            } else {
-                val = *static_cast<double *>(dbChannelField(dbChan));
-            }
-            PVDoublePtr pv = static_pointer_cast<PVDouble>(pvField);
-            if(pv->get()!=val) {
-                pv->put(val);
-                wasChanged = true;
-            }
-            break;
-        }
-        case pvString: {
-            char * val = 0;
-            if(propertyMask&isLinkBit) {
-                char buffer[200];
-                for(int i=0; i<200; i++) buffer[i]  = 0;
-                long result = dbGetField(&dbChan->addr,DBR_STRING,
-                    buffer,0,0,0);
-                if(result!=0) {
-                    requester->message("dbGetField error",errorMessage);
-                }
-                val = buffer;
-            } else {
-                val = static_cast<char *>(dbChannelField(dbChan));
-            }
-            string sval(val);
-            PVStringPtr pvString = static_pointer_cast<PVString>(pvField);
-            if(pvString->get().empty()) {
-                pvString->put(sval);
-                wasChanged = true;
-            } else {
-                if((pvString->get().compare(sval))!=0) {
-                    pvString->put(sval);
-                    wasChanged = true;
+                if (dbChannelFinalDBFType(dbChan) == DBF_DEVICE) {
+                    val = static_cast<epicsEnum16>(dbChannelRecord(dbChan)->dtyp);
+                } else {
+                    val = *static_cast<int32 *>(dbChannelField(dbChan));
                 }
             }
-            break;
-        }
-        default:
-             throw std::logic_error("Should never get here");
-        }
-        if(wasChanged) bitSet->set(pvField->getFieldOffset());
-    } else if((propertyMask&arrayValueBit)!=0) {
-        PVScalarArrayPtr pvArray = static_pointer_cast<PVScalarArray>(pvField);
-        ScalarType scalarType = pvArray->getScalarArray()->getElementType();
-        long rec_length = 0;
-        long rec_offset = 0;
-        struct rset *prset = dbGetRset(&dbChan->addr);
-        get_array_info get_info;
-        get_info = (get_array_info)(prset->get_array_info);
-        get_info(&dbChan->addr, &rec_length, &rec_offset);
-        if(rec_offset!=0) {
-             throw std::logic_error("Can't handle offset != 0");
-        }
-        size_t length = rec_length;
-
-        switch(scalarType) {
-        case pvByte: {
-            shared_vector<int8> xxx(length);
-            int8 *pv3 = static_cast<int8 *>(dbChannelField(dbChan));
-            for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
-            shared_vector<const int8> data(freeze(xxx));
-            PVByteArrayPtr pva = static_pointer_cast<PVByteArray>(pvArray);
-            pva->replace(data);
-            break;
-        }
-        case pvUByte: {
-            shared_vector<uint8> xxx(length);
-            uint8 *pv3 = static_cast<uint8 *>(dbChannelField(dbChan));
-            for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
-            shared_vector<const uint8> data(freeze(xxx));
-            PVUByteArrayPtr pva = static_pointer_cast<PVUByteArray>(pvArray);
-            pva->replace(data);
-            break;
-        }
-        case pvShort: {
-            shared_vector<int16> xxx(length);
-            int16 *pv3 = static_cast<int16 *>(dbChannelField(dbChan));
-            for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
-            shared_vector<const int16> data(freeze(xxx));
-            PVShortArrayPtr pva = static_pointer_cast<PVShortArray>(pvArray);
-            pva->replace(data);
-            break;
-        }
-        case pvUShort: {
-            shared_vector<uint16> xxx(length);
-            uint16 *pv3 = static_cast<uint16 *>(dbChannelField(dbChan));
-            for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
-            shared_vector<const uint16> data(freeze(xxx));
-            PVUShortArrayPtr pva = static_pointer_cast<PVUShortArray>(pvArray);
-            pva->replace(data);
-            break;
-        }
-        case pvInt: {
-            shared_vector<int32> xxx(length);
-            int32 *pv3 = static_cast<int32 *>(dbChannelField(dbChan));
-            for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
-            shared_vector<const int32> data(freeze(xxx));
-            PVIntArrayPtr pva = static_pointer_cast<PVIntArray>(pvArray);
-            pva->replace(data);
-            break;
-        }
-        case pvUInt: {
-            shared_vector<uint32> xxx(length);
-            uint32 *pv3 = static_cast<uint32 *>(dbChannelField(dbChan));
-            for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
-            shared_vector<const uint32> data(freeze(xxx));
-            PVUIntArrayPtr pva = static_pointer_cast<PVUIntArray>(pvArray);
-            pva->replace(data);
-            break;
-        }
-        case pvFloat: {
-            shared_vector<float> xxx(length);
-            float *pv3 = static_cast<float *>(dbChannelField(dbChan));
-            for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
-            shared_vector<const float> data(freeze(xxx));
-            PVFloatArrayPtr pva = static_pointer_cast<PVFloatArray>(pvArray);
-            pva->replace(data);
-            break;
-        }
-        case pvDouble: {
-            shared_vector<double> xxx(length);
-            double *pv3 = static_cast<double *>(dbChannelField(dbChan));
-            for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
-            shared_vector<const double> data(freeze(xxx));
-            PVDoubleArrayPtr pva = static_pointer_cast<PVDoubleArray>(pvArray);
-            pva->replace(data);
-            break;
-        }
-        case pvString: {
-            shared_vector<string> xxx(length);
-            char *pv3 = static_cast<char *>(dbChannelField(dbChan));
-            for(size_t i=0; i<length; i++) {
-                xxx[i] = pv3;
-                pv3 += dbChannelFinalFieldSize(dbChan);
-            }
-            shared_vector<const string> data(freeze(xxx));
-            PVStringArrayPtr pva = static_pointer_cast<PVStringArray>(pvArray);
-            pva->replace(data);
-            break;
-        }
-        default:
-             throw std::logic_error("Should never get here");
-        }
-        bitSet->set(pvField->getFieldOffset());
-    } else if((propertyMask&enumValueBit)!=0) {
-        int32 val = 0;
-        if(caData) {
-            val = caData->intValue;
-        } else {
-            if (dbChannelFinalDBFType(dbChan) == DBF_DEVICE) {
-                val = static_cast<epicsEnum16>(dbChannelRecord(dbChan)->dtyp);
+            if((propertyMask&enumIndexBit)!=0) {
+                PVIntPtr pvIndex = static_pointer_cast<PVInt>(pvField);
+                if(pvIndex->get()!=val) {
+                    pvIndex->put(val);
+                    bitSet->set(pvIndex->getFieldOffset());
+                }
             } else {
-                val = *static_cast<int32 *>(dbChannelField(dbChan));
+                PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
+                PVIntPtr pvIndex = pvEnum->getSubField<PVInt>(indexString);
+                if(pvIndex->get()!=val) {
+                    pvIndex->put(val);
+                    bitSet->set(pvIndex->getFieldOffset());
+                }
             }
         }
-        if((propertyMask&enumIndexBit)!=0) {
-            PVIntPtr pvIndex = static_pointer_cast<PVInt>(pvField);
-            if(pvIndex->get()!=val) {
-                pvIndex->put(val);
-                bitSet->set(pvIndex->getFieldOffset());
-            }
-        } else {
-            PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
-            PVIntPtr pvIndex = pvEnum->getSubField<PVInt>(indexString);
-            if(pvIndex->get()!=val) {
-                pvIndex->put(val);
-                bitSet->set(pvIndex->getFieldOffset());
-            }
-        }
-    }
     }
     if((propertyMask&timeStampBit)!=0) {
         TimeStamp timeStamp;
