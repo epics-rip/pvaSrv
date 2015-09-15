@@ -1,4 +1,4 @@
-DEMO
+DEMODEMO
 
 First run a pvAccess server providing access to EPICS V3 channels via pvAccess protocol by
 running ./runV3Channel in another terminal (or in background).
