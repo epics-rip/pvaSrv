@@ -57,50 +57,50 @@ DbUtilPtr DbUtil::getDbUtil()
 }
 
 DbUtil::DbUtil()
-: 
-  processBit(    0x0001),
-  blockBit(      0x0002),
-  timeStampBit(  0x0004),
-  alarmBit(      0x0008),
-  displayBit(    0x0010),
-  controlBit(    0x0020),
-  valueAlarmBit( 0x0040),
-  // DB data characteristics
-  getValueBit(   0x0080),
-  scalarValueBit(0x0100),
-  arrayValueBit( 0x0200),
-  enumValueBit(  0x0400),
-  enumIndexBit(  0x0800),
-  noAccessBit(   0x1000),
-  noModBit(      0x2000),
-  dbPutBit(      0x4000),
-  isLinkBit(     0x8000),
-  recordString("record"),
-  processString("record._options.process"),
-  blockString("record._options.block"),
-  queueSizeString("record._options.queueSize"),
-  fieldString("field"),
-  valueString("value"),
-  valueIndexString("value.index"),
-  valueChoicesString("value.choices"),
-  timeStampString("timeStamp"),
-  alarmString("alarm"),
-  displayString("display"),
-  controlString("control"),
-  valueAlarmString("valueAlarm"),
-  lowAlarmLimitString("lowAlarmLimit"),
-  lowWarningLimitString("lowWarningLimit"),
-  highWarningLimitString("highWarningLimit"),
-  highAlarmLimitString("highAlarmLimit"),
-  allString("value,timeStamp,alarm,display,control,valueAlarm"),
-  indexString("index")
+    :
+      processBit(    0x0001),
+      blockBit(      0x0002),
+      timeStampBit(  0x0004),
+      alarmBit(      0x0008),
+      displayBit(    0x0010),
+      controlBit(    0x0020),
+      valueAlarmBit( 0x0040),
+      // DB data characteristics
+      getValueBit(   0x0080),
+      scalarValueBit(0x0100),
+      arrayValueBit( 0x0200),
+      enumValueBit(  0x0400),
+      enumIndexBit(  0x0800),
+      noAccessBit(   0x1000),
+      noModBit(      0x2000),
+      dbPutBit(      0x4000),
+      isLinkBit(     0x8000),
+      recordString("record"),
+      processString("record._options.process"),
+      blockString("record._options.block"),
+      queueSizeString("record._options.queueSize"),
+      fieldString("field"),
+      valueString("value"),
+      valueIndexString("value.index"),
+      valueChoicesString("value.choices"),
+      timeStampString("timeStamp"),
+      alarmString("alarm"),
+      displayString("display"),
+      controlString("control"),
+      valueAlarmString("valueAlarm"),
+      lowAlarmLimitString("lowAlarmLimit"),
+      lowWarningLimitString("lowWarningLimit"),
+      highWarningLimitString("highWarningLimit"),
+      highAlarmLimitString("highAlarmLimit"),
+      allString("value,timeStamp,alarm,display,control,valueAlarm"),
+      indexString("index")
 {}
 
 int DbUtil::getProperties(
-    Requester::shared_pointer const &requester,
-    PVStructure::shared_pointer const &pvr,
-    DbAddr &dbAddr,
-    bool processDefault)
+        Requester::shared_pointer const &requester,
+        PVStructure::shared_pointer const &pvr,
+        DbAddr &dbAddr,
+        bool processDefault)
 {
     PVStructure *pvRequest = pvr.get();
     int propertyMask = 0;
@@ -176,72 +176,72 @@ int DbUtil::getProperties(
     if(getValue) {
         propertyMask |= getValueBit;
     }
-        Type type = (dbAddr.special==SPC_DBADDR) ? scalarArray : scalar;
-        ScalarType scalarType(pvBoolean);
-        // Note that pvBoolean is not a supported type
-        switch(dbAddr.field_type) {
-        case DBF_STRING:
-            scalarType = pvString; break;
-        case DBF_CHAR:
-            scalarType = pvByte; break;
-        case DBF_UCHAR:
-            scalarType = pvUByte; break;
-        case DBF_SHORT:
-            scalarType = pvShort; break;
-        case DBF_USHORT:
-            scalarType = pvUShort; break;
-        case DBF_LONG:
-            scalarType = pvInt; break;
-        case DBF_ULONG:
-            scalarType = pvUInt; break;
-        case DBF_FLOAT:
-            scalarType = pvFloat; break;
-        case DBF_DOUBLE:
-            scalarType = pvDouble; break;
-        case DBF_ENUM:
-            propertyMask |= enumValueBit; break;
-        case DBF_MENU:
-            propertyMask |= (enumValueBit|dbPutBit); break;
-        case DBF_DEVICE:
-            propertyMask |= enumValueBit; break;
-        case DBF_INLINK:
-        case DBF_OUTLINK:
-        case DBF_FWDLINK:
-            scalarType = pvString;
-            propertyMask |= (isLinkBit|dbPutBit); break;
-        case DBF_NOACCESS:
-            requester->message("access is not allowed",errorMessage);
-            propertyMask = noAccessBit; return propertyMask;
+    Type type = (dbAddr.special==SPC_DBADDR) ? scalarArray : scalar;
+    ScalarType scalarType(pvBoolean);
+    // Note that pvBoolean is not a supported type
+    switch(dbAddr.field_type) {
+    case DBF_STRING:
+        scalarType = pvString; break;
+    case DBF_CHAR:
+        scalarType = pvByte; break;
+    case DBF_UCHAR:
+        scalarType = pvUByte; break;
+    case DBF_SHORT:
+        scalarType = pvShort; break;
+    case DBF_USHORT:
+        scalarType = pvUShort; break;
+    case DBF_LONG:
+        scalarType = pvInt; break;
+    case DBF_ULONG:
+        scalarType = pvUInt; break;
+    case DBF_FLOAT:
+        scalarType = pvFloat; break;
+    case DBF_DOUBLE:
+        scalarType = pvDouble; break;
+    case DBF_ENUM:
+        propertyMask |= enumValueBit; break;
+    case DBF_MENU:
+        propertyMask |= (enumValueBit|dbPutBit); break;
+    case DBF_DEVICE:
+        propertyMask |= enumValueBit; break;
+    case DBF_INLINK:
+    case DBF_OUTLINK:
+    case DBF_FWDLINK:
+        scalarType = pvString;
+        propertyMask |= (isLinkBit|dbPutBit); break;
+    case DBF_NOACCESS:
+        requester->message("access is not allowed",errorMessage);
+        propertyMask = noAccessBit; return propertyMask;
+    default:
+        requester->message("logic error unknown DBF type",errorMessage);
+        propertyMask = noAccessBit; return propertyMask;
+    }
+    if(type==scalar&&scalarType!=pvBoolean) {
+        propertyMask |= scalarValueBit;
+    }
+    if(type==scalarArray&&scalarType!=pvBoolean) {
+        propertyMask |= arrayValueBit;
+    }
+    if(dbAddr.special!=0) {
+        switch(dbAddr.special) {
+        case SPC_NOMOD:
+            propertyMask |= noModBit; break;
+        case SPC_DBADDR: // already used
+            break;
+        case SPC_SCAN:
+        case SPC_ALARMACK:
+        case SPC_AS:
+        case SPC_ATTRIBUTE:
+        case SPC_MOD:
+        case SPC_RESET:
+        case SPC_LINCONV:
+        case SPC_CALC:
+            propertyMask |= dbPutBit; break;
         default:
-            requester->message("logic error unknown DBF type",errorMessage);
+            requester->message("logic error unknown special type",errorMessage);
             propertyMask = noAccessBit; return propertyMask;
         }
-        if(type==scalar&&scalarType!=pvBoolean) {
-           propertyMask |= scalarValueBit;
-        }
-        if(type==scalarArray&&scalarType!=pvBoolean) {
-           propertyMask |= arrayValueBit;
-        }
-        if(dbAddr.special!=0) {
-            switch(dbAddr.special) {
-            case SPC_NOMOD:
-                propertyMask |= noModBit; break;
-            case SPC_DBADDR: // already used
-                break;
-            case SPC_SCAN:
-            case SPC_ALARMACK:
-            case SPC_AS:
-            case SPC_ATTRIBUTE:
-            case SPC_MOD:
-            case SPC_RESET:
-            case SPC_LINCONV:
-            case SPC_CALC:
-                propertyMask |= dbPutBit; break;
-            default:
-                requester->message("logic error unknown special type",errorMessage);
-                propertyMask = noAccessBit; return propertyMask;
-            }
-        }
+    }
 
     if(fieldList.length()!=0) {
         if(fieldList.find(timeStampString)!=string::npos) {
@@ -274,7 +274,7 @@ int DbUtil::getProperties(
 }
 
 PVStructurePtr DbUtil::createPVStructure(
-    Requester::shared_pointer const &requester,int propertyMask,DbAddr &dbAddr)
+        Requester::shared_pointer const &requester,int propertyMask,DbAddr &dbAddr)
 {
     StandardPVFieldPtr standardPVField = getStandardPVField();
     StandardFieldPtr standardField = getStandardField();
@@ -312,14 +312,14 @@ PVStructurePtr DbUtil::createPVStructure(
     }
     else {
         ScalarType scalarType = propertyMask&isLinkBit ?
-            pvString : getScalarType(requester,dbAddr);
+                    pvString : getScalarType(requester,dbAddr);
         if (scalarType == pvBoolean)
             throw std::logic_error("Should never get here");
 
         if((propertyMask & scalarValueBit)!=0)
             structure = standardField->scalar(scalarType,properties);
         else if((propertyMask & arrayValueBit)!=0)
-            structure = standardField->scalarArray(scalarType,properties);        
+            structure = standardField->scalarArray(scalarType,properties);
         else
             return nullPVStructure;
     }
@@ -360,10 +360,10 @@ PVStructurePtr DbUtil::createPVStructure(
             else if(dbAddr.field_type==DBF_DEVICE) {
                 dbFldDes *pdbFldDes = dbAddr.pfldDes;
                 dbDeviceMenu *pdbDeviceMenu
-                    = static_cast<dbDeviceMenu *>(pdbFldDes->ftPvt);
+                        = static_cast<dbDeviceMenu *>(pdbFldDes->ftPvt);
                 if(pdbDeviceMenu==NULL) {
                     requester->message(
-                        "record type has no device support", errorMessage);
+                                "record type has no device support", errorMessage);
                     return nullPVStructure;
                 }
 
@@ -424,11 +424,11 @@ void  DbUtil::getPropertyData(
         }
         struct dbr_grDouble graphics;
         if(prset && prset->get_graphic_double) {
-           get_graphic_double gg =
-                (get_graphic_double)(prset->get_graphic_double);
-           gg(&dbAddr,&graphics);
-           display.setHigh(graphics.upper_disp_limit);
-           display.setLow(graphics.lower_disp_limit);
+            get_graphic_double gg =
+                    (get_graphic_double)(prset->get_graphic_double);
+            gg(&dbAddr,&graphics);
+            display.setHigh(graphics.upper_disp_limit);
+            display.setLow(graphics.lower_disp_limit);
         }
         PVDisplay pvDisplay;
         PVFieldPtr pvField = pvStructure->getSubField(displayString);
@@ -441,11 +441,11 @@ void  DbUtil::getPropertyData(
         struct dbr_ctrlDouble graphics;
         memset(&graphics,0,sizeof(graphics));
         if(prset && prset->get_control_double) {
-           get_control_double cc =
-                (get_control_double)(prset->get_control_double);
-           cc(&dbAddr,&graphics);
-           control.setHigh(graphics.upper_ctrl_limit);
-           control.setLow(graphics.lower_ctrl_limit);
+            get_control_double cc =
+                    (get_control_double)(prset->get_control_double);
+            cc(&dbAddr,&graphics);
+            control.setHigh(graphics.upper_ctrl_limit);
+            control.setLow(graphics.lower_ctrl_limit);
         }
         PVControl pvControl;
         PVFieldPtr pvField = pvStructure->getSubField(controlString);
@@ -457,12 +457,12 @@ void  DbUtil::getPropertyData(
         struct dbr_alDouble ald;
         memset(&ald,0,sizeof(ald));
         if(prset && prset->get_alarm_double) {
-           get_alarm_double cc =
-               (get_alarm_double)(prset->get_alarm_double);
-           cc(&dbAddr,&ald);
+            get_alarm_double cc =
+                    (get_alarm_double)(prset->get_alarm_double);
+            cc(&dbAddr,&ald);
         }
         PVStructurePtr pvAlarmLimits =
-            pvStructure->getSubField<PVStructure>(valueAlarmString);
+                pvStructure->getSubField<PVStructure>(valueAlarmString);
         PVBooleanPtr pvActive = pvAlarmLimits->getSubField<PVBoolean>("active");
         if(pvActive.get()!=NULL) pvActive->put(false);
         PVFieldPtr pvf = pvAlarmLimits->getSubField(lowAlarmLimitString);
@@ -548,7 +548,7 @@ Status  DbUtil::get(
             case pvUShort: {
                 uint16 val = 0;
                 if(caData) {
-                val = caData->ushortValue;
+                    val = caData->ushortValue;
                 } else {
                     val = *static_cast<uint16 *>(dbAddr.pfield);
                 }
@@ -621,7 +621,7 @@ Status  DbUtil::get(
                     char buffer[200];
                     for(int i=0; i<200; i++) buffer[i]  = 0;
                     long result = dbGetField(&dbAddr,DBR_STRING,
-                    buffer,0,0,0);
+                                             buffer,0,0,0);
                     if(result!=0) {
                         requester->message("dbGetField error",errorMessage);
                     }
@@ -643,7 +643,7 @@ Status  DbUtil::get(
                 break;
             }
             default:
-                 throw std::logic_error("Should never get here");
+                throw std::logic_error("Should never get here");
             }
             if(wasChanged) bitSet->set(pvField->getFieldOffset());
         } else if((propertyMask&arrayValueBit)!=0) {
@@ -656,28 +656,28 @@ Status  DbUtil::get(
             get_info = (get_array_info)(prset->get_array_info);
             get_info(&dbAddr, &rec_length, &rec_offset);
             if(rec_offset!=0) {
-                 throw std::logic_error("Can't handle offset != 0");
-             }
-             size_t length = rec_length;
+                throw std::logic_error("Can't handle offset != 0");
+            }
+            size_t length = rec_length;
 
-             switch(scalarType) {
-             case pvByte: {
-                 shared_vector<int8> xxx(length);
-                 int8 *pv3 = static_cast<int8 *>(dbAddr.pfield);
-                 for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
-                 shared_vector<const int8> data(freeze(xxx));
-                 PVByteArrayPtr pva = static_pointer_cast<PVByteArray>(pvArray);
-                 pva->replace(data);
-                 break;
-             }
-             case pvUByte: {
-                 shared_vector<uint8> xxx(length);
-                 uint8 *pv3 = static_cast<uint8 *>(dbAddr.pfield);
-                 for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
-                 shared_vector<const uint8> data(freeze(xxx));
-                 PVUByteArrayPtr pva = static_pointer_cast<PVUByteArray>(pvArray);
-                 pva->replace(data);
-                 break;
+            switch(scalarType) {
+            case pvByte: {
+                shared_vector<int8> xxx(length);
+                int8 *pv3 = static_cast<int8 *>(dbAddr.pfield);
+                for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
+                shared_vector<const int8> data(freeze(xxx));
+                PVByteArrayPtr pva = static_pointer_cast<PVByteArray>(pvArray);
+                pva->replace(data);
+                break;
+            }
+            case pvUByte: {
+                shared_vector<uint8> xxx(length);
+                uint8 *pv3 = static_cast<uint8 *>(dbAddr.pfield);
+                for(size_t i=0; i<length; i++) xxx[i] = pv3[i];
+                shared_vector<const uint8> data(freeze(xxx));
+                PVUByteArrayPtr pva = static_pointer_cast<PVUByteArray>(pvArray);
+                pva->replace(data);
+                break;
             }
             case pvShort: {
                 shared_vector<int16> xxx(length);
@@ -746,7 +746,7 @@ Status  DbUtil::get(
                 break;
             }
             default:
-                 throw std::logic_error("Should never get here");
+                throw std::logic_error("Should never get here");
             }
             bitSet->set(pvField->getFieldOffset());
         } else if((propertyMask&enumValueBit)!=0) {
@@ -788,7 +788,7 @@ Status  DbUtil::get(
         if(caData) {
             epicsTimeStamp = &caData->timeStamp;
         } else {
-            epicsTimeStamp = &precord->time;     
+            epicsTimeStamp = &precord->time;
         }
         epicsUInt32 secPastEpoch = epicsTimeStamp->secPastEpoch;
         epicsUInt32 nsec = epicsTimeStamp->nsec;
@@ -804,7 +804,7 @@ Status  DbUtil::get(
             bitSet->set(pvField->getFieldOffset());
         }
     }
-     if((propertyMask&alarmBit)!=0) {
+    if((propertyMask&alarmBit)!=0) {
         Alarm alarm;
         PVAlarm pvAlarm;
         PVFieldPtr pvField = pvStructure->getSubField(alarmString);
@@ -849,7 +849,7 @@ Status  DbUtil::put(
 {
     if((propertyMask&getValueBit)==0) {
         requester->message("Logic Error unknown field to put",errorMessage);
-            return Status::Ok;
+        return Status::Ok;
     }
 
     if((propertyMask&scalarValueBit)!=0) {
@@ -996,16 +996,16 @@ Status  DbUtil::put(
             PVStringArray::const_svector xxx = pva->view();
             char *pv3 = static_cast<char *>(dbAddr.pfield);
             for(long i=0; i<length; i++) {
-                 const char * const pxxx = xxx[i].data();
-                 long strlen = xxx[i].length();
-                 if(strlen>dbAddr.field_size) strlen = dbAddr.field_size;
-                 for(long j=0; j<strlen; j++) pv3[j] = pxxx[j];
-                 pv3 += dbAddr.field_size;
+                const char * const pxxx = xxx[i].data();
+                long strlen = xxx[i].length();
+                if(strlen>dbAddr.field_size) strlen = dbAddr.field_size;
+                for(long j=0; j<strlen; j++) pv3[j] = pxxx[j];
+                pv3 += dbAddr.field_size;
             }
             break;
         }
         default:
-             throw std::logic_error("Should never get here");
+            throw std::logic_error("Should never get here");
         }
     } else if((propertyMask&enumValueBit)!=0) {
         PVIntPtr pvIndex;
@@ -1026,7 +1026,7 @@ Status  DbUtil::put(
         }
     } else {
         requester->message("Logic Error unknown field to put",errorMessage);
-            return Status::Ok;
+        return Status::Ok;
     }
 
     dbCommon *precord = dbAddr.precord;
@@ -1060,7 +1060,7 @@ Status  DbUtil::putField(
     string string;
     if((propertyMask&getValueBit)==0) {
         requester->message("Logic Error unknown field to put",errorMessage);
-            return Status::Ok;
+        return Status::Ok;
     }
 
     if((propertyMask&scalarValueBit)!=0) {
@@ -1129,8 +1129,8 @@ Status  DbUtil::putField(
     } else if((propertyMask&enumValueBit)!=0) {
         PVIntPtr pvIndex;
         if(pvField->getField()->getType()==structure) {
-             PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
-             pvIndex = pvEnum->getSubField<PVInt>(indexString);
+            PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
+            pvIndex = pvEnum->getSubField<PVInt>(indexString);
         } else {
             pvIndex = static_pointer_cast<PVInt>(pvField);
         }
@@ -1153,26 +1153,26 @@ Status  DbUtil::putField(
 ScalarType DbUtil::getScalarType(Requester::shared_pointer const &requester, DbAddr &dbAddr)
 {
     switch(dbAddr.field_type) {
-        case DBF_CHAR:
-            return pvByte;
-        case DBF_UCHAR:
-            return pvUByte;
-        case DBF_SHORT:
-            return pvShort;
-        case DBF_USHORT:
-            return pvUShort;
-        case DBF_LONG:
-            return pvInt;
-        case DBF_ULONG:
-            return pvUInt;
-        case DBF_FLOAT:
-            return pvFloat;
-        case DBF_DOUBLE:
-            return pvDouble;
-        case DBF_STRING:
-            return pvString;
-        default:
-            break;
+    case DBF_CHAR:
+        return pvByte;
+    case DBF_UCHAR:
+        return pvUByte;
+    case DBF_SHORT:
+        return pvShort;
+    case DBF_USHORT:
+        return pvUShort;
+    case DBF_LONG:
+        return pvInt;
+    case DBF_ULONG:
+        return pvUInt;
+    case DBF_FLOAT:
+        return pvFloat;
+    case DBF_DOUBLE:
+        return pvDouble;
+    case DBF_STRING:
+        return pvString;
+    default:
+        break;
     }
     // Note that pvBoolean is not a supported type
     return pvBoolean;
