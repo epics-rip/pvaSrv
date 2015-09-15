@@ -105,6 +105,7 @@ private:
     std::string fieldString;
     std::string valueString;
     std::string valueIndexString;
+    std::string valueChoicesString;
     std::string timeStampString;
     std::string alarmString;
     std::string displayString;
