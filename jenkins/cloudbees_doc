@@ -49,7 +49,3 @@ if [ "${PUBLISH}" != "DONT" ]; then
 
     rsync -aqP --delete -e ssh documentation epics-jenkins@web.sourceforge.net:/home/project-web/epics-pvdata/htdocs/docbuild/pvaSrv/${PUBLISH}/
 fi
-###########################################
-# Publish
-
-rsync -aqP --delete -e ssh documentation epics-jenkins@web.sourceforge.net:/home/project-web/epics-pvdata/htdocs/docbuild/pvaSrv/tip
