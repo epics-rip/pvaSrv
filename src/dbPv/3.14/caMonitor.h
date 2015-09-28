@@ -50,7 +50,7 @@ struct CaData {
     epicsTimeStamp  timeStamp;
     int             sevr;
     int             stat;
-    const char *    status;
+    std::string     status;
 };
 
 class CaMonitorRequester : public virtual epics::pvData::Requester {
