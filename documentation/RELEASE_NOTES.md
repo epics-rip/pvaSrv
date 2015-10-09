@@ -12,6 +12,8 @@
 
 ### 0.11.0
 * Set pvDataCPP dependency to release/5.0
+* Add 3.15 variant (new API in Base);
+  pvaSrv now works on recent 3.14 and all 3.15
 
 ## Series release/0.10
 
