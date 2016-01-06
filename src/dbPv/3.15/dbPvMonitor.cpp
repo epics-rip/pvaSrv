@@ -80,8 +80,7 @@ bool DbPvMonitor::init(
     PVStructure::shared_pointer const &pvRequest)
 {
     string queueSizeString("record._options.queueSize");
-    PVFieldPtr pvField = pvRequest.get()->getSubField(queueSizeString);
-    if(pvField) {
+    {
         PVStringPtr pvString = pvRequest.get()->getSubField<PVString>(queueSizeString);
         if(pvString) {
              string value = pvString->get();
