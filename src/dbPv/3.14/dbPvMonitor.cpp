@@ -88,6 +88,7 @@ bool DbPvMonitor::init(
         if(pvString) {
              string value = pvString->get();
              queueSize = atoi(value.c_str());
+             numberFree = queueSize;
         }
     }
     propertyMask = dbUtil->getProperties(
