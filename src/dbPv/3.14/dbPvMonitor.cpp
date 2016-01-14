@@ -262,15 +262,24 @@ void DbPvMonitor::eventCallback(const char *status)
        pvStructure,
        overrunBitSet,
        &caData);
-    int index = overrunBitSet->nextSetBit(0);
-    while(index>=0) {
-        bool wasSet = bitSet->get(index);
-        if(!wasSet) {
-            bitSet->set(index);
-            overrunBitSet->clear(index);
+
+    if(firstTime) {
+        firstTime = false;
+        bitSet->clear();
+        overrunBitSet->clear();
+        bitSet->set(0);
+    } else {
+        int index = overrunBitSet->nextSetBit(0);
+        while(index>=0) {
+            bool wasSet = bitSet->get(index);
+            if(!wasSet) {
+                bitSet->set(index);
+                overrunBitSet->clear(index);
+            }
+            index = overrunBitSet->nextSetBit(index+1);
         }
-        index = overrunBitSet->nextSetBit(index+1);
     }
+    
     if(bitSet->nextSetBit(0)>=0) {
         nextElement =getFree();
         if(nextElement) {
@@ -281,11 +290,6 @@ void DbPvMonitor::eventCallback(const char *status)
         }
     }
     dbScanUnlock(dbAddr.precord);
-    if(firstTime) {
-        firstTime = false;
-        bitSet->clear();
-        bitSet->set(0);
-    }
     if(bitSet->nextSetBit(0)<0) return;
     if(!nextElement) return;
     numberUsed++;
