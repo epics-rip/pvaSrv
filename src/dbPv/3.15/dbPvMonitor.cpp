@@ -63,7 +63,6 @@ DbPvMonitor::DbPvMonitor(
   numberFree(queueSize),
   numberUsed(0),
   nextGetFree(0),
-  nextSetUsed(0),
   nextGetUsed(0),
   nextReleaseUsed(0),
   beingDestroyed(false),
@@ -293,8 +292,6 @@ void DbPvMonitor::eventCallback(const char *status)
     if(bitSet->nextSetBit(0)<0) return;
     if(!nextElement) return;
     numberUsed++;
-    nextSetUsed++;
-    if (nextSetUsed >= queueSize) nextSetUsed = 0;
     currentElement = nextElement;
     monitorRequester->monitorEvent(getPtrSelf());
 }
