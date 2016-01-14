@@ -178,8 +178,10 @@ Status DbPvMonitor::start()
         if(isStarted) return Status::Ok;
         isStarted = true;
     }
-    currentElement = getFree();
-    if (!currentElement) {
+    if(!currentElement) {
+        currentElement = getFree();
+    }
+    if(!currentElement) {
         printf("dbPvMonitor::start will throw\n");
         throw std::logic_error(
             "dbPvMonitor::start no free queue element");
