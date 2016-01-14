@@ -178,6 +178,7 @@ Status DbPvMonitor::start()
         }
         if(isStarted) return Status::Ok;
         isStarted = true;
+        firstTime = true;
     }
     if(!currentElement) {
         currentElement = getFree();
@@ -187,8 +188,7 @@ Status DbPvMonitor::start()
         throw std::logic_error(
             "dbPvMonitor::start no free queue element");
     }
-    BitSet::shared_pointer bitSet = currentElement->changedBitSet;
-    bitSet->clear();
+
     caMonitor.get()->start();
     return Status::Ok;
 }
