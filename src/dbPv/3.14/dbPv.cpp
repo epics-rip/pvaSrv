@@ -19,7 +19,7 @@
 #include <pv/noDefaultMethods.h>
 #include <pv/standardField.h>
 
-#include "dbPv.h"
+#include "pv/dbPv.h"
 
 using namespace epics::pvData;
 using namespace epics::pvAccess;

@@ -22,7 +22,7 @@
 #include <pv/pvData.h>
 #include <pv/pvAccess.h>
 
-#include "dbPv.h"
+#include "pv/dbPv.h"
 #include "dbUtil.h"
 
 using namespace epics::pvData;

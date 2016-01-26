@@ -12,7 +12,7 @@
 #include <dbChannel.h>
 
 #define epicsExportSharedSymbols
-#include <caSecurity.h>
+#include <pv/caSecurity.h>
 
 using namespace epics::pvData;
 using namespace epics::pvAccess;

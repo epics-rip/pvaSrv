@@ -26,8 +26,8 @@
 #include <pv/noDefaultMethods.h>
 #include <pv/lock.h>
 
-#include "dbPv.h"
-#include "caSecurity.h"
+#include "pv/dbPv.h"
+#include "pv/caSecurity.h"
 
 using namespace epics::pvData;
 using namespace epics::pvAccess;

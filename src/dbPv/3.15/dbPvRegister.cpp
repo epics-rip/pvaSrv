@@ -31,7 +31,7 @@
 
 #define epicsExportSharedSymbols
 
-#include "dbPv.h"
+#include "pv/dbPv.h"
 #include <epicsExport.h>
 
 using namespace epics::pvData;

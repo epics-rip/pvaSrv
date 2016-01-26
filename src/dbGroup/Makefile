@@ -4,8 +4,8 @@ SRC_DIRS += $(PVASRV_SRC)/dbGroup
 
 DBD += dbGroup.dbd
 
-INC += dbGroup.h
-INC += pvValue.h
+INC += pv/dbGroup.h
+INC += pv/pvValue.h
 
 LIBSRCS += pvValue.cpp
 LIBSRCS += dbGroupRegister.cpp
