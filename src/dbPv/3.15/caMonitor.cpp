@@ -24,8 +24,8 @@
 
 #include <pv/caStatus.h>
 
-#include "dbPvDebug.h"
-#include "caMonitor.h"
+#include "pv/dbPvDebug.h"
+#include "pv/caMonitor.h"
 #include "caContext.h"
 
 using namespace epics::pvData;

@@ -22,7 +22,7 @@
 #include <dbDefs.h>
 
 #include "caContext.h"
-#include "dbPvDebug.h"
+#include "pv/dbPvDebug.h"
 
 using namespace epics::pvData;
 using namespace epics::pvaSrv;

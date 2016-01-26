@@ -33,9 +33,9 @@
 #define epicsExportSharedSymbols
 
 #include <epicsExport.h>
-#include "dbPv.h"
+#include "pv/dbPv.h"
 #include "caContext.h"
-#include "caMonitor.h"
+#include "pv/caMonitor.h"
 #include "dbUtil.h"
 
 using namespace epics::pvData;

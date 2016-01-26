@@ -24,7 +24,7 @@
 #include <pv/pvIntrospect.h>
 #include <pv/pvData.h>
 
-#include "dbPv.h"
+#include <pv/dbPv.h>
 
 namespace epics { namespace pvaSrv { 
 
