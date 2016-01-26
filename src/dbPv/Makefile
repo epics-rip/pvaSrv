@@ -10,10 +10,10 @@ SRC_DIRS += $(PVASRV_SRC)/dbPv/$(PLACE)
 
 DBD += dbPv.dbd
 
-INC += dbPv.h
-INC += dbPvDebug.h
-INC += caMonitor.h
-INC += caSecurity.h
+INC += pv/dbPv.h
+INC += pv/dbPvDebug.h
+INC += pv/caMonitor.h
+INC += pv/caSecurity.h
 
 LIBSRCS += caContext.cpp
 LIBSRCS += dbUtil.cpp
