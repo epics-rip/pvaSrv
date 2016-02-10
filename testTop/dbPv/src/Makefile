@@ -31,6 +31,7 @@ testDbPvSupport_SRCS += ulongRecord.c
 testDbPvSupport_SRCS += bigstringinRecord.c
 testDbPvSupport_SRCS += waitRecord.c
 testDbPvSupport_SRCS += testDbPv.cpp
+testDbPvSupport_LIBS = pvAccess pvData $(MBLIB) $(EPICS_BASE_IOC_LIBS)
 
 #=============================
 # Build an IOC application
