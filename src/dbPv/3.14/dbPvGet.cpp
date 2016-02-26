@@ -40,9 +40,9 @@ DbPvGet::DbPvGet(
   channelGetRequester(channelGetRequester),
   dbAddr(dbAddr),
   process(false),
+  block(false),
   firstTime(true),
   propertyMask(0),
-  block(true),
   beingDestroyed(false)
 {
     if(DbPvDebug::getLevel()>0)printf("dbPvGet::dbPvGet\n");
