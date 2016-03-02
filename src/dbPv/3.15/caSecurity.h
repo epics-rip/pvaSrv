@@ -223,7 +223,7 @@ namespace epics {
                 // TODO think about this, it is better to split servers
                 // additional case: server RPC service (channelName == "server")
                 const char * msg = se.what();
-                if (msg && strcmp(msg, "no such pv") == 0)
+                if (msg && strcmp(msg, "failed to create dbChannel") == 0)
                     return epics::pvAccess::NoSecurityPlugin::INSTANCE->createChannelSession(channelName);
                 else
                     throw;
