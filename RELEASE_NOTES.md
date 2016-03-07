@@ -2,6 +2,9 @@
 
 ## Series release/0.11
 
+### 0.11.3
+* Fix issues #1, #23, #24
+
 ### 0.11.2
 * Add release notes
 
