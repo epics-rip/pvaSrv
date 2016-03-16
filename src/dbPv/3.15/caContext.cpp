@@ -20,6 +20,7 @@
 #include <cadef.h>
 #include <db_access.h>
 #include <dbDefs.h>
+#include <errlog.h>
 
 #include "caContext.h"
 #include "dbPvDebug.h"
@@ -42,7 +43,8 @@ static void threadExitFunc(void *arg)
 {
     if(DbPvDebug::getLevel()>0) printf("caContext::threadExitFunc\n");
     caContext * context = static_cast<caContext * >(arg);
-    context->stop();
+    std::tr1::shared_ptr<caContext> self(context->shared_from_this());
+    self->stop();
 }
 
 } // extern "C"
@@ -121,7 +123,9 @@ void caContext::release()
 void caContext::exception(string const &message)
 {
     Lock xx(mutex);
-    requester->message(message,errorMessage);
+    epics::pvData::RequesterPtr req(requester.lock());
+    if(req) req->message(message,errorMessage);
+    else errlogPrintf("caContext exception on dead PVA channel: %s\n", message.c_str());
 }
 
 typedef std::map<epicsThreadId,caContextPtr>::iterator contextMapIter;
