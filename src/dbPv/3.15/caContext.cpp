@@ -83,6 +83,7 @@ void caContext::stop()
         //throw std::logic_error(String(
         //   "caContext::stop not same thread"));
     }
+    Lock xx(mutex);
     if(referenceCount!=0) {
         printf("caContext::stop referenceCount != 0 value %d\n",
             referenceCount);
