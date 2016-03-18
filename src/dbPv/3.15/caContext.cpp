@@ -80,22 +80,17 @@ void caContext::stop()
     if(id!=threadId) {
         printf("caContext::stop not same thread\n");
     	return;
-        //throw std::logic_error(String(
-        //   "caContext::stop not same thread"));
     }
-    Lock xx(mutex);
-    if(referenceCount!=0) {
-        printf("caContext::stop referenceCount != 0 value %d\n",
-            referenceCount);
-    	return;
-        //throw std::logic_error(String(
-        //   "caContext::stop referenceCount != 0"));
-    }
-    else
     {
-        caContextCreate::erase(threadId);
-        ca_context_destroy();
+        Lock xx(mutex);
+        if(referenceCount!=0) {
+            printf("caContext::stop referenceCount != 0 value %d\n",
+                   referenceCount);
+            return;
+        }
     }
+    caContextCreate::erase(threadId);
+    ca_context_destroy();
 }
 
 typedef std::list<epicsThreadId>::iterator threadListIter;
