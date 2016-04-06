@@ -26,6 +26,7 @@
 #include <pv/noDefaultMethods.h>
 #include <pv/lock.h>
 
+#define epicsExportSharedSymbols
 #include "dbPv.h"
 #include "caSecurity.h"
 
