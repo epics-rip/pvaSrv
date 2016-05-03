@@ -98,7 +98,7 @@ void DbPv::init()
                 "value,timeStamp,alarm,display");
         } else {
             recordField = standardField->scalar(scalarType,
-                "value,timeStamp,alarm,display,control");
+                "value,timeStamp,alarm,display,control,valueAlarm");
         }
     }
 }
