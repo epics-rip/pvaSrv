@@ -90,8 +90,17 @@ void DbPv::init()
         default:
           break;
     }
-    if(scalarType!=pvBoolean) {
-        bool isArray = (dbChannelFinalElements(dbChan) > 1) ? true : false;
+    bool isArray = (dbChannelFinalElements(dbChan) > 1) ? true : false;
+    if(scalarType==pvString) {  
+        if(isArray) {
+            recordField = standardField->scalarArray(scalarType,
+                "value,timeStamp,alarm");
+        } else {
+            recordField = standardField->scalar(scalarType,
+                "value,timeStamp,alarm");
+        }
+    }
+    else if(scalarType!=pvBoolean) {
         if(isArray) {
             recordField = standardField->scalarArray(scalarType,
                 "value,timeStamp,alarm,display");
