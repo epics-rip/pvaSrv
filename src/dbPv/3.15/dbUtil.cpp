@@ -266,20 +266,28 @@ int DbUtil::getProperties(
         if(fieldList.find(alarmString)!=string::npos) {
             propertyMask |= alarmBit;
         }
-        if(fieldList.find(displayString)!=string::npos) {
-            if(dbChannelFinalDBFType(dbChan)==DBF_LONG||dbChannelFinalDBFType(dbChan)==DBF_DOUBLE) {
+        switch(dbChannelFinalDBFType(dbChan))
+        {
+        case DBF_CHAR:
+        case DBF_UCHAR:
+        case DBF_SHORT:
+        case DBF_USHORT:
+        case DBF_LONG:
+        case DBF_ULONG:
+        case DBF_FLOAT:
+        case DBF_DOUBLE:
+            if(fieldList.find(displayString)!=string::npos) {
                 propertyMask |= displayBit;
             }
-        }
-        if(fieldList.find(controlString)!=string::npos) {
-            if(dbChannelFinalDBFType(dbChan)==DBF_LONG||dbChannelFinalDBFType(dbChan)==DBF_DOUBLE) {
+            if(fieldList.find(controlString)!=string::npos) {
                 propertyMask |= controlBit;
             }
-        }
-        if(fieldList.find(valueAlarmString)!=string::npos) {
-            if(dbChannelFinalDBFType(dbChan)==DBF_LONG||dbChannelFinalDBFType(dbChan)==DBF_DOUBLE) {
+            if(fieldList.find(valueAlarmString)!=string::npos) {
                 propertyMask |= valueAlarmBit;
             }
+            break;
+        default:
+            break;
         }
     }
     if(propertyMask&enumValueBit) {
