@@ -128,8 +128,8 @@ int DbUtil::getProperties(
     string fieldList;
     PVStructurePtr fieldPV = pvRequest->getSubField<PVStructure>(fieldString);
     if(fieldPV.get()==NULL) {
-        fieldList += valueString;
         getValue = true;
+        fieldList = allString;
     } else {
         if(fieldPV.get()!=NULL) pvRequest = fieldPV.get();
         if(pvRequest->getStructure()->getNumberFields()==0) {
