@@ -263,10 +263,10 @@ int DbUtil::getProperties(
             if(fieldList.find(displayString)!=string::npos) {
                 propertyMask |= displayBit;
             }
-            if(fieldList.find(controlString)!=string::npos) {
+            if(type==scalar && fieldList.find(controlString)!=string::npos) {
                 propertyMask |= controlBit;
             }
-            if(fieldList.find(valueAlarmString)!=string::npos) {
+            if(type==scalar && fieldList.find(valueAlarmString)!=string::npos) {
                 propertyMask |= valueAlarmBit;
             }
             break;
