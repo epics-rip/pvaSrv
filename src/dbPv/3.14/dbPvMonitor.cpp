@@ -110,7 +110,6 @@ bool DbPvMonitor::init(
         elements.push_back(element);
     }
     MonitorElementPtr element = elements[0];
-    dbUtil->getPropertyData(monitorRequester,propertyMask,dbAddr,element->pvStructurePtr);
     StructureConstPtr saveStructure = element->pvStructurePtr->getStructure();
     if((propertyMask&dbUtil->enumValueBit)!=0) {
         caType = CaEnum;
