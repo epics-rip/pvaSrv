@@ -250,21 +250,30 @@ int DbUtil::getProperties(
         if(fieldList.find(alarmString)!=string::npos) {
             propertyMask |= alarmBit;
         }
-        if(fieldList.find(displayString)!=string::npos) {
-            if(dbAddr.field_type==DBF_LONG||dbAddr.field_type==DBF_DOUBLE) {
+        switch(dbAddr.field_type)
+        {
+        case DBF_CHAR:
+        case DBF_UCHAR:
+        case DBF_SHORT:
+        case DBF_USHORT:
+        case DBF_LONG:
+        case DBF_ULONG:
+        case DBF_FLOAT:
+        case DBF_DOUBLE:
+            if(fieldList.find(displayString)!=string::npos) {
                 propertyMask |= displayBit;
             }
-        }
-        if(fieldList.find(controlString)!=string::npos) {
-            if(dbAddr.field_type==DBF_LONG||dbAddr.field_type==DBF_DOUBLE) {
+            if(type==scalar && fieldList.find(controlString)!=string::npos) {
                 propertyMask |= controlBit;
             }
-        }
-        if(fieldList.find(valueAlarmString)!=string::npos) {
-            if(dbAddr.field_type==DBF_LONG||dbAddr.field_type==DBF_DOUBLE) {
+            if(type==scalar && fieldList.find(valueAlarmString)!=string::npos) {
                 propertyMask |= valueAlarmBit;
             }
+            break;
+        default:
+            break;
         }
+
     }
     if(propertyMask&enumValueBit) {
         pvField = pvRequest->getSubField(valueIndexString);
