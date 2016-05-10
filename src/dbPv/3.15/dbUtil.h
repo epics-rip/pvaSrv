@@ -97,6 +97,12 @@ public:
         dbChannel *dbChan);
 private:
     DbUtil();
+    void getPropertyDataImpl(
+        epics::pvData::Requester::shared_pointer const &requester,
+        int mask,
+        dbChannel *dbChan,
+        epics::pvData::PVStructurePtr const &pvStructure,
+        epics::pvData::BitSet::shared_pointer const &bitSet);
     epics::pvData::PVStructurePtr  nullPVStructure;
     std::string recordString;
     std::string processString;

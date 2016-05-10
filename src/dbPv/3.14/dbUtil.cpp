@@ -406,8 +406,24 @@ void  DbUtil::getPropertyData(
         int propertyMask,DbAddr &dbAddr,
         PVStructurePtr const &pvStructure)
 {
+    BitSet::shared_pointer bitSet;
+    getPropertyDataImpl(requester, propertyMask, dbAddr,
+        pvStructure, bitSet);
+}
+
+void  DbUtil::getPropertyDataImpl(
+        Requester::shared_pointer const &requester,
+        int propertyMask,DbAddr &dbAddr,
+        PVStructurePtr const &pvStructure,
+        BitSet::shared_pointer const &bitSet)
+{
     if(propertyMask&displayBit) {
         Display display;
+        PVDisplay pvDisplay;
+        PVStructurePtr displayField = pvStructure->getSubFieldT<PVStructure>(displayString);
+        pvDisplay.attach(displayField);
+        pvDisplay.get(display);
+        bool changed = false;
         char units[DB_UNITS_SIZE];
         units[0] = 0;
         long precision = 0;
@@ -416,19 +432,29 @@ void  DbUtil::getPropertyData(
             get_units gunits;
             gunits = (get_units)(prset->get_units);
             gunits(&dbAddr,units);
-            display.setUnits(units);
+            string unitsString = string(units);
+            if (unitsString != display.getUnits()) {
+                display.setUnits(units);
+                changed = true;
+            }
         }
         if(prset && prset->get_precision) {
             get_precision gprec = (get_precision)(prset->get_precision);
             gprec(&dbAddr,&precision);
+            string format;
             if(precision>0) {
                 char fmt[16];
                 sprintf(fmt,"%%.%ldf",precision);
-                display.setFormat(string(fmt));
+                format = string(fmt);
             }
             else {
-                static string defaultFormat("%f");
+                const static string defaultFormat("%f");
+                format = defaultFormat;
                 display.setFormat(defaultFormat);
+            }
+            if (format != display.getFormat()) {
+                display.setFormat(format);
+                changed = true;
             }
         }
         struct dbr_grDouble graphics;
@@ -436,30 +462,52 @@ void  DbUtil::getPropertyData(
             get_graphic_double gg =
                     (get_graphic_double)(prset->get_graphic_double);
             gg(&dbAddr,&graphics);
-            display.setHigh(graphics.upper_disp_limit);
-            display.setLow(graphics.lower_disp_limit);
+            if (display.getHigh() != graphics.upper_disp_limit) {
+                display.setHigh(graphics.upper_disp_limit);
+                changed = true;
+            }
+            if (display.getLow() != graphics.lower_disp_limit) {
+                display.setLow(graphics.lower_disp_limit);
+                changed = true;
+            }
+            
         }
-        PVDisplay pvDisplay;
-        PVFieldPtr pvField = pvStructure->getSubField(displayString);
-        pvDisplay.attach(pvField);
-        pvDisplay.set(display);
+        if (changed) {
+            pvDisplay.set(display);
+            if (bitSet.get()) 
+                bitSet->set(displayField->getFieldOffset());
+            else
+                std::cout << "display: bitset == null" << std::endl;
+        }
     }
     if(propertyMask&controlBit) {
+        PVControl pvControl;
+        PVStructurePtr controlField = pvStructure->getSubFieldT<PVStructure>(controlString);
+        pvControl.attach(controlField);
         Control control;
+        pvControl.get(control);
+        bool changed = false;
         struct rset *prset = dbGetRset(&dbAddr);
         struct dbr_ctrlDouble graphics;
         memset(&graphics,0,sizeof(graphics));
         if(prset && prset->get_control_double) {
             get_control_double cc =
                     (get_control_double)(prset->get_control_double);
-            cc(&dbAddr,&graphics);
-            control.setHigh(graphics.upper_ctrl_limit);
-            control.setLow(graphics.lower_ctrl_limit);
+            cc(&dbAddr, &graphics);
+            if (control.getHigh() != graphics.upper_ctrl_limit) {
+                control.setHigh(graphics.upper_ctrl_limit);
+                changed = true;
+            }
+            if (control.getLow() != graphics.lower_ctrl_limit) {
+                control.setLow(graphics.lower_ctrl_limit);
+                changed = true;
+            }
         }
-        PVControl pvControl;
-        PVFieldPtr pvField = pvStructure->getSubField(controlString);
-        pvControl.attach(pvField);
-        pvControl.set(control);
+        if (changed) {
+            pvControl.set(control);
+            if (bitSet.get())
+                bitSet->set(controlField->getFieldOffset());
+        }
     }
     if(propertyMask&valueAlarmBit) {
         struct rset *prset = dbGetRset(&dbAddr);
@@ -471,31 +519,52 @@ void  DbUtil::getPropertyData(
             cc(&dbAddr,&ald);
         }
         PVStructurePtr pvAlarmLimits =
-                pvStructure->getSubField<PVStructure>(valueAlarmString);
+                pvStructure->getSubFieldT<PVStructure>(valueAlarmString);
         PVBooleanPtr pvActive = pvAlarmLimits->getSubField<PVBoolean>("active");
         if(pvActive.get()!=NULL) pvActive->put(false);
-        PVFieldPtr pvf = pvAlarmLimits->getSubField(lowAlarmLimitString);
-        if(pvf.get()!=NULL && pvf->getField()->getType()==scalar) {
-            PVScalarPtr pvScalar = static_pointer_cast<PVScalar>(pvf);
-            getConvert()->fromDouble(pvScalar,ald.lower_alarm_limit);
+        PVScalarPtr pvScalar = pvAlarmLimits->getSubField<PVScalar>(lowAlarmLimitString);
+        if(pvScalar.get()!=NULL) {
+            double lowerAlarmLimit = getConvert()->toDouble(pvScalar);
+            if (lowerAlarmLimit != ald.lower_alarm_limit)
+            {
+                getConvert()->fromDouble(pvScalar,ald.lower_alarm_limit);
+                if (bitSet.get())
+                    bitSet->set(pvScalar->getFieldOffset());
+            }
         }
-        pvf = pvAlarmLimits->getSubField(lowWarningLimitString);
-        if(pvf.get()!=NULL && pvf->getField()->getType()==scalar) {
-            PVScalarPtr pvScalar = static_pointer_cast<PVScalar>(pvf);
-            getConvert()->fromDouble(pvScalar,ald.lower_warning_limit);
+        pvScalar = pvAlarmLimits->getSubField<PVScalar>(lowWarningLimitString);
+        if(pvScalar.get()!=NULL) {
+            double lowerWarningLimit = getConvert()->toDouble(pvScalar);
+            if (lowerWarningLimit != ald.lower_warning_limit)
+            {
+                getConvert()->fromDouble(pvScalar,ald.lower_warning_limit);
+                if (bitSet.get())
+                    bitSet->set(pvScalar->getFieldOffset());
+            }
         }
-        pvf = pvAlarmLimits->getSubField(highWarningLimitString);
-        if(pvf.get()!=NULL && pvf->getField()->getType()==scalar) {
-            PVScalarPtr pvScalar = static_pointer_cast<PVScalar>(pvf);
-            getConvert()->fromDouble(pvScalar,ald.upper_warning_limit);
+        pvScalar = pvAlarmLimits->getSubField<PVScalar>(highWarningLimitString);
+        if(pvScalar.get()!=NULL) {
+            double higherAlarmWarning = getConvert()->toDouble(pvScalar);
+            if (higherAlarmWarning != ald.upper_warning_limit)
+            {
+                getConvert()->fromDouble(pvScalar,ald.upper_warning_limit);
+                if (bitSet.get())
+                    bitSet->set(pvScalar->getFieldOffset());
+            }
         }
-        pvf = pvAlarmLimits->getSubField(highAlarmLimitString);
-        if(pvf.get()!=NULL && pvf->getField()->getType()==scalar) {
-            PVScalarPtr pvScalar = static_pointer_cast<PVScalar>(pvf);
-            getConvert()->fromDouble(pvScalar,ald.upper_alarm_limit);
+        pvScalar = pvAlarmLimits->getSubField<PVScalar>(highAlarmLimitString);
+        if(pvScalar.get()!=NULL) {
+            double higherAlarmLimit = getConvert()->toDouble(pvScalar);
+            if (higherAlarmLimit != ald.upper_alarm_limit)
+            {
+                getConvert()->fromDouble(pvScalar,ald.upper_alarm_limit);
+                if (bitSet.get())
+                    bitSet->set(pvScalar->getFieldOffset());
+            }
         }
     }
 }
+
 
 Status  DbUtil::get(
         Requester::shared_pointer const &requester,
@@ -848,6 +917,9 @@ Status  DbUtil::get(
             bitSet->set(pvField->getFieldOffset());
         }
     }
+    getPropertyDataImpl(requester, propertyMask, dbAddr,
+        pvStructure, bitSet);
+
     return Status::Ok;
 }
 
