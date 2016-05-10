@@ -65,10 +65,6 @@ bool DbPvGet::init(PVStructure::shared_pointer const &pvRequest)
                     propertyMask,
                     dbPv->getDbChannel()));
     if (!pvStructure.get()) return false;
-    dbUtil->getPropertyData(channelGetRequester,
-                            propertyMask,
-                            dbPv->getDbChannel(),
-                            pvStructure);
     int numFields = pvStructure->getNumberFields();
     bitSet.reset(new BitSet(numFields));
     if (propertyMask & dbUtil->processBit) {
