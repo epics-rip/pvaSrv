@@ -782,7 +782,7 @@ Status  DbUtil::get(
                 if (dbChannelFinalDBFType(dbChan) == DBF_DEVICE) {
                     val = static_cast<epicsEnum16>(dbChannelRecord(dbChan)->dtyp);
                 } else {
-                    val = *static_cast<int32 *>(dbChannelField(dbChan));
+                    val = static_cast<int32>(*static_cast<epicsEnum16 *>(dbChannelField(dbChan)));
                 }
             }
             if((propertyMask&enumIndexBit)!=0) {

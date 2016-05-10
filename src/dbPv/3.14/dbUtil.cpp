@@ -764,7 +764,7 @@ Status  DbUtil::get(
                 if(dbAddr.field_type==DBF_DEVICE) {
                     val = static_cast<epicsEnum16>(dbAddr.precord->dtyp);
                 } else {
-                    val = *static_cast<int32 *>(dbAddr.pfield);
+                    val = static_cast<int32>(*static_cast<epicsEnum16 *>(dbAddr.pfield));
                 }
             }
             if((propertyMask&enumIndexBit)!=0) {
