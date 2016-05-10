@@ -3,7 +3,8 @@
 ## Series release/0.11
 
 ### 0.11.4
-* Fix issues #38, #41, #44, #46 (fields, structures, enums)
+* Fix more issues:
+  #38, #41, #44, #46, #48 (fields, structures, enums)
 * Add support for Cygwin and MinGW
 * Fix issues #34, #35 (weak pointers and locking)
 
