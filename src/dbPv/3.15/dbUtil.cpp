@@ -934,8 +934,8 @@ Status  DbUtil::get(
         }
     }
 
-    //getPropertyDataImpl(requester, propertyMask, dbChan,
-    //    pvStructure, bitSet);
+    getPropertyDataImpl(requester, propertyMask, dbChan,
+        pvStructure, bitSet);
 
     return Status::Ok;
 }
