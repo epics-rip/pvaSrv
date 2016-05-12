@@ -482,6 +482,24 @@ void  DbUtil::getPropertyData(
         PVStructurePtr const &pvStructure,
         BitSet::shared_pointer const &bitSet)
 {
+        getDisplayData(requester, propertyMask, dbChan,
+            pvStructure, bitSet);
+
+        getControlData(requester, propertyMask, dbChan,
+            pvStructure, bitSet);
+
+        getValueAlarmData(requester, propertyMask, dbChan,
+            pvStructure, bitSet);
+}
+
+void  DbUtil::getDisplayData(
+        Requester::shared_pointer const &requester,
+        int propertyMask,
+        dbChannel *dbChan,
+        PVStructurePtr const &pvStructure,
+        BitSet::shared_pointer const &bitSet)
+{
+
     if(propertyMask&displayBit) {
         PVStructurePtr displayField = pvStructure->getSubFieldT<PVStructure>(displayString);
         char units[DB_UNITS_SIZE];
@@ -546,6 +564,15 @@ void  DbUtil::getPropertyData(
             }
         }
     }
+}
+
+void  DbUtil::getControlData(
+        Requester::shared_pointer const &requester,
+        int propertyMask,
+        dbChannel *dbChan,
+        PVStructurePtr const &pvStructure,
+        BitSet::shared_pointer const &bitSet)
+{
     if(propertyMask&controlBit) {
         PVStructurePtr controlField = pvStructure->getSubFieldT<PVStructure>(controlString);
         struct rset *prset = dbGetRset(&dbChan->addr);
@@ -573,6 +600,15 @@ void  DbUtil::getPropertyData(
             }
         }
     }
+}
+
+void  DbUtil::getValueAlarmData(
+        Requester::shared_pointer const &requester,
+        int propertyMask,
+        dbChannel *dbChan,
+        PVStructurePtr const &pvStructure,
+        BitSet::shared_pointer const &bitSet)
+{
     if(propertyMask&valueAlarmBit) {
         struct rset *prset = dbGetRset(&dbChan->addr);
         struct dbr_alDouble ald;

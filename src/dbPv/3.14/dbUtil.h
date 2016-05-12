@@ -98,12 +98,35 @@ public:
         DbAddr &dbAddr);
 private:
     DbUtil();
+
     void getPropertyData(
         epics::pvData::Requester::shared_pointer const &requester,
         int mask,
         DbAddr &dbAddr,
         epics::pvData::PVStructurePtr const &pvStructure,
         epics::pvData::BitSet::shared_pointer const &bitSet);
+
+    void getDisplayData(
+        epics::pvData::Requester::shared_pointer const &requester,
+        int mask,
+        DbAddr &dbAddr,
+        epics::pvData::PVStructurePtr const &pvStructure,
+        epics::pvData::BitSet::shared_pointer const &bitSet);
+
+    void getControlData(
+        epics::pvData::Requester::shared_pointer const &requester,
+        int mask,
+        DbAddr &dbAddr,
+        epics::pvData::PVStructurePtr const &pvStructure,
+        epics::pvData::BitSet::shared_pointer const &bitSet);
+
+    void getValueAlarmData(
+        epics::pvData::Requester::shared_pointer const &requester,
+        int mask,
+        DbAddr &dbAddr,
+        epics::pvData::PVStructurePtr const &pvStructure,
+        epics::pvData::BitSet::shared_pointer const &bitSet);
+
     epics::pvData::PVStructurePtr  nullPVStructure;
     std::string recordString;
     std::string processString;
