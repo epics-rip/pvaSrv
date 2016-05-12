@@ -45,6 +45,51 @@ using epics::pvAccess::ca::dbrStatus2alarmStatus;
 
 namespace epics { namespace pvaSrv { 
 
+// Filter out unrequested fields from a source structure according to a
+// structure conforming to the format of the "field" field of a pvRequest,
+// preserving type ids of unchanged structures.
+static StructureConstPtr refineStructure(StructureConstPtr const & source,
+           StructureConstPtr const & requestedFields)
+{
+    if (requestedFields.get() == NULL || requestedFields->getNumberFields() == 0)
+        return source;
+
+    FieldBuilderPtr builder = getFieldCreate()->createFieldBuilder();
+    boolean addId = true;
+
+    FieldConstPtrArray fields = source->getFields();
+    StringArray names = source->getFieldNames();
+    size_t i = 0;
+    for (FieldConstPtrArray::const_iterator it = fields.begin(); it != fields.end(); ++it)
+    {
+        FieldConstPtr field = *it;
+        const std::string & name = names[i++];
+        FieldConstPtr reqField = requestedFields->getField(name);
+        if (reqField.get())
+        {
+            if (field->getType() != structure || (reqField->getType() != structure))
+                builder->add(name,field);
+            else
+            {
+                StructureConstPtr substruct =
+                    std::tr1::dynamic_pointer_cast<const Structure>(field);
+
+                StructureConstPtr reqSubstruct =
+                    std::tr1::dynamic_pointer_cast<const Structure>(reqField);
+
+                StructureConstPtr nested = refineStructure(substruct, reqSubstruct);
+                builder->add(name,nested);
+                if (nested->getID() != substruct->getID())
+                    addId = false;
+            }
+        }
+        else
+            addId =  false;
+    }
+    if (addId)
+        builder->setId(source->getID());
+    return  builder->createStructure();
+}
 
 // Return DBF type of final field (after any filters applied)
 static short dbChannelFinalDBFType(dbChannel *dbChan)
@@ -298,7 +343,8 @@ int DbUtil::getProperties(
 }
 
 PVStructurePtr DbUtil::createPVStructure(
-        Requester::shared_pointer const &requester, int propertyMask, dbChannel *dbChan)
+        Requester::shared_pointer const &requester, int propertyMask,
+        dbChannel *dbChan, PVStructure::shared_pointer const &pvRequest)
 {
     StandardPVFieldPtr standardPVField = getStandardPVField();
     StandardFieldPtr standardField = getStandardField();
@@ -324,15 +370,15 @@ PVStructurePtr DbUtil::createPVStructure(
         properties += valueAlarmString;
     }
 
-    StructureConstPtr structure;
+    StructureConstPtr unrefinedStructure;
 
     if((propertyMask & enumValueBit)!=0) {
         if((propertyMask&enumIndexBit)!=0)
             // TODO: This is the wrong structure. Leave now until
             // have fix for returning partial structures
-            structure = standardField->scalar(pvInt,properties);
+            unrefinedStructure = standardField->scalar(pvInt,properties);
         else
-            structure = standardField->enumerated(properties);
+            unrefinedStructure = standardField->enumerated(properties);
     }
     else {
         ScalarType scalarType = propertyMask&isLinkBit ?
@@ -341,17 +387,17 @@ PVStructurePtr DbUtil::createPVStructure(
             throw std::logic_error("Should never get here");
 
         if((propertyMask & scalarValueBit)!=0)
-            structure = standardField->scalar(scalarType,properties);
+            unrefinedStructure = standardField->scalar(scalarType,properties);
         else if((propertyMask & arrayValueBit)!=0)
-            structure = standardField->scalarArray(scalarType,properties);
+            unrefinedStructure = standardField->scalarArray(scalarType,properties);
         else
             return nullPVStructure;
     }
 
     // delete value field if not requested
     if(!(propertyMask&getValueBit)) {
-        FieldConstPtrArray fields = structure->getFields();
-        StringArray names = structure->getFieldNames();
+        FieldConstPtrArray fields = unrefinedStructure->getFields();
+        StringArray names = unrefinedStructure->getFieldNames();
         for(size_t i=0; i<names.size(); ++i) {
             if(names[i].compare("value")==0) {
                 fields.erase(fields.begin()+i);
@@ -359,10 +405,19 @@ PVStructurePtr DbUtil::createPVStructure(
                 break;
             }
         }
-        structure = fieldCreate->createStructure(names,fields);
+        unrefinedStructure = fieldCreate->createStructure(names,fields);
     }
 
-    PVStructurePtr pvStructure = pvDataCreate->createPVStructure(structure);
+    PVStructurePtr fieldPVStructure = pvRequest->getSubField<PVStructure>("field");
+    // Don't refine structure for enum types yet, not until correct
+    // handling for value.index is implemented
+    bool refine = fieldPVStructure.get() && (propertyMask&enumValueBit) == 0;
+
+    StructureConstPtr finalStructure = refine ?
+        refineStructure(unrefinedStructure, fieldPVStructure->getStructure()) :
+        unrefinedStructure;
+
+    PVStructurePtr pvStructure = pvDataCreate->createPVStructure(finalStructure);
 
     if((propertyMask&enumValueBit)!=0) {
         struct dbr_enumStrs enumStrs;
@@ -424,11 +479,11 @@ void  DbUtil::getPropertyData(
         PVStructurePtr const &pvStructure)
 {
     BitSet::shared_pointer bitSet;
-    getPropertyDataImpl(requester, propertyMask,
+    getPropertyData(requester, propertyMask,
         dbChan,pvStructure,bitSet);
 }
 
-void  DbUtil::getPropertyDataImpl(
+void  DbUtil::getPropertyData(
         Requester::shared_pointer const &requester,
         int propertyMask,
         dbChannel *dbChan,
@@ -436,43 +491,44 @@ void  DbUtil::getPropertyDataImpl(
         BitSet::shared_pointer const &bitSet)
 {
     if(propertyMask&displayBit) {
-        Display display;
-        PVDisplay pvDisplay;
         PVStructurePtr displayField = pvStructure->getSubFieldT<PVStructure>(displayString);
-        pvDisplay.attach(displayField);
-        pvDisplay.get(display);
-        bool changed = false;
         char units[DB_UNITS_SIZE];
         units[0] = 0;
         long precision = 0;
         struct rset *prset = dbGetRset(&dbChan->addr);
         if(prset && prset->get_units) {
-            get_units gunits;
-            gunits = (get_units)(prset->get_units);
-            gunits(&dbChan->addr,units);
-            string unitsString = string(units);
-            if (unitsString != display.getUnits()) {
-                display.setUnits(units);
-                changed = true;
+            PVStringPtr unitsField = displayField->getSubField<PVString>("units");
+            if (unitsField.get()) {
+                get_units gunits;
+                gunits = (get_units)(prset->get_units);
+                gunits(&dbChan->addr,units);
+                string unitsString = string(units);
+                if (unitsString != unitsField->get()) {
+                    unitsField->put(unitsString);
+                    if (bitSet.get()) 
+                        bitSet->set(unitsField->getFieldOffset());
+                }
             }
         }
         if(prset && prset->get_precision) {
-            get_precision gprec = (get_precision)(prset->get_precision);
-            gprec(&dbChan->addr,&precision);
-            string format;
-            if(precision>0) {
-                char fmt[16];
-                sprintf(fmt,"%%.%ldf",precision);
-                format = string(fmt);
-            }
-            else {
-                const static string defaultFormat("%f");
-                format = defaultFormat;
-                display.setFormat(defaultFormat);
-            }
-            if (format != display.getFormat()) {
-                display.setFormat(format);
-                changed = true;
+            PVStringPtr formatField = displayField->getSubField<PVString>("format");
+            if (formatField.get()) {
+                get_precision gprec = (get_precision)(prset->get_precision);
+                gprec(&dbChan->addr,&precision);
+                string format;
+                if(precision>0) {
+                    char fmt[16];
+                    sprintf(fmt,"%%.%ldf",precision);
+                    format = string(fmt);
+                } else {
+                    const static string defaultFormat("%f");
+                    format = defaultFormat;
+                }
+                if (format != formatField->get()) {
+                    formatField->put(format);
+                    if (bitSet.get()) 
+                       bitSet->set(formatField->getFieldOffset());
+                }
             }
         }
         struct dbr_grDouble graphics;
@@ -480,29 +536,26 @@ void  DbUtil::getPropertyDataImpl(
             get_graphic_double gg =
                     (get_graphic_double)(prset->get_graphic_double);
             gg(&dbChan->addr,&graphics);
-            if (display.getHigh() != graphics.upper_disp_limit) {
-                display.setHigh(graphics.upper_disp_limit);
-                changed = true;
+
+            PVDoublePtr limitLowField = displayField->getSubField<PVDouble>("limitLow");
+            if (limitLowField.get() &&
+                    limitLowField->get() != graphics.lower_disp_limit) {
+                limitLowField->put(graphics.lower_disp_limit);
+                if (bitSet.get()) 
+                    bitSet->set(limitLowField->getFieldOffset());
             }
-            if (display.getLow() != graphics.lower_disp_limit) {
-                display.setLow(graphics.lower_disp_limit);
-                changed = true;
+
+            PVDoublePtr limitHighField = displayField->getSubField<PVDouble>("limitHigh");
+            if (limitHighField.get() &&
+                    limitHighField->get() != graphics.upper_disp_limit) {
+                limitHighField->put(graphics.upper_disp_limit);
+                if (bitSet.get()) 
+                    bitSet->set(limitHighField->getFieldOffset());
             }
-            
-        }
-        if (changed) {
-            pvDisplay.set(display);
-            if (bitSet.get())
-                bitSet->set(displayField->getFieldOffset());
         }
     }
     if(propertyMask&controlBit) {
-        PVControl pvControl;
         PVStructurePtr controlField = pvStructure->getSubFieldT<PVStructure>(controlString);
-        pvControl.attach(controlField);
-        Control control;
-        pvControl.get(control);
-        bool changed = false;
         struct rset *prset = dbGetRset(&dbChan->addr);
         struct dbr_ctrlDouble graphics;
         memset(&graphics,0,sizeof(graphics));
@@ -510,19 +563,22 @@ void  DbUtil::getPropertyDataImpl(
             get_control_double cc =
                     (get_control_double)(prset->get_control_double);
             cc(&dbChan->addr, &graphics);
-            if (control.getHigh() != graphics.upper_ctrl_limit) {
-                control.setHigh(graphics.upper_ctrl_limit);
-                changed = true;
+
+            PVDoublePtr limitLowField = controlField->getSubField<PVDouble>("limitLow");
+            if (limitLowField.get() &&
+                    limitLowField->get() != graphics.lower_ctrl_limit) {
+                limitLowField->put(graphics.lower_ctrl_limit);
+                if (bitSet.get()) 
+                    bitSet->set(limitLowField->getFieldOffset());
             }
-            if (control.getLow() != graphics.lower_ctrl_limit) {
-                control.setLow(graphics.lower_ctrl_limit);
-                changed = true;
+
+            PVDoublePtr limitHighField = controlField->getSubField<PVDouble>("limitHigh");
+            if (limitHighField.get() &&
+                    limitHighField->get() != graphics.upper_ctrl_limit) {
+                limitHighField->put(graphics.upper_ctrl_limit);
+                if (bitSet.get()) 
+                    bitSet->set(limitHighField->getFieldOffset());
             }
-        }
-        if (changed) {
-            pvControl.set(control);
-            if (bitSet.get())
-                bitSet->set(controlField->getFieldOffset());
         }
     }
     if(propertyMask&valueAlarmBit) {
@@ -870,41 +926,37 @@ Status  DbUtil::get(
             }
         }
     }
-    if((propertyMask&timeStampBit)!=0) {
-        TimeStamp timeStamp;
-        PVTimeStamp pvTimeStamp;
-        PVFieldPtr pvField = pvStructure->getSubFieldT(timeStampString);
-        if(!pvTimeStamp.attach(pvField)) {
-            throw std::logic_error("V3ChannelGet::get logic error");
-        }
+
+    if((propertyMask&timeStampBit)!=0)
+    {
+        PVStructurePtr pvField = pvStructure->getSubFieldT<PVStructure>(timeStampString);
         epicsTimeStamp *epicsTimeStamp;
         struct dbCommon *precord = dbChannelRecord(dbChan);
         if(caData) {
             epicsTimeStamp = &caData->timeStamp;
         } else {
-            epicsTimeStamp = &precord->time;
+                epicsTimeStamp = &precord->time;     
         }
-        epicsUInt32 secPastEpoch = epicsTimeStamp->secPastEpoch;
-        epicsUInt32 nsec = epicsTimeStamp->nsec;
-        int64 seconds = secPastEpoch;
-        seconds += POSIX_TIME_AT_EPICS_EPOCH;
-        int32 nanoseconds = nsec;
-        pvTimeStamp.get(timeStamp);
-        int64 oldSecs = timeStamp.getSecondsPastEpoch();
-        int32 oldNano = timeStamp.getNanoseconds();
-        if(oldSecs!=seconds || oldNano!=nanoseconds) {
-            timeStamp.put(seconds,nanoseconds);
-            pvTimeStamp.set(timeStamp);
-            bitSet->set(pvField->getFieldOffset());
+        PVLongPtr pvSecs = pvField->getSubField<PVLong>("secondsPastEpoch");
+        if (pvSecs.get()) {
+            int64 seconds  = epicsTimeStamp->secPastEpoch + POSIX_TIME_AT_EPICS_EPOCH;
+            if(seconds != pvSecs->get()) {
+                pvSecs->put(seconds);
+                bitSet->set(pvSecs->getFieldOffset());
+            }
+        }
+        PVIntPtr pvNsecs = pvField->getSubField<PVInt>("nanoseconds");
+        if (pvNsecs.get()) {
+            int32 nanoseconds= epicsTimeStamp->nsec;
+            if(nanoseconds != pvNsecs->get()) {
+                pvNsecs->put(nanoseconds);
+                bitSet->set(pvNsecs->getFieldOffset());
+            }
         }
     }
+
     if((propertyMask&alarmBit)!=0) {
-        Alarm alarm;
-        PVAlarm pvAlarm;
-        PVFieldPtr pvField = pvStructure->getSubFieldT(alarmString);
-        if(!pvAlarm.attach(pvField)) {
-            throw std::logic_error("V3ChannelGet::get logic error");
-        }
+        PVStructurePtr pvField = pvStructure->getSubFieldT<PVStructure>(alarmString);
         struct dbCommon *precord = dbChannelRecord(dbChan);
         string message;
         epicsEnum16 stat;
@@ -918,23 +970,27 @@ Status  DbUtil::get(
             stat = dbrStatus2alarmStatus[precord->stat];
             sevr = precord->sevr;
         }
-        pvAlarm.get(alarm);
-        AlarmSeverity alarmSeverity = alarm.getSeverity();
-        epicsEnum16 prevSeverity = static_cast<epicsEnum16>(alarmSeverity);
-        AlarmStatus alarmStatus = alarm.getStatus();
-        epicsEnum16 prevStatus = static_cast<epicsEnum16>(alarmStatus);
-        if((prevSeverity!=sevr) || (prevStatus!=stat)) {
-            AlarmSeverity severity = static_cast<AlarmSeverity>(sevr);
-            alarm.setSeverity(severity);
-            AlarmStatus status = static_cast<AlarmStatus>(stat);
-            alarm.setStatus(status);
-            alarm.setMessage(message);
-            pvAlarm.set(alarm);
-            bitSet->set(pvField->getFieldOffset());
+
+        PVIntPtr pvStatus = pvField->getSubField<PVInt>("status");
+        if (pvStatus.get() && stat != pvStatus->get()) {
+            pvStatus->put(stat);
+            bitSet->set(pvStatus->getFieldOffset());
+        }
+
+        PVIntPtr pvSeverity = pvField->getSubField<PVInt>("severity");
+        if (pvSeverity.get() && sevr != pvSeverity->get()) {
+            pvSeverity->put(sevr);
+            bitSet->set(pvSeverity->getFieldOffset());
+        }
+
+        PVStringPtr pvMessage = pvField->getSubField<PVString>("message");
+        if (pvMessage.get() && message != pvMessage->get()) {
+            pvMessage->put(message);
+            bitSet->set(pvMessage->getFieldOffset());
         }
     }
 
-    getPropertyDataImpl(requester, propertyMask, dbChan,
+    getPropertyData(requester, propertyMask, dbChan,
         pvStructure, bitSet);
 
     return Status::Ok;

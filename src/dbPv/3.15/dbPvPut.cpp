@@ -75,7 +75,8 @@ bool DbPvPut::init(PVStructure::shared_pointer const &pvRequest)
         dbUtil->createPVStructure(
             channelPutRequester,
             propertyMask,
-            dbPv->getDbChannel()));
+            dbPv->getDbChannel(),
+            pvRequest));
     if (!pvStructure.get()) return false;
     if (propertyMask & dbUtil->dbPutBit) {
         if (propertyMask & dbUtil->processBit) {

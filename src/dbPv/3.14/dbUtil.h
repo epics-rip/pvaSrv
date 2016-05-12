@@ -73,7 +73,8 @@ public:
         bool processDefault);
     epics::pvData::PVStructurePtr createPVStructure(
         epics::pvData::Requester::shared_pointer const &requester,
-        int mask,DbAddr &dbAddr);
+        int mask,DbAddr &dbAddr,
+        epics::pvData::PVStructure::shared_pointer const &pvRequest);
     void getPropertyData(
         epics::pvData::Requester::shared_pointer const &requester,
         int mask,DbAddr &dbAddr,
@@ -97,7 +98,7 @@ public:
         DbAddr &dbAddr);
 private:
     DbUtil();
-    void getPropertyDataImpl(
+    void getPropertyData(
         epics::pvData::Requester::shared_pointer const &requester,
         int mask,
         DbAddr &dbAddr,

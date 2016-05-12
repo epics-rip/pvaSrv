@@ -63,7 +63,8 @@ bool DbPvGet::init(PVStructure::shared_pointer const &pvRequest)
                 dbUtil->createPVStructure(
                     channelGetRequester,
                     propertyMask,
-                    dbPv->getDbChannel()));
+                    dbPv->getDbChannel(),
+                    pvRequest));
     if (!pvStructure.get()) return false;
     int numFields = pvStructure->getNumberFields();
     bitSet.reset(new BitSet(numFields));

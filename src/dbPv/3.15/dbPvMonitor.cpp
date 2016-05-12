@@ -102,7 +102,8 @@ bool DbPvMonitor::init(
         PVStructurePtr pvStructure(dbUtil->createPVStructure(
                 monitorRequester,
                 propertyMask,
-                dbPv->getDbChannel()));
+                dbPv->getDbChannel(),
+                pvRequest));
         if(!pvStructure) return false;
         MonitorElementPtr element(new MonitorElement(pvStructure));
         elements.push_back(element);
