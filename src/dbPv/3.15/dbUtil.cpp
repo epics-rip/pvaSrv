@@ -154,7 +154,8 @@ DbUtil::DbUtil()
       highWarningLimitString("highWarningLimit"),
       highAlarmLimitString("highAlarmLimit"),
       allString("value,timeStamp,alarm,display,control,valueAlarm"),
-      indexString("index")
+      indexString("index"),
+      choicesString("choices")
 {}
 
 int DbUtil::getProperties(
@@ -373,12 +374,7 @@ PVStructurePtr DbUtil::createPVStructure(
     StructureConstPtr unrefinedStructure;
 
     if((propertyMask & enumValueBit)!=0) {
-        if((propertyMask&enumIndexBit)!=0)
-            // TODO: This is the wrong structure. Leave now until
-            // have fix for returning partial structures
-            unrefinedStructure = standardField->scalar(pvInt,properties);
-        else
-            unrefinedStructure = standardField->enumerated(properties);
+        unrefinedStructure = standardField->enumerated(properties);
     }
     else {
         ScalarType scalarType = propertyMask&isLinkBit ?
@@ -408,12 +404,8 @@ PVStructurePtr DbUtil::createPVStructure(
         unrefinedStructure = fieldCreate->createStructure(names,fields);
     }
 
-    PVStructurePtr fieldPVStructure = pvRequest->getSubField<PVStructure>("field");
-    // Don't refine structure for enum types yet, not until correct
-    // handling for value.index is implemented
-    bool refine = fieldPVStructure.get() && (propertyMask&enumValueBit) == 0;
-
-    StructureConstPtr finalStructure = refine ?
+    PVStructurePtr fieldPVStructure = pvRequest->getSubField<PVStructure>("field"); 
+    StructureConstPtr finalStructure = fieldPVStructure.get() ?
         refineStructure(unrefinedStructure, fieldPVStructure->getStructure()) :
         unrefinedStructure;
 
@@ -910,19 +902,11 @@ Status  DbUtil::get(
                     val = static_cast<int32>(*static_cast<epicsEnum16 *>(dbChannelField(dbChan)));
                 }
             }
-            if((propertyMask&enumIndexBit)!=0) {
-                PVIntPtr pvIndex = static_pointer_cast<PVInt>(pvField);
-                if(pvIndex->get()!=val) {
-                    pvIndex->put(val);
-                    bitSet->set(pvIndex->getFieldOffset());
-                }
-            } else {
-                PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
-                PVIntPtr pvIndex = pvEnum->getSubField<PVInt>(indexString);
-                if(pvIndex->get()!=val) {
-                    pvIndex->put(val);
-                    bitSet->set(pvIndex->getFieldOffset());
-                }
+            PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
+            PVIntPtr pvIndex = pvEnum->getSubField<PVInt>(indexString);
+            if(pvIndex.get() && pvIndex->get()!=val) {
+                pvIndex->put(val);
+                bitSet->set(pvIndex->getFieldOffset());
             }
         }
     }
@@ -1165,17 +1149,28 @@ Status  DbUtil::put(
         }
     } else if((propertyMask&enumValueBit)!=0) {
         PVIntPtr pvIndex;
-        if((propertyMask&enumIndexBit)!=0) {
-            pvIndex = static_pointer_cast<PVInt>(pvField);
-        } else {
-            PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
-            pvIndex = pvEnum->getSubFieldT<PVInt>(indexString);
-        }
-        if (dbChannelFinalDBFType(dbChan) == DBF_MENU) {
+        PVStructurePtr pvEnum = static_pointer_cast<PVStructure>(pvField);
+        pvIndex = pvEnum->getSubField<PVInt>(indexString);
+
+        if(dbChannelFinalDBFType(dbChan) == DBF_MENU) {
             requester->message("Not allowed to change a menu field",errorMessage);
-        } else if (dbChannelFinalDBFType(dbChan) == DBF_ENUM || dbChannelFinalDBFType(dbChan) == DBF_DEVICE) {
+        } else if(dbChannelFinalDBFType(dbChan) == DBF_ENUM || dbChannelFinalDBFType(dbChan) == DBF_DEVICE) {
             epicsEnum16 *value = static_cast<epicsEnum16*>(dbChannelField(dbChan));
-            *value = pvIndex->get();
+            if (pvIndex.get()) {
+               *value = pvIndex->get();
+            }
+            else {
+                PVStringArrayPtr pvChoices = pvEnum->getSubField<PVStringArray>(choicesString);
+                if (pvChoices.get())
+                {
+                    requester->message("Can't change the choices field",errorMessage);
+                }
+                else
+                {
+                    requester->message("Logic error. Putting to a enum subfield that's not index or choices", errorMessage);
+                }
+                return Status::Ok;
+            }
         } else {
             requester->message("Logic Error unknown enum field",errorMessage);
             return Status::Ok;

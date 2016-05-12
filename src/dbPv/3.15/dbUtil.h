@@ -124,6 +124,7 @@ private:
     std::string highAlarmLimitString;
     std::string allString;
     std::string indexString;
+    std::string choicesString;
 };
 
 }}
