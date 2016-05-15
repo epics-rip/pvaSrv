@@ -390,20 +390,6 @@ PVStructurePtr DbUtil::createPVStructure(
             return nullPVStructure;
     }
 
-    // delete value field if not requested
-    if(!(propertyMask&getValueBit)) {
-        FieldConstPtrArray fields = unrefinedStructure->getFields();
-        StringArray names = unrefinedStructure->getFieldNames();
-        for(size_t i=0; i<names.size(); ++i) {
-            if(names[i].compare("value")==0) {
-                fields.erase(fields.begin()+i);
-                names.erase(names.begin()+i);
-                break;
-            }
-        }
-        unrefinedStructure = fieldCreate->createStructure(names,fields);
-    }
-
     PVStructurePtr fieldPVStructure = pvRequest->getSubField<PVStructure>("field"); 
     StructureConstPtr finalStructure = fieldPVStructure.get() ?
         refineStructure(unrefinedStructure, fieldPVStructure->getStructure()) :
