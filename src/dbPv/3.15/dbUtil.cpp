@@ -55,7 +55,7 @@ static StructureConstPtr refineStructure(StructureConstPtr const & source,
         return source;
 
     FieldBuilderPtr builder = getFieldCreate()->createFieldBuilder();
-    boolean addId = true;
+    bool addId = true;
 
     FieldConstPtrArray fields = source->getFields();
     StringArray names = source->getFieldNames();
