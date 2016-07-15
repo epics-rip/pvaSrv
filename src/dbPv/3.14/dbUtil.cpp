@@ -489,25 +489,37 @@ void  DbUtil::getDisplayData(
                 }
             }
         }
-        if(prset && prset->get_precision) {
-            PVStringPtr formatField = displayField->getSubField<PVString>("format");
-            if (formatField.get()) {
-                get_precision gprec = (get_precision)(prset->get_precision);
-                gprec(&dbAddr,&precision);
-                string format;
-                if(precision>0) {
-                    char fmt[16];
-                    sprintf(fmt,"%%.%ldf",precision);
-                    format = string(fmt);
+        PVStringPtr formatField = displayField->getSubField<PVString>("format");
+        if (formatField.get()) {
+            string format;
+            ScalarType scalarType = getScalarType(requester, dbAddr);
+            if (scalarType == pvFloat || scalarType == pvDouble) {
+                const static string defaultFormat("%f");
+                if(prset && prset->get_precision) {
+                    get_precision gprec = (get_precision)(prset->get_precision);
+                    gprec(&dbAddr,&precision);
+                    if(precision>0) {
+                        char fmt[16];
+                        sprintf(fmt,"%%.%ldf",precision);
+                        format = string(fmt);
+                    } else {
+                        format = defaultFormat;
+                    }
                 } else {
-                    const static string defaultFormat("%f");
                     format = defaultFormat;
                 }
-                if (format != formatField->get()) {
-                    formatField->put(format);
-                    if (bitSet.get()) 
-                       bitSet->set(formatField->getFieldOffset());
-                }
+            } else if (scalarType == pvString)
+                format="%s";
+            else if (scalarType == pvUByte || scalarType == pvUShort ||
+                     scalarType == pvUInt  || scalarType == pvULong) {
+                format="%u";
+            } else {
+                format="%d";
+            }
+            if (format != formatField->get()) {
+                formatField->put(format);
+                if (bitSet.get()) 
+                   bitSet->set(formatField->getFieldOffset());
             }
         }
         struct dbr_grDouble graphics;
