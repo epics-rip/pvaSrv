@@ -2,6 +2,15 @@
 
 ## Series release/0.11
 
+### 0.11.4
+* Fix more issues:
+  #38, #41, #44, #46, #48 (fields, structures, enums)
+* Add support for Cygwin and MinGW
+* Fix issues #34, #35 (weak pointers and locking)
+
+### 0.11.3
+* Fix issues #1, #23, #24
+
 ### 0.11.2
 * Add release notes
 
@@ -12,6 +21,8 @@
 
 ### 0.11.0
 * Set pvDataCPP dependency to release/5.0
+* Add 3.15 variant (new API in Base);
+  pvaSrv now works on recent 3.14 and all 3.15
 
 ## Series release/0.10
 

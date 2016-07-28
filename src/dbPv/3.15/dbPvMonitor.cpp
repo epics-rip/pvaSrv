@@ -78,7 +78,7 @@ bool DbPvMonitor::init(
     PVStructure::shared_pointer const &pvRequest)
 {
     string queueSizeString("record._options.queueSize");
-    {
+    if(pvField) {
         PVStringPtr pvString = pvRequest.get()->getSubField<PVString>(queueSizeString);
         if(pvString) {
              string value = pvString->get();
@@ -101,8 +101,7 @@ bool DbPvMonitor::init(
         PVStructurePtr pvStructure(dbUtil->createPVStructure(
                 monitorRequester,
                 propertyMask,
-                dbPv->getDbChannel(),
-                pvRequest));
+                dbPv->getDbChannel()));
         if(!pvStructure) return false;
         MonitorElementPtr element(new MonitorElement(pvStructure));
         elements.push_back(element);
