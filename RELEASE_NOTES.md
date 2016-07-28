@@ -1,5 +1,15 @@
 # pvaSrv Release Notes
 
+## Series release/0.12
+
+### 0.12.0
+* Major clean-up wrt returned structures on gets
+  and monitors
+* Treat enum as uint16 (not int32)
+* Security plugin improvements
+* Fix issues #3, #5
+* Changes in Jenkins jobs (@CloudBees)
+
 ## Series release/0.11
 
 ### 0.11.4
