@@ -8,6 +8,7 @@ PVASRV_VERSION = 0.12.0
 LIBRARY_IOC = pvaSrv
 
 SHRLIB_VERSION = $(PVASRV_VERSION)
+USR_CPPFLAGS = -DPVASRV_VERSION=\"$(PVASRV_VERSION)\"
 
 PVASRV_SRC = $(TOP)/src
 
@@ -17,6 +18,21 @@ include $(PVASRV_SRC)/dbPv/Makefile
 pvaSrv_LIBS += pvAccess pvData
 pvaSrv_LIBS += $(EPICS_BASE_IOC_LIBS)
 
-USR_CPPFLAGS = -DPVASRV_VERSION=\"$(PVASRV_VERSION)\"
+FINAL_LOCATION ?= $(shell $(PERL) $(TOOLS)/fullPathName.pl $(INSTALL_LOCATION))
 
+USR_CPPFLAGS += -DFINAL_LOCATION="\"$(FINAL_LOCATION)\""
+
+PROD_IOC += softIocPVA
+
+softIocPVA_SRCS += softMain.cpp
+softIocPVA_SRCS += softIocPVA_registerRecordDeviceDriver.cpp
+
+softIocPVA_LIBS += pvaSrv pvAccess pvData $(MBLIB)
+softIocPVA_LIBS += $(EPICS_BASE_IOC_LIBS)
+
+DBD += softIocPVA.dbd
+
+softIocPVA_DBD += softIoc.dbd
+softIocPVA_DBD += dbPv.dbd
+softIocPVA_DBD += PVAServerRegister.dbd
 include $(TOP)/configure/RULES
