@@ -34,8 +34,7 @@
 
 <h2 class="nocount">Status of this Document</h2>
 
-<p>This document is describing version 0.9.1 of pvaSrv as of 19-Jun-2013.
-This version is being released part of EPICS V4.3.0 (BETA).</p>
+<p>This document is describing version 0.13.0 of pvaSrv as of 19-Aug-2016.</p>
 
 <div id="toc">
 <h2 class="nocount" style="page-break-before: always">Table of Contents</h2>
@@ -63,20 +62,18 @@ records in the local EPICS database.</p>
 
 <h3 id="prerequisites">Prerequisites</h3>
 
-<p>You need to have the following modules installed and mentioned in the configure/RELEASE file of pvaSrv:</p>
+<p>You need to have the following modules installed and their paths defined in a RELEASE.local file.   See pvaSrv's configure/RELEASE file for details.</p>
 <dl>
 <dt>EPICS Base</dt>
 <dd>&ge; 3.14.11</dd>
 <dt>pvCommonCPP</dt>
 <dt>pvDataCPP</dt>
 <dt>pvAccessCPP</dt>
-<dt>pvIOCCPP</dt>
-<dd>&ge; 4.3.0 BETA</dd>
 </dl>
 
 <h3 id="build">Build</h3>
 
-<p>With these modules present, pvaSrv should compile as a regular EPICS V3 support module.</p>
+<p>With these modules present and successfully built, pvaSrv should compile as a regular EPICS V3 support module.</p>
 
 <h2 id="usage">Usage</h2>
 
@@ -93,7 +90,7 @@ include "dbPv.dbd"
 
 <li>Add the EPICS V4 libraries, for example in myApp/src/Makefile
 <pre>
-myApp_LIBS += pvaSrv pvIOC pvAccess pvData pvMB
+myApp_LIBS += pvaSrv pvAccess pvData pvMB
 myApp_LIBS += $(EPICS_BASE_IOC_LIBS)
 </pre>
 </li>
@@ -154,10 +151,9 @@ adapt the references in its configure/RELEASE file, and compile it.</p>
 
 <h2 id="sources">Sources</h2>
 
-<p>The source code is kept under Mercurial revision control as part of the
-<a href="http://epics-pvdata.sourceforge.net/" target="_blank">EPICS V4 project</a> on SourceForge.
-A <a href="http://epics-pvdata.sourceforge.net/hgweb/pvaSrv/" target="_blank">repository browser</a>
-is available.</p>
+<p>The source code is kept under git revision control as part of the
+<a href="https://github.com/epics-base" target="_blank">EPICS V4 project</a> on github.com.
+The pvaSrv module can be cloned, forked, or downloaded from the github <a href="https://github.com/epics-base/pvaSrv" target="_blank">repository</a>.</p>
 
 </div>
 </body>
