@@ -10,3 +10,4 @@ O.*
 envPaths
 QtC-*
 *.orig
+*.log
