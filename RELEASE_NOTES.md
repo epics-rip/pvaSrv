@@ -2,6 +2,10 @@
 
 ## Series release/0.12
 
+### 0.12.1
+* SHRLIB_VERSION can be overridden
+* More Cloudbees Jenkins job changes
+
 ### 0.12.0
 * Major clean-up wrt returned structures on gets
   and monitors
