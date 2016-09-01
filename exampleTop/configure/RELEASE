@@ -26,5 +26,5 @@
 PVASRV = $(TOP)/..
 
 -include $(TOP)/../../RELEASE.local
--include $(TOP)/configure/RELEASE.local
 -include $(TOP)/../configure/RELEASE.local
+-include $(TOP)/configure/RELEASE.local

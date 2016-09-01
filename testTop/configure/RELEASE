@@ -29,8 +29,8 @@
 
 PVASRV = $(TOP)/..
 -include $(TOP)/../../RELEASE.local
--include $(TOP)/configure/RELEASE.local
 -include $(TOP)/../configure/RELEASE.local
+-include $(TOP)/configure/RELEASE.local
 
 # If you copied these tests from pvaSrv to be built as a
 # standalone TOP, define
