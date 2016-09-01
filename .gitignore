@@ -6,6 +6,8 @@ dbd/
 configure/*.local
 html/
 **/O.*
+O.*
 envPaths
 QtC-*
 *.orig
+*.log
