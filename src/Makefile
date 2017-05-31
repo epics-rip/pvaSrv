@@ -12,7 +12,7 @@ PVASRV_SRC = $(TOP)/src
 include $(PVASRV_SRC)/dbPv/Makefile
 #include $(PVASRV_SRC)/dbGroup/Makefile
 
-pvaSrv_LIBS += pvAccess pvData
+pvaSrv_LIBS += pvAccessIOC pvAccess pvData
 pvaSrv_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 FINAL_LOCATION ?= $(shell $(PERL) $(TOOLS)/fullPathName.pl $(INSTALL_LOCATION))
@@ -24,7 +24,7 @@ PROD_IOC += softIocPVA
 softIocPVA_SRCS += softMain.cpp
 softIocPVA_SRCS += softIocPVA_registerRecordDeviceDriver.cpp
 
-softIocPVA_LIBS += pvaSrv pvAccess pvData $(MBLIB)
+softIocPVA_LIBS += pvaSrv pvAccessIOC pvAccess pvData $(MBLIB)
 softIocPVA_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 DBD += softIocPVA.dbd

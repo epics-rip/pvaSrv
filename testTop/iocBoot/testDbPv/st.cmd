@@ -72,7 +72,6 @@ cd ${TOP}/iocBoot/${IOC}
 iocInit()
 epicsThreadSleep(2.0)
 casr
-startPVAServer
 dbpf string01 10.1
 dbpf wait01 1
 dbpf wait02 2

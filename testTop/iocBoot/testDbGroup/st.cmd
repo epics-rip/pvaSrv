@@ -13,7 +13,5 @@ dbLoadRecords "db/bpm.db","name=bpm"
 cd ${TOP}/iocBoot/${IOC}
 iocInit()
 
-pvaSrvStart
-startChannelProviderLocal
 dbGroupCreate quadruple.txt
 dbGroupCreate bpm.txt
