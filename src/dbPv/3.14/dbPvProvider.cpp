@@ -62,7 +62,7 @@ public:
     {
         DbPvProviderFactoryPtr xxx(
             new DbPvProviderFactory(channelProvider));
-        registerChannelProviderFactory(xxx);
+        epics::pvAccess::ChannelProviderRegistry::servers()->add(xxx);
         return xxx;
     }
     virtual  ChannelProvider::shared_pointer sharedInstance()

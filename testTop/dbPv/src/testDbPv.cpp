@@ -144,7 +144,7 @@ static void testDbPvCallFunc(const iocshArgBuf *args)
     string channelName(pvName);
     printf("channelName %s\n",channelName.c_str());
     ChannelProvider::shared_pointer channelProvider =
-        getChannelProviderRegistry()->getProvider("dbPv");
+        epics::pvAccess::ChannelProviderRegistry::servers()->getProvider("dbPv");
     string providerName = channelProvider->getProviderName();
     printf("providerName %s\n",providerName.c_str());
     FindRequester::shared_pointer findRequester
