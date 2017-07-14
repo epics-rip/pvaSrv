@@ -54,8 +54,9 @@ DbPvProcess::~DbPvProcess()
 
 bool DbPvProcess::init(epics::pvData::PVStructurePtr const & pvRequest)
 {
+    requester_type::shared_pointer req(channelProcessRequester.lock());
     propertyMask = dbUtil->getProperties(
-                channelProcessRequester,
+                req,
                 pvRequest,
                 dbPv->getDbChannel(),
                 true);
@@ -68,17 +69,19 @@ bool DbPvProcess::init(epics::pvData::PVStructurePtr const & pvRequest)
     pn->doneCallback = this->notifyCallback;
     pn->usrPvt = this;
     if (propertyMask & dbUtil->blockBit) block = true;
-    channelProcessRequester->channelProcessConnect(Status::Ok, getPtrSelf());
+    if(req) req->channelProcessConnect(Status::Ok, getPtrSelf());
     return true;
 }
 
 string DbPvProcess::getRequesterName() {
-    return channelProcessRequester->getRequesterName();
+    requester_type::shared_pointer req(channelProcessRequester.lock());
+    return req ? req->getRequesterName() : "<DEAD>";
 }
 
 void DbPvProcess::message(string const &message,MessageType messageType)
 {
-    channelProcessRequester->message(message,messageType);
+    requester_type::shared_pointer req(channelProcessRequester.lock());
+    if(req) req->message(message,messageType);
 }
 
 void DbPvProcess::destroy() {
@@ -106,7 +109,8 @@ void DbPvProcess::process()
 void DbPvProcess::notifyCallback(struct processNotify *pn)
 {
     DbPvProcess * pdp = static_cast<DbPvProcess *>(pn->usrPvt);
-    pdp->channelProcessRequester->processDone(Status::Ok, pdp->getPtrSelf());
+    requester_type::shared_pointer req(pdp->channelProcessRequester.lock());
+    if(req) req->processDone(Status::Ok, pdp->getPtrSelf());
 }
 
 void DbPvProcess::lock()

@@ -98,8 +98,9 @@ DbPvArray::~DbPvArray()
 
 bool DbPvArray::init(PVStructure::shared_pointer const &pvRequest)
 {
+    requester_type::shared_pointer req(channelArrayRequester.lock());
     if(!(dbAddr.no_elements>1)) {
-        channelArrayRequester.get()->message("field in V3 record is not an array",errorMessage);
+        if(req) req->message("field in V3 record is not an array",errorMessage);
         return false;
     }
     ScalarType scalarType(pvBoolean);
@@ -127,12 +128,12 @@ bool DbPvArray::init(PVStructure::shared_pointer const &pvRequest)
       break;
     }
     if(scalarType==pvBoolean) {
-        channelArrayRequester.get()->message("unsupported field in DB record",errorMessage);
+        if(req) req->message("unsupported field in DB record",errorMessage);
         return false;
     }
     pvScalarArray = getPVDataCreate()->createPVScalarArray(scalarType);
     pvScalarArray->setCapacity(dbAddr.no_elements);
-    channelArrayRequester->channelArrayConnect(
+    if(req) req->channelArrayConnect(
         Status::Ok,
         getPtrSelf(),
         pvScalarArray->getArray());
@@ -151,18 +152,11 @@ void DbPvArray::destroy() {
 
 void DbPvArray::getArray(size_t offset,size_t count,size_t stride)
 {
-    if(offset<0) {
-         channelArrayRequester->getArrayDone(illegalOffsetStatus,getPtrSelf(),nullPVArray);
-         return;
-    }
-    if(stride<0) {
-         channelArrayRequester->getArrayDone(illegalStrideStatus,getPtrSelf(),nullPVArray);
-         return;
-    }
+    requester_type::shared_pointer req(channelArrayRequester.lock());
     dbScanLock(dbAddr.precord);
     long v3length = 0;
     long v3offset = 0;
-    struct rset *prset = dbGetRset(&dbAddr);
+    rset *prset = dbGetRset(&dbAddr);
     if(prset && prset->get_array_info) {
         get_array_info get_info;
         get_info = (get_array_info)(prset->get_array_info);
@@ -171,7 +165,7 @@ void DbPvArray::getArray(size_t offset,size_t count,size_t stride)
             dbScanUnlock(dbAddr.precord);
             Status status(Status::STATUSTYPE_ERROR,
                    "v3offset not supported");
-            channelArrayRequester->getArrayDone(
+            if(req) req->getArrayDone(
                 status,
                 getPtrSelf(),
                 nullPVArray);
@@ -195,7 +189,7 @@ void DbPvArray::getArray(size_t offset,size_t count,size_t stride)
     if(!ok) {
         dbScanUnlock(dbAddr.precord);
         pvScalarArray->setLength(0);
-        channelArrayRequester->getArrayDone(
+        if(req) req->getArrayDone(
             Status::Ok,
             getPtrSelf(),
             pvScalarArray);
@@ -294,7 +288,7 @@ void DbPvArray::getArray(size_t offset,size_t count,size_t stride)
     pvScalarArray->setLength(offset + count*stride);
     }
     dbScanUnlock(dbAddr.precord);
-    channelArrayRequester->getArrayDone(
+    if(req) req->getArrayDone(
         Status::Ok,
         getPtrSelf(),
         pvScalarArray);
@@ -304,18 +298,7 @@ void DbPvArray::putArray(
     PVArray::shared_pointer const &pvArray,
     size_t offset, size_t count, size_t stride)
 {
-    if(offset<0) {
-         channelArrayRequester->putArrayDone(illegalOffsetStatus,getPtrSelf());
-         return;
-    }
-    if(count<0) {
-         channelArrayRequester->putArrayDone(illegalCountStatus,getPtrSelf());
-         return;
-    }
-    if(stride<0) {
-         channelArrayRequester->putArrayDone(illegalStrideStatus,getPtrSelf());
-         return;
-    }
+    requester_type::shared_pointer req(channelArrayRequester.lock());
     dbScanLock(dbAddr.precord);
     long no_elements = dbAddr.no_elements;
     size_t length = no_elements;
@@ -324,13 +307,13 @@ void DbPvArray::putArray(
     }
     if(count<=0) {
         dbScanUnlock(dbAddr.precord);
-        channelArrayRequester->putArrayDone(
+        if(req) req->putArrayDone(
             Status::Ok,
             getPtrSelf());
         return;
     }
     long newLength = offset + count*stride;
-    struct rset *prset = dbGetRset(&dbAddr);
+    rset *prset = dbGetRset(&dbAddr);
     if(prset && prset->get_array_info) {
         long oldLength = 0;
         long v3offset = 0;
@@ -425,7 +408,7 @@ void DbPvArray::putArray(
     }
     db_post_events(dbAddr.precord,dbAddr.pfield,DBE_VALUE | DBE_LOG);
     dbScanUnlock(dbAddr.precord);
-    channelArrayRequester->putArrayDone(Status::Ok,getPtrSelf());
+    if(req) req->putArrayDone(Status::Ok,getPtrSelf());
 }
 
 void DbPvArray::getLength()
@@ -433,14 +416,15 @@ void DbPvArray::getLength()
     long v3offset = 0;
     long v3length = 0;
     dbScanLock(dbAddr.precord);
-    struct rset *prset = dbGetRset(&dbAddr);
+    rset *prset = dbGetRset(&dbAddr);
     if(prset && prset->get_array_info) {
         get_array_info get_info;
         get_info = (get_array_info)(prset->get_array_info);
         get_info(&dbAddr, &v3length, &v3offset);
     }
     dbScanUnlock(dbAddr.precord);
-    channelArrayRequester->getLengthDone(
+    requester_type::shared_pointer req(channelArrayRequester.lock());
+    if(req) req->getLengthDone(
        Status::Ok,getPtrSelf(),v3length);
 }
 
@@ -450,14 +434,15 @@ void DbPvArray::setLength(size_t length)
     long no_elements = dbAddr.no_elements;
     if(length>static_cast<size_t>(no_elements)) length = no_elements;
     long v3length = length;
-    struct rset *prset = dbGetRset(&dbAddr);
+    rset *prset = dbGetRset(&dbAddr);
     if(prset && prset->put_array_info) {
         put_array_info put_info;
         put_info = (put_array_info)(prset->put_array_info);
         put_info(&dbAddr, v3length);
     }
     dbScanUnlock(dbAddr.precord);
-    channelArrayRequester->setLengthDone(Status::Ok,getPtrSelf());
+    requester_type::shared_pointer req(channelArrayRequester.lock());
+    if(req) req->setLengthDone(Status::Ok,getPtrSelf());
 }
 
 void DbPvArray::lock()

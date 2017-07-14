@@ -59,27 +59,28 @@ DbPvPut::~DbPvPut()
 
 bool DbPvPut::init(PVStructure::shared_pointer const &pvRequest)
 {
+    requester_type::shared_pointer req(channelPutRequester.lock());
     propertyMask = dbUtil->getProperties(
-        channelPutRequester,
+        req,
         pvRequest,
         dbPv->getDbChannel(),
         true);
     if (propertyMask == dbUtil->noAccessBit) return false;
     if (propertyMask == dbUtil->noModBit) {
-        channelPutRequester->message(
+        if(req) req->message(
                     "field not allowed to be changed",
                     errorMessage);
         return 0;
     }
     pvStructure = PVStructure::shared_pointer(
         dbUtil->createPVStructure(
-            channelPutRequester,
+            req,
             propertyMask,
             dbPv->getDbChannel()));
     if (!pvStructure.get()) return false;
     if (propertyMask & dbUtil->dbPutBit) {
         if (propertyMask & dbUtil->processBit) {
-            channelPutRequester->message(
+            if(req) req->message(
                         "process determined by dbPutField",
                         errorMessage);
         }
@@ -96,7 +97,7 @@ bool DbPvPut::init(PVStructure::shared_pointer const &pvRequest)
     }
     int numFields = pvStructure->getNumberFields();
     bitSet.reset(new BitSet(numFields));
-    channelPutRequester->channelPutConnect(
+    if(req) req->channelPutConnect(
        Status::Ok,
        getPtrSelf(),
        pvStructure->getStructure());
@@ -104,12 +105,14 @@ bool DbPvPut::init(PVStructure::shared_pointer const &pvRequest)
 }
 
 string DbPvPut::getRequesterName() {
-    return channelPutRequester->getRequesterName();
+    requester_type::shared_pointer req(channelPutRequester.lock());
+    return req ? req->getRequesterName() : "<DEAD>";
 }
 
 void DbPvPut::message(string const &message,MessageType messageType)
 {
-    channelPutRequester->message(message,messageType);
+    requester_type::shared_pointer req(channelPutRequester.lock());
+    if(req) req->message(message,messageType);
 }
 
 void DbPvPut::destroy() {
@@ -135,23 +138,25 @@ void DbPvPut::put(PVStructurePtr const &pvStructure, BitSetPtr const & bitSet)
         return;
     }
 
+    requester_type::shared_pointer req(channelPutRequester.lock());
+
     Lock lock(dataMutex);
     PVFieldPtr pvField = pvStructure.get()->getPVFields()[0];
     if (propertyMask & dbUtil->dbPutBit) {
         status = dbUtil->putField(
-                    channelPutRequester,
+                    req,
                     propertyMask,
                     dbPv->getDbChannel(),
                     pvField);
     } else {
         dbScanLock(dbChannelRecord(dbPv->getDbChannel()));
         status = dbUtil->put(
-                    channelPutRequester, propertyMask, dbPv->getDbChannel(), pvField);
+                    req, propertyMask, dbPv->getDbChannel(), pvField);
         if (process) dbProcess(dbChannelRecord(dbPv->getDbChannel()));
         dbScanUnlock(dbChannelRecord(dbPv->getDbChannel()));
     }
     lock.unlock();
-    channelPutRequester->putDone(status, getPtrSelf());
+    if(req) req->putDone(status, getPtrSelf());
 }
 
 int DbPvPut::putCallback(struct processNotify *pn, notifyPutType type)
@@ -170,14 +175,14 @@ int DbPvPut::putCallback(struct processNotify *pn, notifyPutType type)
         return 0;
     case putFieldType:
         pdp->status = pdp->dbUtil->putField(
-                    pdp->channelPutRequester,
+                    pdp->channelPutRequester.lock(),
                     pdp->propertyMask,
                     pdp->dbPv->getDbChannel(),
                     pvField);
         break;
     case putType:
         pdp->status = pdp->dbUtil->put(
-                    pdp->channelPutRequester,
+                    pdp->channelPutRequester.lock(),
                     pdp->propertyMask,
                     pdp->dbPv->getDbChannel(),
                     pvField);
@@ -192,7 +197,8 @@ void DbPvPut::doneCallback(struct processNotify *pn)
 {
     DbPvPut *pdp = static_cast<DbPvPut *>(pn->usrPvt);
 
-    pdp->channelPutRequester->putDone(
+    requester_type::shared_pointer req(pdp->channelPutRequester.lock());
+    if(req) req->putDone(
                 pdp->status,
                 pdp->getPtrSelf());
 }
@@ -200,12 +206,13 @@ void DbPvPut::doneCallback(struct processNotify *pn)
 void DbPvPut::get()
 {
     if(DbPvDebug::getLevel()>0) printf("dbPvPut::get()\n");
+    requester_type::shared_pointer req(channelPutRequester.lock());
     {
         Lock lock(dataMutex);
         dbScanLock(dbChannelRecord(dbPv->getDbChannel()));
         bitSet->clear();
         Status status = dbUtil->get(
-                    channelPutRequester,
+                    req,
                     propertyMask,
                     dbPv->getDbChannel(),
                     pvStructure,
@@ -217,7 +224,7 @@ void DbPvPut::get()
             bitSet->set(pvStructure->getFieldOffset());
         }
     }
-    channelPutRequester->getDone(
+    if(req) req->getDone(
                 status,
                 getPtrSelf(),
                 pvStructure,

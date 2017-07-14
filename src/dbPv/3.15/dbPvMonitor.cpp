@@ -78,6 +78,7 @@ DbPvMonitor::~DbPvMonitor() {
 bool DbPvMonitor::init(
     PVStructure::shared_pointer const &pvRequest)
 {
+    requester_type::shared_pointer req(monitorRequester.lock());
     string queueSizeString("record._options.queueSize");
     {
         PVStringPtr pvString = pvRequest.get()->getSubField<PVString>(queueSizeString);
@@ -88,19 +89,19 @@ bool DbPvMonitor::init(
         }
     }
     propertyMask = dbUtil->getProperties(
-        monitorRequester,
+        req,
         pvRequest,
         dbPv->getDbChannel(),
         false);
     if(propertyMask==dbUtil->noAccessBit) return false;
     if(propertyMask&dbUtil->isLinkBit) {
-        monitorRequester->message("can not monitor a link field", errorMessage);
+        if(req) req->message("can not monitor a link field", errorMessage);
         return 0;
     }
     elements.reserve(queueSize);
     for(int i=0; i<queueSize; i++) {
         PVStructurePtr pvStructure(dbUtil->createPVStructure(
-                monitorRequester,
+                req,
                 propertyMask,
                 dbPv->getDbChannel()));
         if(!pvStructure) return false;
@@ -113,7 +114,7 @@ bool DbPvMonitor::init(
         caType = CaEnum;
     } else {
         ScalarType scalarType = dbUtil->getScalarType(
-            monitorRequester,
+            req,
             dbPv->getDbChannel());
         switch(scalarType) {
         case pvByte: caType = CaByte; break;
@@ -135,7 +136,7 @@ bool DbPvMonitor::init(
     caMonitor->connect();
     event.wait();
     Monitor::shared_pointer thisPointer = dynamic_pointer_cast<Monitor>(getPtrSelf());
-    monitorRequester->monitorConnect(
+    if(req) req->monitorConnect(
        Status::Ok,
        thisPointer,
        saveStructure);
@@ -143,12 +144,14 @@ bool DbPvMonitor::init(
 }
 
 string DbPvMonitor::getRequesterName() {
-    return monitorRequester.get()->getRequesterName();
+    requester_type::shared_pointer req(monitorRequester.lock());
+    return req ? req->getRequesterName() : "<DEAD>";
 }
 
 void DbPvMonitor::message(string const &message,MessageType messageType)
 {
-    monitorRequester->message(message,messageType);
+    requester_type::shared_pointer req(monitorRequester.lock());
+    if(req) req->message(message,messageType);
 }
 
 void DbPvMonitor::destroy() {
@@ -244,8 +247,9 @@ void DbPvMonitor::eventCallback(const char *status)
 {
     if (DbPvDebug::getLevel() > 0) printf("dbPvMonitor::eventCallback\n");
     if(beingDestroyed) return;
+    requester_type::shared_pointer req(monitorRequester.lock());
     if(status!=0) {
-         monitorRequester->message(status, errorMessage);
+         if(req) req->message(status, errorMessage);
     }
     MonitorElementPtr nextElement = nullElement;
     PVStructure::shared_pointer pvStructure = currentElement->pvStructurePtr;
@@ -254,7 +258,7 @@ void DbPvMonitor::eventCallback(const char *status)
     CaData &caData = caMonitor.get()->getData();
     BitSet::shared_pointer overrunBitSet = currentElement->overrunBitSet;
     Status stat = dbUtil->get(
-       monitorRequester,
+       req,
        propertyMask,
        dbPv->getDbChannel(),
        pvStructure,
@@ -292,7 +296,7 @@ void DbPvMonitor::eventCallback(const char *status)
     if(!nextElement) return;
     numberUsed++;
     currentElement = nextElement;
-    monitorRequester->monitorEvent(getPtrSelf());
+    if(req) req->monitorEvent(getPtrSelf());
 }
 
 void DbPvMonitor::lock()

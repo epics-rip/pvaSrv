@@ -186,7 +186,7 @@ int DbUtil::getProperties(
         }
     }
     if (!fieldList.size()) {
-        requester->message("no valid field name specified", errorMessage);
+        if(requester) requester->message("no valid field name specified", errorMessage);
         propertyMask = noAccessBit; return propertyMask;
     }
     if(getValue) {
@@ -226,10 +226,10 @@ int DbUtil::getProperties(
         scalarType = pvString;
         propertyMask |= (isLinkBit|dbPutBit); break;
     case DBF_NOACCESS:
-        requester->message("access is not allowed",errorMessage);
+        if(requester) requester->message("access is not allowed",errorMessage);
         propertyMask = noAccessBit; return propertyMask;
     default:
-        requester->message("logic error unknown DBF type",errorMessage);
+        if(requester) requester->message("logic error unknown DBF type",errorMessage);
         propertyMask = noAccessBit; return propertyMask;
     }
     if(type==scalar&&scalarType!=pvBoolean) {
@@ -254,7 +254,7 @@ int DbUtil::getProperties(
         case SPC_CALC:
             propertyMask |= dbPutBit; break;
         default:
-            requester->message("logic error unknown special type",errorMessage);
+            if(requester) requester->message("logic error unknown special type",errorMessage);
             propertyMask = noAccessBit; return propertyMask;
         }
     }
@@ -358,7 +358,7 @@ PVStructurePtr DbUtil::createPVStructure(
 
     if((propertyMask&enumValueBit)!=0) {
         struct dbr_enumStrs enumStrs;
-        struct rset *prset = dbGetRset(&dbChan->addr);
+        rset *prset = dbGetRset(&dbChan->addr);
 
         PVStringArrayPtr pvChoices = pvStructure->getSubField<PVStringArray>(valueChoicesString);
         if(pvChoices.get()) {
@@ -379,7 +379,7 @@ PVStructurePtr DbUtil::createPVStructure(
                 dbDeviceMenu *pdbDeviceMenu
                         = static_cast<dbDeviceMenu *>(pdbFldDes->ftPvt);
                 if(pdbDeviceMenu==NULL) {
-                    requester->message(
+                    if(requester) requester->message(
                                 "record type has no device support", errorMessage);
                     return nullPVStructure;
                 }
@@ -400,7 +400,7 @@ PVStructurePtr DbUtil::createPVStructure(
                     choices.push_back(papChoice[i]);
             }
             else {
-                requester->message("bad enum field in V3 record",errorMessage);
+                if(requester) requester->message("bad enum field in V3 record",errorMessage);
                 return nullPVStructure;
             }
             pvChoices->replace(freeze(choices));
@@ -420,7 +420,7 @@ void  DbUtil::getPropertyData(
         char units[DB_UNITS_SIZE];
         units[0] = 0;
         long precision = 0;
-        struct rset *prset = dbGetRset(&dbChan->addr);
+        rset *prset = dbGetRset(&dbChan->addr);
         if(prset && prset->get_units) {
             get_units gunits;
             gunits = (get_units)(prset->get_units);
@@ -454,7 +454,7 @@ void  DbUtil::getPropertyData(
     }
     if(propertyMask&controlBit) {
         Control control;
-        struct rset *prset = dbGetRset(&dbChan->addr);
+        rset *prset = dbGetRset(&dbChan->addr);
         struct dbr_ctrlDouble graphics;
         memset(&graphics,0,sizeof(graphics));
         if(prset && prset->get_control_double) {
@@ -469,7 +469,7 @@ void  DbUtil::getPropertyData(
         pvControl.set(control);
     }
     if(propertyMask&valueAlarmBit) {
-        struct rset *prset = dbGetRset(&dbChan->addr);
+        rset *prset = dbGetRset(&dbChan->addr);
         struct dbr_alDouble ald;
         memset(&ald,0,sizeof(ald));
         if(prset && prset->get_alarm_double) {
@@ -640,7 +640,7 @@ Status  DbUtil::get(
                     long result = dbGetField(&dbChan->addr,DBR_STRING,
                                              buffer,0,0,0);
                     if(result!=0) {
-                        requester->message("dbGetField error",errorMessage);
+                        if(requester) requester->message("dbGetField error",errorMessage);
                     }
                     val = buffer;
                 } else {
@@ -668,7 +668,7 @@ Status  DbUtil::get(
             ScalarType scalarType = pvArray->getScalarArray()->getElementType();
             long rec_length = 0;
             long rec_offset = 0;
-            struct rset *prset = dbGetRset(&dbChan->addr);
+            rset *prset = dbGetRset(&dbChan->addr);
             get_array_info get_info;
             get_info = (get_array_info)(prset->get_array_info);
             get_info(&dbChan->addr, &rec_length, &rec_offset);
@@ -866,7 +866,7 @@ Status  DbUtil::put(
         PVFieldPtr const &pvField)
 {
     if((propertyMask&getValueBit)==0) {
-        requester->message("Logic Error unknown field to put",errorMessage);
+        if(requester) requester->message("Logic Error unknown field to put",errorMessage);
         return Status::Ok;
     }
 
@@ -937,7 +937,7 @@ Status  DbUtil::put(
             break;
         }
         default:
-            requester->message("Logic Error did not handle scalarType",errorMessage);
+            if(requester) requester->message("Logic Error did not handle scalarType",errorMessage);
             return Status::Ok;
         }
     } else if((propertyMask&arrayValueBit)!=0) {
@@ -946,7 +946,7 @@ Status  DbUtil::put(
         long no_elements  = dbChannelFinalElements(dbChan);
         long length = pvArray->getLength();
         if(length>no_elements) length = no_elements;
-        struct rset *prset = dbGetRset(&dbChan->addr);
+        rset *prset = dbGetRset(&dbChan->addr);
         if(prset && prset->put_array_info) {
             put_array_info put_info;
             put_info = (put_array_info)(prset->put_array_info);
@@ -1035,16 +1035,16 @@ Status  DbUtil::put(
             pvIndex = pvEnum->getSubFieldT<PVInt>(indexString);
         }
         if (dbChannelFinalDBFType(dbChan) == DBF_MENU) {
-            requester->message("Not allowed to change a menu field",errorMessage);
+            if(requester) requester->message("Not allowed to change a menu field",errorMessage);
         } else if (dbChannelFinalDBFType(dbChan) == DBF_ENUM || dbChannelFinalDBFType(dbChan) == DBF_DEVICE) {
             epicsEnum16 *value = static_cast<epicsEnum16*>(dbChannelField(dbChan));
             *value = pvIndex->get();
         } else {
-            requester->message("Logic Error unknown enum field",errorMessage);
+            if(requester) requester->message("Logic Error unknown enum field",errorMessage);
             return Status::Ok;
         }
     } else {
-        requester->message("Logic Error unknown field to put",errorMessage);
+        if(requester) requester->message("Logic Error unknown field to put",errorMessage);
         return Status::Ok;
     }
     dbCommon *precord = dbChannelRecord(dbChan);
@@ -1078,7 +1078,7 @@ Status  DbUtil::putField(
     double dvalue;
     string string;
     if((propertyMask&getValueBit)==0) {
-        requester->message("Logic Error unknown field to put",errorMessage);
+        if(requester) requester->message("Logic Error unknown field to put",errorMessage);
         return Status::Ok;
     }
 
@@ -1142,7 +1142,7 @@ Status  DbUtil::putField(
             break;
         }
         default:
-            requester->message("Logic Error did not handle scalarType",errorMessage);
+            if(requester) requester->message("Logic Error did not handle scalarType",errorMessage);
             return Status::Ok;
         }
     } else if((propertyMask&enumValueBit)!=0) {
@@ -1156,7 +1156,7 @@ Status  DbUtil::putField(
         svalue = pvIndex->get(); pbuffer = &svalue;
         dbrType = DBF_ENUM;
     } else {
-        requester->message("Logic Error unknown field to put",errorMessage);
+        if(requester) requester->message("Logic Error unknown field to put",errorMessage);
         return Status::Ok;
     }
     long status = dbPutField(&dbChan->addr, dbrType, pbuffer, 1);
@@ -1164,7 +1164,7 @@ Status  DbUtil::putField(
         char buf[30];
         sprintf(buf,"dbPutField returned error 0x%lx",status);
         std::string message(buf);
-        requester->message(message,warningMessage);
+        if(requester) requester->message(message,warningMessage);
     }
     return Status::Ok;
 }

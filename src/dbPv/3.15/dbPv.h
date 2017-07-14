@@ -97,8 +97,8 @@ public:
        { return "local";}
     virtual std::string getChannelName()
        { return name; }
-    virtual epics::pvAccess::ChannelRequester::shared_pointer getChannelRequester()
-       { return requester;}
+    virtual requester_type::shared_pointer getChannelRequester()
+       { return requester_type::shared_pointer(requester);}
     virtual void getField(
         epics::pvAccess::GetFieldRequester::shared_pointer const &requester,
         std::string const &subField);
@@ -128,7 +128,7 @@ private:
         return shared_from_this();
     }
     DbPvProviderPtr  provider;
-    epics::pvAccess::ChannelRequester::shared_pointer requester;
+    requester_type::weak_pointer requester;
     std::string name;
     dbChannel *dbChan;
     epics::pvData::FieldConstPtr recordField;
@@ -168,7 +168,7 @@ private:
     static void notifyCallback(struct processNotify *);
     DbUtilPtr dbUtil;
     DbPvPtr dbPv;
-    epics::pvAccess::ChannelProcessRequester::shared_pointer channelProcessRequester;
+    requester_type::weak_pointer channelProcessRequester;
     int propertyMask;
     bool block;
     std::string recordString;
@@ -213,7 +213,7 @@ private:
     static void doneCallback(struct processNotify *pn);
     DbUtilPtr dbUtil;
     DbPvPtr dbPv;
-    epics::pvAccess::ChannelGetRequester::shared_pointer channelGetRequester;
+    requester_type::weak_pointer channelGetRequester;
     epics::pvData::PVStructurePtr pvStructure;
     epics::pvData::BitSet::shared_pointer bitSet;
     bool process;
@@ -263,7 +263,7 @@ private:
     static void doneCallback(struct processNotify *pn);
     DbUtilPtr dbUtil;
     DbPvPtr dbPv;
-    epics::pvAccess::ChannelPutRequester::shared_pointer channelPutRequester;
+    requester_type::weak_pointer channelPutRequester;
     epics::pvData::PVStructurePtr pvStructure;
     epics::pvData::BitSet::shared_pointer bitSet;
     int propertyMask;
@@ -313,7 +313,7 @@ private:
     DbUtilPtr dbUtil;
     epics::pvData::MonitorElementPtr &getFree();
     DbPvPtr dbPv;
-    epics::pvData::MonitorRequester::shared_pointer  monitorRequester;
+    requester_type::weak_pointer  monitorRequester;
     epics::pvData::Event event;
     int propertyMask;
     bool firstTime;
@@ -364,7 +364,7 @@ private:
         return shared_from_this();
     }
     DbPvPtr dbPv;
-    epics::pvAccess::ChannelArrayRequester::shared_pointer channelArrayRequester;
+    requester_type::weak_pointer channelArrayRequester;
     epics::pvData::PVScalarArray::shared_pointer pvScalarArray;
     epics::pvData::Mutex dataMutex;
     epics::pvData::Mutex mutex;

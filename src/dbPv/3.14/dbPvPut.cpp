@@ -61,26 +61,27 @@ DbPvPut::~DbPvPut()
 
 bool DbPvPut::init(PVStructure::shared_pointer const &pvRequest)
 {
+    requester_type::shared_pointer req(channelPutRequester.lock());
     propertyMask = dbUtil->getProperties(
-        channelPutRequester,
+        req,
         pvRequest,
         dbAddr,
         true);
     if(propertyMask==dbUtil->noAccessBit) return false;
     if(propertyMask==dbUtil->noModBit) {
-        channelPutRequester->message(
+        if(req) req->message(
              "field not allowed to be changed",errorMessage);
         return 0;
     }
     pvStructure = PVStructure::shared_pointer(
         dbUtil->createPVStructure(
-            channelPutRequester,
+            req,
             propertyMask,
             dbAddr));
     if (!pvStructure.get()) return false;
     if (propertyMask & dbUtil->dbPutBit) {
         if (propertyMask & dbUtil->processBit) {
-            channelPutRequester->message(
+            if(req) req->message(
                         "process determined by dbPutField", errorMessage);
         }
     } else if (propertyMask&dbUtil->processBit) {
@@ -106,7 +107,7 @@ bool DbPvPut::init(PVStructure::shared_pointer const &pvRequest)
     }
     int numFields = pvStructure->getNumberFields();
     bitSet.reset(new BitSet(numFields));
-    channelPutRequester->channelPutConnect(
+    if(req) req->channelPutConnect(
        Status::Ok,
        getPtrSelf(),
        pvStructure->getStructure());
@@ -114,12 +115,14 @@ bool DbPvPut::init(PVStructure::shared_pointer const &pvRequest)
 }
 
 string DbPvPut::getRequesterName() {
-    return channelPutRequester->getRequesterName();
+    requester_type::shared_pointer req(channelPutRequester.lock());
+    return req ? req->getRequesterName() : "<DEAD>";
 }
 
 void DbPvPut::message(string const &message,MessageType messageType)
 {
-    channelPutRequester->message(message,messageType);
+    requester_type::shared_pointer req(channelPutRequester.lock());
+    if(req) req->message(message,messageType);
 }
 
 void DbPvPut::destroy() {
@@ -136,20 +139,21 @@ void DbPvPut::destroy() {
 void DbPvPut::put(PVStructurePtr const &pvStructure, BitSetPtr const & bitSet)
 {
     if(DbPvDebug::getLevel()>0) printf("dbPvPut::put()\n");
+    requester_type::shared_pointer req(channelPutRequester.lock());
     Lock lock(dataMutex);
     this->pvStructure = pvStructure;
     this->bitSet = bitSet;
     PVFieldPtr pvField = pvStructure.get()->getPVFields()[0];
     if(propertyMask&dbUtil->dbPutBit) {
         Status status = dbUtil->putField(
-            channelPutRequester,propertyMask,dbAddr,pvField);
+            req,propertyMask,dbAddr,pvField);
         lock.unlock();
-        channelPutRequester->putDone(status,getPtrSelf());
+        if(req) req->putDone(status,getPtrSelf());
         return;
     }
     dbScanLock(dbAddr.precord);
     Status status = dbUtil->put(
-                channelPutRequester, propertyMask, dbAddr, pvField);
+                req, propertyMask, dbAddr, pvField);
     if (process && !block) dbProcess(dbAddr.precord);
     dbScanUnlock(dbAddr.precord);
     lock.unlock();
@@ -158,25 +162,27 @@ void DbPvPut::put(PVStructurePtr const &pvStructure, BitSetPtr const & bitSet)
         pNotify.get()->pbuffer = &value;
         dbPutNotify(pNotify.get());
     } else {
-        channelPutRequester->putDone(status, getPtrSelf());
+        if(req) req->putDone(status, getPtrSelf());
     }
 }
 
 void DbPvPut::notifyCallback(struct putNotify *pn)
 {
     DbPvPut * pdp = static_cast<DbPvPut *>(pn->usrPvt);
-    pdp->channelPutRequester->putDone(Status::Ok, pdp->getPtrSelf());
+    requester_type::shared_pointer req(pdp->channelPutRequester.lock());
+    if(req) req->putDone(Status::Ok, pdp->getPtrSelf());
 }
 
 void DbPvPut::get()
 {
+    requester_type::shared_pointer req(channelPutRequester.lock());
     if(DbPvDebug::getLevel()>0) printf("dbPvPut::get()\n");
     {
     Lock lock(dataMutex);
     bitSet->clear();
     dbScanLock(dbAddr.precord);
     Status status = dbUtil->get(
-        channelPutRequester,
+        req,
         propertyMask,dbAddr,
         pvStructure,
         bitSet,
@@ -187,7 +193,7 @@ void DbPvPut::get()
     }
     dbScanUnlock(dbAddr.precord);
     }
-    channelPutRequester->getDone(
+    if(req) req->getDone(
         Status::Ok,
         getPtrSelf(),
         pvStructure,

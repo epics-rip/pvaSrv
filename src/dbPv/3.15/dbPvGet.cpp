@@ -53,19 +53,20 @@ DbPvGet::~DbPvGet()
 
 bool DbPvGet::init(PVStructure::shared_pointer const &pvRequest)
 {
+    requester_type::shared_pointer req(channelGetRequester.lock());
     propertyMask = dbUtil->getProperties(
-        channelGetRequester,
+        req,
         pvRequest,
         dbPv->getDbChannel(),
         false);
     if (propertyMask == dbUtil->noAccessBit) return false;
     pvStructure = PVStructure::shared_pointer(
                 dbUtil->createPVStructure(
-                    channelGetRequester,
+                    req,
                     propertyMask,
                     dbPv->getDbChannel()));
     if (!pvStructure.get()) return false;
-    dbUtil->getPropertyData(channelGetRequester,
+    dbUtil->getPropertyData(req,
                             propertyMask,
                             dbPv->getDbChannel(),
                             pvStructure);
@@ -82,7 +83,7 @@ bool DbPvGet::init(PVStructure::shared_pointer const &pvRequest)
         pn->usrPvt = this;
         if (propertyMask & dbUtil->blockBit) block = true;
     }
-    channelGetRequester->channelGetConnect(
+    if(req) req->channelGetConnect(
                 Status::Ok,
                 getPtrSelf(),
                 pvStructure->getStructure());
@@ -90,12 +91,14 @@ bool DbPvGet::init(PVStructure::shared_pointer const &pvRequest)
 }
 
 string DbPvGet::getRequesterName() {
-    return channelGetRequester->getRequesterName();
+    requester_type::shared_pointer req(channelGetRequester.lock());
+    return req ? req->getRequesterName() : "<DEAD>";
 }
 
 void DbPvGet::message(string const &message,MessageType messageType)
 {
-    channelGetRequester->message(message,messageType);
+    requester_type::shared_pointer req(channelGetRequester.lock());
+    if(req) req->message(message,messageType);
 }
 
 void DbPvGet::destroy() {
@@ -115,13 +118,15 @@ void DbPvGet::get()
     if (block && process) {
         dbProcessNotify(pNotify.get());
     } else {
+        requester_type::shared_pointer req(channelGetRequester.lock());
+
         dbScanLock(dbChannelRecord(dbPv->getDbChannel()));
         if (process) dbProcess(dbChannelRecord(dbPv->getDbChannel()));
 
         Lock lock(dataMutex);
         bitSet->clear();
         status = dbUtil->get(
-                    channelGetRequester,
+                    req,
                     propertyMask,
                     dbPv->getDbChannel(),
                     pvStructure,
@@ -134,7 +139,7 @@ void DbPvGet::get()
             bitSet->set(0);
         }
         lock.unlock();
-        channelGetRequester->getDone(
+        if(req) req->getDone(
             status,
             getPtrSelf(),
             pvStructure,
@@ -153,7 +158,7 @@ void DbPvGet::getCallback(struct processNotify *pn, notifyGetType type)
     Lock lock(pdp->dataMutex);
     pdp->bitSet->clear();
     pdp->status = pdp->dbUtil->get(
-                pdp->channelGetRequester,
+                pdp->channelGetRequester.lock(),
                 pdp->propertyMask,
                 pdp->dbPv->getDbChannel(),
                 pdp->pvStructure,
@@ -172,7 +177,8 @@ void DbPvGet::doneCallback(struct processNotify *pn)
 {
     DbPvGet * pdp = static_cast<DbPvGet *>(pn->usrPvt);
 
-    pdp->channelGetRequester->getDone(
+    requester_type::shared_pointer req(pdp->channelGetRequester.lock());
+    if(req) req->getDone(
                 pdp->status,
                 pdp->getPtrSelf(),
                 pdp->pvStructure,
