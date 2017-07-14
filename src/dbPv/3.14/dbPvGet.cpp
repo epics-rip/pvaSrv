@@ -178,7 +178,7 @@ void DbPvGet::notifyCallback(struct putNotify *pn)
         pdp->bitSet->set(0);
     }
     lock.unlock();
-    requester_type::shared_pointer req(channelGetRequester.lock());
+    requester_type::shared_pointer req(pdp->channelGetRequester.lock());
     if(req) req->getDone(
                 status,
                 pdp->getPtrSelf(),
