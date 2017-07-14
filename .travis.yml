@@ -1,0 +1,19 @@
+sudo: false
+dist: trusty
+language: c++
+compiler:
+  - gcc
+addons:
+  apt:
+    packages:
+    - libreadline6-dev
+    - libncurses5-dev
+    - perl
+env:
+ - BRBASE=3.16 BRPVD=master BRPVA=master BRNT=master
+ - BRBASE=3.15 BRPVD=master BRPVA=master BRNT=master
+ - BRBASE=3.14 BRPVD=master BRPVA=master BRNT=master
+install:
+ - ./build-deps.sh
+script:
+ - make -j2
