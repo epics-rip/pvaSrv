@@ -195,11 +195,6 @@ ChannelArray::shared_pointer DbPv::createChannelArray(
     return dbPvArray;
 }
 
-void DbPv::printInfo()
-{
-    printInfo(std::cout);
-}
-
 void DbPv::printInfo(std::ostream& out)
 {
     out << "dbPv provides access to DB records";

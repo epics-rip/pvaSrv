@@ -90,24 +90,14 @@ public:
     virtual ~DbPv();
     void init();
     virtual void destroy(){}
-    virtual std::string getRequesterName()
-       {return requester->getRequesterName();}
-    virtual void message(
-        std::string const & message,
-        epics::pvData::MessageType messageType)
-       {requester->message(message,messageType);}
     virtual epics::pvAccess::ChannelProvider::shared_pointer getProvider()
        { return provider;}
     virtual std::string getRemoteAddress()
        { return "local";}
-    virtual epics::pvAccess::Channel::ConnectionState getConnectionState()
-       { return epics::pvAccess::Channel::CONNECTED;}
     virtual std::string getChannelName()
        { return name; }
     virtual epics::pvAccess::ChannelRequester::shared_pointer getChannelRequester()
        { return requester;}
-    virtual bool isConnected()
-       { return true;}
     virtual void getField(
         epics::pvAccess::GetFieldRequester::shared_pointer const &requester,
         std::string const &subField);
@@ -123,38 +113,12 @@ public:
     virtual epics::pvAccess::ChannelPut::shared_pointer createChannelPut(
         epics::pvAccess::ChannelPutRequester::shared_pointer const &channelPutRequester,
         epics::pvData::PVStructurePtr const &pvRequest);
-    virtual epics::pvAccess::ChannelPutGet::shared_pointer createChannelPutGet(
-        epics::pvAccess::ChannelPutGetRequester::shared_pointer const &requester,
-        epics::pvData::PVStructure::shared_pointer const &pvRequest)
-        {
-           epics::pvData::Status status(epics::pvData::Status::STATUSTYPE_ERROR,
-           "ChannelPutGet not supported");
-           epics::pvData::StructureConstPtr nullStructure;
-           requester->channelPutGetConnect(
-               status,
-               epics::pvAccess::ChannelPutGet::shared_pointer(),
-               nullStructure,
-               nullStructure);
-           return epics::pvAccess::ChannelPutGet::shared_pointer();
-        }
-    virtual epics::pvAccess::ChannelRPC::shared_pointer createChannelRPC(
-        epics::pvAccess::ChannelRPCRequester::shared_pointer const &requester,
-        epics::pvData::PVStructure::shared_pointer const &pvRequest)
-        {
-            epics::pvData::Status status(epics::pvData::Status::STATUSTYPE_ERROR,
-            "ChannelRPC not supported");
-            requester->channelRPCConnect(
-                 status,
-                 epics::pvAccess::ChannelRPC::shared_pointer());
-            return epics::pvAccess::ChannelRPC::shared_pointer();
-        }
     virtual epics::pvData::Monitor::shared_pointer createMonitor(
         epics::pvData::MonitorRequester::shared_pointer const &monitorRequester,
         epics::pvData::PVStructurePtr const &pvRequest);
     virtual epics::pvAccess::ChannelArray::shared_pointer createChannelArray(
         epics::pvAccess::ChannelArrayRequester::shared_pointer const &channelArrayRequester,
         epics::pvData::PVStructurePtr const &pvRequest);
-    virtual void printInfo();
     virtual void printInfo(std::ostream& out);
 private:
     shared_pointer getPtrSelf()
