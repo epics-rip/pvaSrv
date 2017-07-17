@@ -1,13 +1,12 @@
 /**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution.
  */
 /**
  * @author mrk
  */
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(NOMINMAX)
 #define NOMINMAX
 #endif
 
@@ -26,6 +25,7 @@
 #include <pv/noDefaultMethods.h>
 #include <pv/lock.h>
 
+#define epicsExportSharedSymbols
 #include "dbPv.h"
 #include "caSecurity.h"
 
