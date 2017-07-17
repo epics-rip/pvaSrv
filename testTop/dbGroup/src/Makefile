@@ -27,7 +27,7 @@ testDbGroup_SRCS_vxWorks += -nil-
 # The following adds support from base/src/vxWorks
 testDbGroup_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary
 
-testDbGroup_LIBS += pvaSrv pvIOC pvAccessIOC pvAccess pvData pvMB
+testDbGroup_LIBS += pvaSrv pvIOC pvAccessCA pvAccessIOC pvAccess pvData pvMB
 testDbGroup_LIBS += testDbPvSupport
 testDbGroup_LIBS += $(EPICS_BASE_IOC_LIBS)
 
