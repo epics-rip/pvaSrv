@@ -3,6 +3,7 @@
  * found in the file LICENSE that is included with the distribution.
  */
 
+#include <osiSock.h>
 #include <dbAccess.h>
 #include <epicsStdio.h>
 #include <asDbLib.h>

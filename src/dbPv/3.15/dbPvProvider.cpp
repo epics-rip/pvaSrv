@@ -14,6 +14,7 @@
 #include <stdexcept>
 #include <memory>
 
+#include <osiSock.h>
 #include <epicsExit.h>
 #include <dbAccess.h>
 #include <dbStaticLib.h>
