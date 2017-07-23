@@ -6,13 +6,15 @@
 #include <osiSock.h>
 #include <dbAccess.h>
 #include <epicsStdio.h>
-#include <asDbLib.h>
 
 #include <db_access_routines.h>
 #include <dbChannel.h>
 
 #define epicsExportSharedSymbols
 #include <caSecurity.h>
+
+#undef epicsExportSharedSymbols
+#include <asDbLib.h>
 
 using namespace epics::pvData;
 using namespace epics::pvAccess;
