@@ -9,10 +9,13 @@ addons:
     - libreadline6-dev
     - libncurses5-dev
     - perl
+    - clang
+    - g++-mingw-w64-i686
 env:
- - BRBASE=3.16 BRPVD=master BRPVA=master BRNT=master
- - BRBASE=3.15 BRPVD=master BRPVA=master BRNT=master
- - BRBASE=3.14 BRPVD=master BRPVA=master BRNT=master
+ - BRBASE=3.16 WINE=32
+ - BRBASE=3.16 USR_CXXFLAGS=-std=c++11 CMPLR=clang
+ - BRBASE=3.15
+ - BRBASE=3.14
 install:
  - ./build-deps.sh
 script:
