@@ -24,7 +24,7 @@ using namespace epics::pvaSrv;
 SecuritySession::shared_pointer CAServerSecurityPlugin::createSession(
         osiSockAddr const & /*remoteAddress*/,
         SecurityPluginControl::shared_pointer const & control,
-        PVField::shared_pointer const & data) throw (SecurityException)
+        PVField::shared_pointer const & data)
 {
     PVStructure::shared_pointer s = std::tr1::dynamic_pointer_cast<PVStructure>(data);
     if (s)
@@ -55,7 +55,6 @@ Status CAServerChannelSecuritySession::m_noAccessStatus(Status::STATUSTYPE_ERROR
 CAServerChannelSecuritySession::CAServerChannelSecuritySession(std::string const & channelName,
                                const char * user,
                                char * host)
-    throw (SecurityException)
 {
     m_dbChannel = dbChannel_create (channelName.c_str());
     if (!m_dbChannel)

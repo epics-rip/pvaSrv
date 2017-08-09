@@ -38,8 +38,7 @@ namespace epics {
 
         CAServerChannelSecuritySession(std::string const & channelName,
                                        const char * user,
-                                       char * host)
-            throw (epics::pvAccess::SecurityException);
+                                       char * host);
 
         virtual ~CAServerChannelSecuritySession();
 
@@ -212,7 +211,6 @@ namespace epics {
 
         // notification to the client on allowed requests (bitSet, a bit per request)
         virtual epics::pvAccess::ChannelSecuritySession::shared_pointer createChannelSession(std::string const & channelName)
-            throw (epics::pvAccess::SecurityException)
         {
             try
             {
@@ -260,7 +258,7 @@ namespace epics {
         virtual epics::pvAccess::SecuritySession::shared_pointer createSession(
                 osiSockAddr const & /*remoteAddress*/,
                 epics::pvAccess::SecurityPluginControl::shared_pointer const & control,
-                epics::pvData::PVField::shared_pointer const & data) throw (epics::pvAccess::SecurityException);
+                epics::pvData::PVField::shared_pointer const & data);
 
     };
 
